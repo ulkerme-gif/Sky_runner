@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>SkyRunner 3D - Su-27 Edition</title>
+    <title>SkyRunner 3D - Su-27 Advanced</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -51,7 +51,7 @@
             background: rgba(0, 0, 0, 0.55);
             color: #fff;
             font-size: 11px;
-            max-width: 260px;
+            max-width: 280px;
             backdrop-filter: blur(6px);
         }
 
@@ -127,7 +127,7 @@
             backdrop-filter: blur(6px);
         }
 
-        /* Dokunmatik kontroller – daha yukarıda */
+        /* Dokunmatik kontroller – biraz yukarıda */
         .touch-controls {
             position: absolute;
             inset: 0;
@@ -137,10 +137,10 @@
         .pad-left,
         .pad-right {
             position: absolute;
-            bottom: 80px;              /* ÖNEMLİ: önceki 12px idi, şimdi daha yukarıda */
+            bottom: 80px;
             width: 46%;
             max-width: 280px;
-            height: 38%;
+            height: 40%;
             display: flex;
             justify-content: center;
             align-items: flex-end;
@@ -299,7 +299,7 @@
         }
 
         @media (max-width: 768px) {
-            .hud-top-left { font-size: 11px; max-width: 230px; }
+            .hud-top-left { font-size: 11px; max-width: 250px; }
             .hud-top-center { font-size: 11px; }
             .hud-value { font-size: 13px; }
         }
@@ -313,9 +313,8 @@
         <div class="hud-top-left">
             <h1>SkyRunner 3D - Su-27</h1>
             <p>
-                Tablet: Soldaki pad <strong>yaw / roll</strong>, sağdaki pad <strong>pitch</strong> ve <strong>gaz</strong>.<br/>
-                Klavye (PC): W/S (gaz), A/D (yaw+roll), ok tuşları (pitch).<br/>
-                R: Reset · Sert inişte CRASH.
+                Tablet: Sol pad <strong>yaw / roll</strong>, sağ pad <strong>pitch</strong>, <strong>gaz</strong>, <strong>iniş takımı</strong>, <strong>motor</strong>.<br/>
+                Klavye: W/S (gaz), A/D (yaw+roll), ok tuşları (pitch), G (iniş takımı), E (motor), R (reset).
             </p>
         </div>
 
@@ -336,6 +335,14 @@
                 <div class="hud-label">Durum</div>
                 <div class="hud-value" id="hudStatus">IDLE</div>
             </div>
+            <div class="hud-chip">
+                <div class="hud-label">Gear</div>
+                <div class="hud-value" id="hudGear">DN</div>
+            </div>
+            <div class="hud-chip">
+                <div class="hud-label">Motor</div>
+                <div class="hud-value" id="hudEng">ON</div>
+            </div>
         </div>
 
         <div class="hud-top-right">
@@ -344,20 +351,21 @@
         </div>
 
         <div class="hud-bottom-center">
-            Su-27 tarzı mini flight sim: yerçekimi, lift, stall ve tablet dostu kontroller.
+            Su-27 tarzı mini flight sim: motor, iniş takımı, pitch ve throttle tamamen sende.
         </div>
 
         <div class="reticle"></div>
 
         <div class="center-message" id="startMessage">
-            <div class="center-message-title">Uçuşa Hazır ✈️</div>
+            <div class="center-message-title">Pistte Hazır ✈️</div>
             <div class="center-message-sub">
-                Gaz vermek için sağ alttaki <b>+</b> tuşuna dokun veya klavyeden <b>W</b> / <b>↑</b>'a bas.
+                Gaz vermek için sağ alttaki <b>+</b> tuşuna dokun (veya klavyeden <b>W</b> / <b>↑</b>).<br/>
+                Yeterli hızdan sonra burnu kaldırarak (▲) havalan.
             </div>
         </div>
 
         <div class="game-over-banner" id="gameOverBanner">
-            CRASH! Uçak yere çok sert indi.
+            CRASH! İniş çok sert ya da iniş takımı kapalıydı.
             <span>R tuşuna basarak veya sayfayı yenileyerek yeniden başlayabilirsin.</span>
         </div>
     </div>
@@ -375,7 +383,7 @@
             </div>
         </div>
 
-        <!-- Sağ pad: pitch ve throttle -->
+        <!-- Sağ pad: pitch, throttle, gear, engine -->
         <div class="pad-right">
             <div class="ctrl-group">
                 <div class="ctrl-row">
@@ -388,6 +396,11 @@
                     <button class="ctrl-btn" id="btnPitchDown">▼</button>
                 </div>
                 <div class="ctrl-label">Pitch / İrtifa</div>
+                <div class="ctrl-row">
+                    <button class="ctrl-btn small" id="btnGear">G</button>
+                    <button class="ctrl-btn small" id="btnEngine">E</button>
+                </div>
+                <div class="ctrl-label">İniş Takımı / Motor</div>
             </div>
         </div>
     </div>
@@ -407,6 +420,8 @@
     const hudStatus= document.getElementById("hudStatus");
     const hudFps   = document.getElementById("hudFps");
     const hudStall = document.getElementById("hudStall");
+    const hudGear  = document.getElementById("hudGear");
+    const hudEng   = document.getElementById("hudEng");
     const startMessage = document.getElementById("startMessage");
     const gameOverBanner = document.getElementById("gameOverBanner");
 
@@ -416,6 +431,8 @@
     const btnPitchDown     = document.getElementById("btnPitchDown");
     const btnThrottleUp    = document.getElementById("btnThrottleUp");
     const btnThrottleDown  = document.getElementById("btnThrottleDown");
+    const btnGear          = document.getElementById("btnGear");
+    const btnEngine        = document.getElementById("btnEngine");
 
     function resize() {
         const width = window.innerWidth;
@@ -585,14 +602,14 @@
     // Su-27 tarzı uçak modeli
     const plane = new THREE.Group();
 
-    // Gövde (uzun silindir)
+    // Gövde
     const bodyGeo = new THREE.CylinderGeometry(1.3, 1.3, 24, 16);
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x7fb3d5, metalness: 0.55, roughness: 0.3 });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.rotation.z = Math.PI / 2;
     plane.add(body);
 
-    // Burun konisi
+    // Burun
     const noseGeo = new THREE.ConeGeometry(1.4, 4.5, 16);
     const noseMat = new THREE.MeshStandardMaterial({ color: 0x2e86c1, metalness: 0.6, roughness: 0.3 });
     const nose = new THREE.Mesh(noseGeo, noseMat);
@@ -614,7 +631,7 @@
     canopy.rotation.y = Math.PI / 2;
     plane.add(canopy);
 
-    // Ana kanatlar (süpürülmüş)
+    // Ana kanatlar
     const mainWingGeo = new THREE.BoxGeometry(2, 20, 0.4);
     const mainWingMat = new THREE.MeshStandardMaterial({ color: 0x5dade2, metalness: 0.4, roughness: 0.4 });
 
@@ -630,7 +647,7 @@
     mainWingRight.rotation.z = -THREE.MathUtils.degToRad(5);
     plane.add(mainWingRight);
 
-    // Gövde üstündeki LERX benzeri parça
+    // LERX benzeri parçalar
     const lerxGeo = new THREE.BoxGeometry(3, 8, 0.3);
     const lerxLeft = new THREE.Mesh(lerxGeo, mainWingMat);
     lerxLeft.position.set(0, 0.3, -3.5);
@@ -683,12 +700,39 @@
     hTailRight.rotation.y = -THREE.MathUtils.degToRad(15);
     plane.add(hTailRight);
 
-    // Uçağın başlangıç pozisyonu
-    plane.position.set(0, 5, 0);
+    // Basit iniş takımları (gövde altında üç ayak)
+    const gearGroup = new THREE.Group();
+    const gearLegGeo = new THREE.CylinderGeometry(0.15, 0.15, 1.0, 8);
+    const wheelGeo = new THREE.TorusGeometry(0.25, 0.08, 8, 16);
+
+    function createGearLeg(x, z) {
+        const legMat = new THREE.MeshStandardMaterial({ color: 0xf0f3f4, roughness: 0.5 });
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x17202a, roughness: 0.7 });
+
+        const leg = new THREE.Mesh(gearLegGeo, legMat);
+        leg.position.set(x, -1.2, z);
+
+        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+        wheel.rotation.z = Math.PI / 2;
+        wheel.position.set(x, -1.7, z);
+
+        const unit = new THREE.Group();
+        unit.add(leg);
+        unit.add(wheel);
+
+        gearGroup.add(unit);
+    }
+
+    createGearLeg(0, 0);     // burun iniş takımı
+    createGearLeg(-4, -1.5); // sol arka
+    createGearLeg(-4, 1.5);  // sağ arka
+    plane.add(gearGroup);
+
+    plane.position.set(0, 1.5, 0); // pistin üstünde
     plane.rotation.set(0, 0, 0);
     scene.add(plane);
 
-    camera.position.set(-18, 9, 30);
+    camera.position.set(-18, 6, 28);
     camera.lookAt(plane.position);
 
     // INPUT
@@ -702,12 +746,35 @@
         throttleDown: false
     };
 
+    let engineOn = true;
+    let gearDown = true;
+
+    function updateGearHud() {
+        hudGear.textContent = gearDown ? "DN" : "UP";
+    }
+    function updateEngineHud() {
+        hudEng.textContent = engineOn ? "ON" : "OFF";
+    }
+
+    function toggleGear() {
+        gearDown = !gearDown;
+        gearGroup.visible = gearDown;
+        updateGearHud();
+    }
+
+    function toggleEngine() {
+        engineOn = !engineOn;
+        updateEngineHud();
+    }
+
     window.addEventListener("keydown", e => {
         keys[e.key] = true;
         if (e.key === "w" || e.key === "ArrowUp") input.throttleUp = true;
         if (e.key === "s" || e.key === "ArrowDown") input.throttleDown = true;
         if (e.key === "a" || e.key === "ArrowLeft") input.yawLeft = true;
         if (e.key === "d" || e.key === "ArrowRight") input.yawRight = true;
+        if (e.key === "g" || e.key === "G") toggleGear();
+        if (e.key === "e" || e.key === "E") toggleEngine();
         if (e.key === "r" || e.key === "R") resetGame();
     });
 
@@ -719,21 +786,29 @@
         if (e.key === "d" || e.key === "ArrowRight") input.yawRight = false;
     });
 
-    function bindTouchButton(btn, prop) {
+    function bindHoldButton(btn, prop) {
         const on = (ev) => { ev.preventDefault(); input[prop] = true; };
         const off= (ev) => { ev.preventDefault(); input[prop] = false; };
         ["touchstart","mousedown"].forEach(ev => btn.addEventListener(ev, on));
         ["touchend","touchcancel","mouseup","mouseleave"].forEach(ev => btn.addEventListener(ev, off));
     }
 
-    bindTouchButton(btnYawLeft,      "yawLeft");
-    bindTouchButton(btnYawRight,     "yawRight");
-    bindTouchButton(btnPitchUp,      "pitchUp");
-    bindTouchButton(btnPitchDown,    "pitchDown");
-    bindTouchButton(btnThrottleUp,   "throttleUp");
-    bindTouchButton(btnThrottleDown, "throttleDown");
+    bindHoldButton(btnYawLeft,      "yawLeft");
+    bindHoldButton(btnYawRight,     "yawRight");
+    bindHoldButton(btnPitchUp,      "pitchUp");
+    bindHoldButton(btnPitchDown,    "pitchDown");
+    bindHoldButton(btnThrottleUp,   "throttleUp");
+    bindHoldButton(btnThrottleDown, "throttleDown");
 
-    // FLIGHT STATE (önceki fizik aynen, küçük kameraya göre ayarlı)
+    // Toggle butonları (G/E)
+    function bindToggleButton(btn, callback) {
+        btn.addEventListener("click", (ev) => { ev.preventDefault(); callback(); });
+        btn.addEventListener("touchstart", (ev) => { ev.preventDefault(); callback(); });
+    }
+    bindToggleButton(btnGear, toggleGear);
+    bindToggleButton(btnEngine, toggleEngine);
+
+    // FLIGHT STATE
     let throttle = 0;             // 0..1
     let speed = 0;                // m/s
     const maxSpeed = 120;         // m/s (~233kn)
@@ -746,8 +821,9 @@
 
     const gravity = 9.81;
     const stallSpeed = 35;        // m/s
-    const liftCoeff = 2.4;
-    const dragCoeff = 0.025;
+    const liftCoeff = 1.8;        // daha sakin lift
+    const baseDragCoeff = 0.02;
+    const gearDragExtra = 0.015;
 
     const clock = new THREE.Clock();
 
@@ -763,13 +839,19 @@
         gameOver = false;
         hasStarted = false;
         isStalling = false;
-        plane.position.set(0, 5, 0);
+        engineOn = true;
+        gearDown = true;
+        gearGroup.visible = true;
+        updateGearHud();
+        updateEngineHud();
+
+        plane.position.set(0, 1.5, 0);
         plane.rotation.set(0, 0, 0);
-        camera.position.set(-18, 9, 30);
+        camera.position.set(-18, 6, 28);
         camera.lookAt(plane.position);
         hudStatus.textContent = "IDLE";
         hudSpeed.textContent = "0";
-        hudAlt.textContent = "5";
+        hudAlt.textContent = "1";
         hudDist.textContent = "0.0";
         hudStall.textContent = "Yok";
         gameOverBanner.style.display = "none";
@@ -786,15 +868,22 @@
     function updateFlight(dt) {
         if (gameOver) return;
 
-        dt = Math.min(dt, 0.04); // FPS dalgalanmasında saçma zıplamayı engelle
+        dt = Math.min(dt, 0.04);
+
+        // Motor kapalıysa throttle yavaşça sıfıra iner
+        if (!engineOn) {
+            throttle -= 0.6 * dt;
+        }
 
         const throttleChange = 0.45 * dt;
-        if (input.throttleUp) {
-            throttle += throttleChange;
-            hasStarted = true;
-        }
-        if (input.throttleDown) {
-            throttle -= throttleChange;
+        if (engineOn) {
+            if (input.throttleUp) {
+                throttle += throttleChange;
+                hasStarted = true;
+            }
+            if (input.throttleDown) {
+                throttle -= throttleChange;
+            }
         }
         throttle = THREE.MathUtils.clamp(throttle, 0, 1);
 
@@ -830,7 +919,7 @@
             plane.rotation.x *= (1 - 1.5 * dt);
         }
 
-        plane.rotation.x = THREE.MathUtils.clamp(plane.rotation.x, -0.6, 0.55);
+        plane.rotation.x = THREE.MathUtils.clamp(plane.rotation.x, -0.5, 0.45);
         plane.rotation.z = THREE.MathUtils.clamp(plane.rotation.z, -0.9, 0.9);
 
         const forward = new THREE.Vector3(0,0,-1).applyEuler(plane.rotation).normalize();
@@ -838,21 +927,24 @@
         // Basitleştirilmiş aerodinamik
         const speedSq = speed * speed;
 
+        const dragCoeff = baseDragCoeff + (gearDown ? gearDragExtra : 0);
         const drag = dragCoeff * speedSq;
         const dragVec = forward.clone().multiplyScalar(-drag);
 
+        // Açıya bağlı lift (pitch çekmezsen çok az)
+        const aoa = THREE.MathUtils.clamp(-plane.rotation.x, -0.5, 0.5);
         let lift = 0;
-        if (speed > stallSpeed) {
-            const aoa = -plane.rotation.x;
-            lift = liftCoeff * speedSq * Math.max(0, Math.cos(aoa));
-        } else {
-            lift = -20;
+        if (speed > stallSpeed && aoa > 0) {
+            const aoaFactor = aoa / 0.5; // 0..1
+            lift = liftCoeff * speedSq * aoaFactor;
+        } else if (speed < stallSpeed * 0.8) {
+            lift = -15; // sert stall değil ama aşağı çeken kuvvet
         }
 
         const liftVec = new THREE.Vector3(0, lift, 0);
         const gravityVec = new THREE.Vector3(0, -gravity * 18, 0);
 
-        const thrust = throttle * 150;
+        const thrust = engineOn ? throttle * 150 : 0;
         const thrustVec = forward.clone().multiplyScalar(thrust);
 
         const accel = new THREE.Vector3();
@@ -878,16 +970,26 @@
         distanceTravelled += move.length();
 
         const groundHeight = 0;
+        const gearHeight = 1.5;
         const altitude = plane.position.y - groundHeight;
         const verticalSpeed = (plane.position.y - lastAlt) / dt;
         lastAlt = plane.position.y;
 
-        if (plane.position.y < groundHeight + 1.5) {
-            plane.position.y = groundHeight + 1.5;
-            if (Math.abs(verticalSpeed) > 10 || speed > 22) {
+        // Ground contact
+        if (plane.position.y < groundHeight + gearHeight) {
+            plane.position.y = groundHeight + gearHeight;
+
+            if (!gearDown && speed > 5) {
+                // İniş takımı kapalıyken yere vurursan direkt CRASH
                 triggerGameOver();
             } else {
-                speed *= 0.8;
+                // Yumuşak iniş kontrolü
+                if (Math.abs(verticalSpeed) > 10 || speed > 22) {
+                    triggerGameOver();
+                } else {
+                    // Pistte rollout – sürtünme ile yavaşla
+                    speed *= (1 - 1.8 * dt);
+                }
             }
         }
 
@@ -896,7 +998,7 @@
         }
 
         // Kamera
-        const camOffset = new THREE.Vector3(0, 8, 28);
+        const camOffset = new THREE.Vector3(0, 7, 27);
         camOffset.applyEuler(plane.rotation);
         const desiredCamPos = plane.position.clone().add(camOffset);
         camera.position.lerp(desiredCamPos, 0.12);
