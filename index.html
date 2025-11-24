@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>SkyRunner 3D - Cockpit Day Final V2</title>
+    <title>SkyRunner 3D - Cessna View Toggle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -17,15 +17,14 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            /* GÜNDÜZ GÖKYÜZÜ ARKAPLANI */
             background: linear-gradient(to bottom, #aee3ff 0%, #e0f3ff 45%, #bcd7ff 100%);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
         #game-container {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             background: transparent;
         }
@@ -36,7 +35,6 @@
             height: 100%;
         }
 
-        /* HUD */
         .hud {
             position: absolute;
             inset: 0;
@@ -53,7 +51,6 @@
             color: #0fef8f;
             font-size: 11px;
             letter-spacing: 0.08em;
-            pointer-events: none;
             text-shadow: 0 0 4px #000;
         }
 
@@ -66,7 +63,6 @@
             background: rgba(0, 0, 0, 0.6);
             color: #e5e7ff;
             font-size: 11px;
-            pointer-events: none;
             text-shadow: 0 0 4px #000;
         }
 
@@ -83,7 +79,6 @@
             font-size: 11px;
             letter-spacing: 0.2em;
             text-transform: uppercase;
-            pointer-events: none;
             opacity: 0;
             text-shadow: 0 0 6px #000;
         }
@@ -143,8 +138,6 @@
                 0 0 18px #0fef8f55;
         }
 
-        /* Kontroller */
-
         /* Sol: THR */
         .btn-thr-up {
             top: 35%;
@@ -182,7 +175,7 @@
             height: 70px;
         }
 
-        /* Motor / Gear butonları */
+        /* Motor / Gear / View */
         .btn-eng-on {
             top: 90px;
             left: 50%;
@@ -209,6 +202,15 @@
             height: 70px;
             font-size: 10px;
         }
+
+        .btn-view {
+            top: 50px;
+            right: 50%;
+            transform: translateX(50%);
+            width: 70px;
+            height: 70px;
+            font-size: 10px;
+        }
     </style>
 </head>
 <body>
@@ -217,11 +219,11 @@
 
     <div class="hud">
         <div id="hud-info">SPD 0 | ALT 0 | THR 0%</div>
-        <div id="hud-sub">SKYRUNNER • COCKPIT DAY VIEW</div>
+        <div id="hud-sub">SKYRUNNER • CESSNA • COCKPIT</div>
         <div id="hud-terrain">TERRAIN</div>
         <div id="hud-center"></div>
 
-        <!-- Sol - Motor (ince ayar) -->
+        <!-- Sol - Motor -->
         <div class="btn btn-thr-up">THR<br>+</div>
         <div class="btn btn-thr-down">THR<br>-</div>
 
@@ -229,14 +231,15 @@
         <div class="btn btn-pitch-up">NOSE<br>UP</div>
         <div class="btn btn-pitch-down">NOSE<br>DOWN</div>
 
-        <!-- Orta alt - Yaw -->
+        <!-- Alt orta - Yaw -->
         <div class="btn btn-yaw-left">YAW<br>◀</div>
         <div class="btn btn-yaw-right">YAW<br>▶</div>
 
-        <!-- Motor / Gear -->
+        <!-- Motor / Gear / View -->
         <div class="btn btn-eng-on">ENG<br>ON</div>
         <div class="btn btn-eng-off">ENG<br>OFF</div>
         <div class="btn btn-gear">GEAR</div>
+        <div class="btn btn-view">VIEW</div>
     </div>
 </div>
 
@@ -253,12 +256,9 @@
     });
     renderer.setPixelRatio(window.devicePixelRatio || 1);
     renderer.setSize(container.clientWidth, container.clientHeight);
-
-    // GÜNDÜZ GÖKYÜZÜ RENGİ
     renderer.setClearColor(0xaee3ff, 1);
 
     const scene = new THREE.Scene();
-    // GÜNDÜZ SİSİ
     scene.fog = new THREE.FogExp2(0xcfe8ff, 0.00035);
 
     const camera = new THREE.PerspectiveCamera(
@@ -268,7 +268,7 @@
         8000
     );
 
-    // Işıklar (daha parlak gündüz)
+    // Gündüz ışıklar
     const hemi = new THREE.HemisphereLight(0xdbeafe, 0x2f3b2f, 1.0);
     scene.add(hemi);
 
@@ -277,14 +277,14 @@
     dir.castShadow = true;
     scene.add(dir);
 
-    // "Güneş"
+    // Güneş
     const sunGeo = new THREE.SphereGeometry(60, 32, 32);
     const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff7d6 });
     const sun = new THREE.Mesh(sunGeo, sunMat);
     sun.position.set(-800, 900, -1500);
     scene.add(sun);
 
-    // Zemin (daha açık yeşil)
+    // Zemin
     const groundGeo = new THREE.PlaneGeometry(6000, 6000, 32, 32);
     const groundMat = new THREE.MeshStandardMaterial({
         color: 0x3b7f3b,
@@ -310,7 +310,6 @@
     runway.receiveShadow = true;
     scene.add(runway);
 
-    // Pist çizgileri (runway ekseni Z)
     const stripeMat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         roughness: 0.8,
@@ -324,7 +323,6 @@
         scene.add(stripe);
     }
 
-    // Yan kenar çizgileri
     const edgeMat = new THREE.MeshStandardMaterial({
         color: 0xfafafa,
         roughness: 0.9,
@@ -339,7 +337,7 @@
     rightEdge.position.set(27, 0.03, 0);
     scene.add(leftEdge, rightEdge);
 
-    // Bulutlar (gündüz, hafif daha opak)
+    // Bulutlar
     const clouds = [];
     const cloudMat = new THREE.MeshLambertMaterial({
         color: 0xffffff,
@@ -365,378 +363,246 @@
         clouds.push(cm);
     }
 
-    // -------------------------------------------------------------------------
-    // UÇAK MODELİ + KOKPİT
-    // -------------------------------------------------------------------------
-
+    // ---------------------------------------------------------------------
+    // CESSNA UÇAĞI
+    // ---------------------------------------------------------------------
     const jet = new THREE.Group();
 
     let leftWing, rightWing, tail;
     let flapL, flapR, elevonL, elevonR;
-    let rudderL, rudderR;
-    let canardL, canardR;
+    let rudder;
     let noseWheel, mainWheelL, mainWheelR, gearStrutN, gearStrutL, gearStrutR;
+    let propeller;
     let leftNavLight, rightNavLight, tailNavLight;
-    let glowL, glowR;
-    let cockpitRig;
-    let controlStick;
     const cockpitScreens = [];
 
-    // Malzemeler
-    const hullMetalMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1f2937,
-        metalness: 0.9,
-        roughness: 0.28
+    const fuselageMat = new THREE.MeshStandardMaterial({
+        color: 0xf9fafb,
+        metalness: 0.6,
+        roughness: 0.3
     });
-    const accentBlueMaterial = new THREE.MeshStandardMaterial({
+    const stripeMat = new THREE.MeshStandardMaterial({
         color: 0x2563eb,
-        metalness: 0.92,
-        roughness: 0.25
+        metalness: 0.8,
+        roughness: 0.3
     });
-    const accentDarkBlueMaterial = new THREE.MeshStandardMaterial({
+    const darkStripeMat = new THREE.MeshStandardMaterial({
         color: 0x1d4ed8,
-        metalness: 0.92,
-        roughness: 0.35
-    });
-    const engineMetalMaterial = new THREE.MeshStandardMaterial({
-        color: 0x020617,
-        metalness: 0.95,
+        metalness: 0.8,
         roughness: 0.4
     });
-    const wheelRubberMaterial = new THREE.MeshStandardMaterial({
+    const engineMat = new THREE.MeshStandardMaterial({
+        color: 0x020617,
+        metalness: 0.9,
+        roughness: 0.4
+    });
+    const wheelMat = new THREE.MeshStandardMaterial({
         color: 0x020617,
         metalness: 0.2,
         roughness: 0.9
     });
-    const strutMetalMaterial = new THREE.MeshStandardMaterial({
+    const strutMat = new THREE.MeshStandardMaterial({
         color: 0xe5e7eb,
         metalness: 0.9,
         roughness: 0.3
     });
-    const missileBodyMaterial = new THREE.MeshStandardMaterial({
-        color: 0xf9fafb,
-        metalness: 0.4,
-        roughness: 0.5
-    });
-    const missileNoseMaterial = new THREE.MeshStandardMaterial({
-        color: 0x9ca3af,
-        metalness: 0.8,
-        roughness: 0.2
-    });
-    const tankMaterial = new THREE.MeshStandardMaterial({
-        color: 0x0f172a,
-        metalness: 0.9,
-        roughness: 0.3
-    });
-    const panelMaterial = new THREE.MeshStandardMaterial({
+    const panelMat = new THREE.MeshStandardMaterial({
         color: 0x111827,
         metalness: 0.7,
         roughness: 0.5
     });
-    const canopyOuterMaterial = new THREE.MeshPhysicalMaterial({
+    const glassMat = new THREE.MeshPhysicalMaterial({
         color: 0x93c5fd,
         roughness: 0.08,
         metalness: 0.15,
         transparent: true,
-        opacity: 0.14,  // DAHA ŞEFFAF CAM
-        reflectivity: 1.0,
-        clearcoat: 0.9
+        opacity: 0.35,
+        reflectivity: 0.9,
+        clearcoat: 0.8
     });
-    const canopyFrameMaterial = new THREE.MeshStandardMaterial({
+    const frameMat = new THREE.MeshStandardMaterial({
         color: 0x020617,
         metalness: 0.9,
-        roughness: 0.35
+        roughness: 0.4
     });
-    // ÖNDEKİ SİYAH ŞERİT İÇİN CAM MALZEME
-    const frameGlassMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0x9ca3af,
-        roughness: 0.05,
-        metalness: 0.0,
-        transparent: true,
-        opacity: 0.10,
-        reflectivity: 0.6,
-        clearcoat: 0.4
-    });
-    const navRedMaterial = new THREE.MeshBasicMaterial({
+    const navRedMat = new THREE.MeshBasicMaterial({
         color: 0xef4444,
         transparent: true,
         opacity: 0.9
     });
-    const navGreenMaterial = new THREE.MeshBasicMaterial({
+    const navGreenMat = new THREE.MeshBasicMaterial({
         color: 0x22c55e,
         transparent: true,
         opacity: 0.9
     });
-    const navWhiteMaterial = new THREE.MeshBasicMaterial({
+    const navWhiteMat = new THREE.MeshBasicMaterial({
         color: 0xf9fafb,
         transparent: true,
         opacity: 0.9
     });
-    const afterburnerMat = new THREE.MeshBasicMaterial({
-        color: 0x60a5fa,
-        transparent: true,
-        opacity: 0.0
-    });
 
-    // Gövde
-    const frontHullGeo = new THREE.CylinderGeometry(0.7, 1.0, 8.0, 24, 1, false);
-    const frontHull = new THREE.Mesh(frontHullGeo, hullMetalMaterial);
-    frontHull.rotation.z = Math.PI / 2;
-    frontHull.position.set(4.0, 0.1, 0);
-    frontHull.castShadow = true;
-    jet.add(frontHull);
+    // Gövde (Cessna)
+    const bodyGeo = new THREE.BoxGeometry(10.5, 1.4, 1.6);
+    const fuselage = new THREE.Mesh(bodyGeo, fuselageMat);
+    fuselage.position.set(0, 1.8, 0);
+    fuselage.castShadow = true;
+    jet.add(fuselage);
 
-    const midHullGeo = new THREE.CylinderGeometry(1.0, 1.0, 8.5, 26, 1, false);
-    const midHull = new THREE.Mesh(midHullGeo, hullMetalMaterial);
-    midHull.rotation.z = Math.PI / 2;
-    midHull.position.set(-0.2, 0.0, 0);
-    midHull.castShadow = true;
-    jet.add(midHull);
-
-    const rearHullGeo = new THREE.CylinderGeometry(0.9, 1.0, 7.0, 22, 1, false);
-    const rearHull = new THREE.Mesh(rearHullGeo, hullMetalMaterial);
-    rearHull.rotation.z = Math.PI / 2;
-    rearHull.position.set(-5.5, -0.1, 0);
-    rearHull.castShadow = true;
-    jet.add(rearHull);
-
-    for (let i = -6; i <= 4; i += 2) {
-        const spineGeo = new THREE.BoxGeometry(0.7, 0.12, 0.6);
-        const spine = new THREE.Mesh(spineGeo, panelMaterial);
-        spine.position.set(i, 0.8, 0);
-        spine.castShadow = true;
-        jet.add(spine);
-    }
-
-    // Burun
-    const noseGeo = new THREE.ConeGeometry(1.05, 3.5, 28);
-    const nose = new THREE.Mesh(noseGeo, accentBlueMaterial);
-    nose.position.set(7.8, 0.0, 0);
+    const noseGeo = new THREE.CylinderGeometry(0.9, 0.7, 1.8, 20);
+    const nose = new THREE.Mesh(noseGeo, fuselageMat);
     nose.rotation.z = Math.PI / 2;
+    nose.position.set(5.8, 1.8, 0);
     nose.castShadow = true;
     jet.add(nose);
 
-    const noseTipGeo = new THREE.ConeGeometry(0.6, 1.5, 24);
-    const noseTip = new THREE.Mesh(noseTipGeo, engineMetalMaterial);
-    noseTip.position.set(9.3, 0, 0);
-    noseTip.rotation.z = Math.PI / 2;
-    noseTip.castShadow = true;
-    jet.add(noseTip);
+    const stripeGeo = new THREE.BoxGeometry(8.5, 0.2, 0.1);
+    const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+    stripe.position.set(-0.2, 1.4, 0.82);
+    jet.add(stripe);
+    const stripe2 = stripe.clone();
+    stripe2.position.z = -0.82;
+    stripe2.material = darkStripeMat;
+    jet.add(stripe2);
 
-    // Canopy (kokpit camı)
-    const canopyGeo = new THREE.SphereGeometry(1.2, 28, 18, 0, Math.PI * 2, 0, Math.PI / 1.8);
-    const canopy = new THREE.Mesh(canopyGeo, canopyOuterMaterial);
-    canopy.position.set(2.3, 0.85, 0);
-    canopy.rotation.z = Math.PI / 2;
-    canopy.castShadow = true;
-    jet.add(canopy);
+    const tailGeo = new THREE.BoxGeometry(2.3, 1.1, 1.4);
+    const tailBox = new THREE.Mesh(tailGeo, fuselageMat);
+    tailBox.position.set(-5.0, 2.0, 0);
+    tailBox.castShadow = true;
+    jet.add(tailBox);
 
-    const canopyFrameGeo = new THREE.TorusGeometry(1.18, 0.06, 10, 30);
-    const canopyFrame = new THREE.Mesh(canopyFrameGeo, canopyFrameMaterial);
-    canopyFrame.position.set(2.3, 0.86, 0);
-    canopyFrame.rotation.y = Math.PI / 2;
-    canopyFrame.castShadow = true;
-    jet.add(canopyFrame);
-
-    const frontFrameGeo = new THREE.BoxGeometry(0.1, 0.9, 1.6);
-    // ÖNDEKİ SİYAH ÇERÇEVE ARTIK CAM
-    const frontFrame = new THREE.Mesh(frontFrameGeo, frameGlassMaterial);
-    frontFrame.position.set(3.4, 0.7, 0);
-    jet.add(frontFrame);
-
-    // Kanatlar
-    const mainWingGeo = new THREE.BoxGeometry(8.4, 0.18, 2.6);
-    const flapGeo = new THREE.BoxGeometry(3.4, 0.16, 0.8);
-    const elevonGeo = new THREE.BoxGeometry(2.0, 0.14, 0.7);
-
-    leftWing = new THREE.Mesh(mainWingGeo, accentDarkBlueMaterial);
-    leftWing.position.set(-0.6, 0.0, -3.2);
-    leftWing.rotation.x = THREE.MathUtils.degToRad(3);
-    leftWing.rotation.y = THREE.MathUtils.degToRad(2);
+    // Kanatlar (high wing)
+    const wingGeo = new THREE.BoxGeometry(9.0, 0.18, 2.4);
+    leftWing = new THREE.Mesh(wingGeo, fuselageMat);
+    rightWing = new THREE.Mesh(wingGeo, fuselageMat);
+    leftWing.position.set(-0.8, 2.7, -1.8);
+    rightWing.position.set(-0.8, 2.7, 1.8);
     leftWing.castShadow = true;
-    jet.add(leftWing);
-
-    rightWing = new THREE.Mesh(mainWingGeo, accentDarkBlueMaterial);
-    rightWing.position.set(-0.6, 0.0, 3.2);
-    rightWing.rotation.x = THREE.MathUtils.degToRad(-3);
-    rightWing.rotation.y = THREE.MathUtils.degToRad(-2);
     rightWing.castShadow = true;
-    jet.add(rightWing);
+    jet.add(leftWing, rightWing);
 
-    flapL = new THREE.Mesh(flapGeo, hullMetalMaterial);
-    flapL.position.set(-1.0, -0.05, -3.1);
+    const wingStrutGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.0, 10);
+    const strutL = new THREE.Mesh(wingStrutGeo, strutMat);
+    const strutR = new THREE.Mesh(wingStrutGeo, strutMat);
+    strutL.position.set(1.6, 2.05, -1.6);
+    strutR.position.set(1.6, 2.05, 1.6);
+    strutL.rotation.z = THREE.MathUtils.degToRad(35);
+    strutR.rotation.z = THREE.MathUtils.degToRad(-35);
+    jet.add(strutL, strutR);
+
+    const flapGeo = new THREE.BoxGeometry(2.8, 0.15, 0.6);
+    flapL = new THREE.Mesh(flapGeo, panelMat);
+    flapR = new THREE.Mesh(flapGeo, panelMat);
+    flapL.position.set(-1.5, 2.6, -2.3);
+    flapR.position.set(-1.5, 2.6, 2.3);
     flapL.castShadow = true;
-    jet.add(flapL);
-
-    flapR = new THREE.Mesh(flapGeo, hullMetalMaterial);
-    flapR.position.set(-1.0, -0.05, 3.1);
     flapR.castShadow = true;
-    jet.add(flapR);
+    jet.add(flapL, flapR);
 
-    elevonL = new THREE.Mesh(elevonGeo, accentBlueMaterial);
-    elevonL.position.set(-3.9, -0.03, -3.0);
-    elevonL.castShadow = true;
-    jet.add(elevonL);
+    const elevonGeo = new THREE.BoxGeometry(1.5, 0.14, 0.5);
+    elevonL = new THREE.Mesh(elevonGeo, darkStripeMat);
+    elevonR = new THREE.Mesh(elevonGeo, darkStripeMat);
+    elevonL.position.set(-3.0, 2.6, -2.25);
+    elevonR.position.set(-3.0, 2.6, 2.25);
+    jet.add(elevonL, elevonR);
 
-    elevonR = new THREE.Mesh(elevonGeo, accentBlueMaterial);
-    elevonR.position.set(-3.9, -0.03, 3.0);
-    elevonR.castShadow = true;
-    jet.add(elevonR);
-
-    // Kuyruk
-    const tailWingGeo = new THREE.BoxGeometry(4.0, 0.16, 1.6);
-    tail = new THREE.Mesh(tailWingGeo, accentBlueMaterial);
-    tail.position.set(-6.2, 0.35, 0);
-    tail.rotation.x = THREE.MathUtils.degToRad(5);
+    // Kuyruk yüzeyleri
+    const hTailGeo = new THREE.BoxGeometry(2.4, 0.15, 1.5);
+    tail = new THREE.Mesh(hTailGeo, fuselageMat);
+    tail.position.set(-6.2, 2.3, 0);
     tail.castShadow = true;
     jet.add(tail);
 
-    const vTailGeo = new THREE.BoxGeometry(0.22, 2.2, 1.1);
-    rudderL = new THREE.Mesh(vTailGeo, accentDarkBlueMaterial);
-    rudderR = new THREE.Mesh(vTailGeo, accentDarkBlueMaterial);
-    rudderL.position.set(-6.4, 1.1, -0.9);
-    rudderR.position.set(-6.4, 1.1, 0.9);
-    rudderL.rotation.x = THREE.MathUtils.degToRad(14);
-    rudderR.rotation.x = THREE.MathUtils.degToRad(14);
-    rudderL.castShadow = true;
-    rudderR.castShadow = true;
-    jet.add(rudderL, rudderR);
-
-    // Canard
-    const canardGeo = new THREE.BoxGeometry(2.4, 0.12, 0.8);
-    canardL = new THREE.Mesh(canardGeo, accentBlueMaterial);
-    canardR = new THREE.Mesh(canardGeo, accentBlueMaterial);
-    canardL.position.set(3.8, 0.4, -1.6);
-    canardR.position.set(3.8, 0.4, 1.6);
-    canardL.rotation.y = THREE.MathUtils.degToRad(6);
-    canardR.rotation.y = THREE.MathUtils.degToRad(-6);
-    canardL.castShadow = true;
-    canardR.castShadow = true;
-    jet.add(canardL, canardR);
-
-    // Çift motor + afterburner
-    const engineGeo = new THREE.CylinderGeometry(0.6, 0.9, 2.6, 20);
-    const engineL = new THREE.Mesh(engineGeo, engineMetalMaterial);
-    const engineR = new THREE.Mesh(engineGeo, engineMetalMaterial);
-    engineL.rotation.z = Math.PI / 2;
-    engineR.rotation.z = Math.PI / 2;
-    engineL.position.set(-7.5, -0.25, -0.9);
-    engineR.position.set(-7.5, -0.25, 0.9);
-    engineL.castShadow = true;
-    engineR.castShadow = true;
-    jet.add(engineL, engineR);
-
-    const glowGeo = new THREE.SphereGeometry(0.95, 20, 20);
-    glowL = new THREE.Mesh(glowGeo, afterburnerMat);
-    glowR = new THREE.Mesh(glowGeo, afterburnerMat);
-    glowL.position.set(-8.9, -0.25, -0.9);
-    glowR.position.set(-8.9, -0.25, 0.9);
-    jet.add(glowL, glowR);
+    const vTailGeo = new THREE.BoxGeometry(0.28, 1.8, 1.0);
+    rudder = new THREE.Mesh(vTailGeo, fuselageMat);
+    rudder.position.set(-6.6, 2.9, 0);
+    rudder.castShadow = true;
+    jet.add(rudder);
 
     // Landing gear
-    const noseStrutGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.4, 10);
-    gearStrutN = new THREE.Mesh(noseStrutGeo, strutMetalMaterial);
+    const noseStrutGeo = new THREE.CylinderGeometry(0.07, 0.07, 1.0, 10);
+    gearStrutN = new THREE.Mesh(noseStrutGeo, strutMat);
     gearStrutN.rotation.z = Math.PI / 2;
-    gearStrutN.position.set(4.2, -0.9, 0);
+    gearStrutN.position.set(3.7, 1.0, 0);
     gearStrutN.castShadow = true;
     jet.add(gearStrutN);
 
-    const noseWheelGeo = new THREE.TorusGeometry(0.32, 0.12, 10, 20);
-    noseWheel = new THREE.Mesh(noseWheelGeo, wheelRubberMaterial);
+    const wheelGeo = new THREE.TorusGeometry(0.35, 0.12, 10, 24);
+    noseWheel = new THREE.Mesh(wheelGeo, wheelMat);
     noseWheel.rotation.y = Math.PI / 2;
-    noseWheel.position.set(4.9, -1.1, 0);
+    noseWheel.position.set(4.4, 0.8, 0);
     noseWheel.castShadow = true;
     jet.add(noseWheel);
 
-    const mainStrutGeo = new THREE.CylinderGeometry(0.1, 0.1, 1.6, 10);
-    gearStrutL = new THREE.Mesh(mainStrutGeo, strutMetalMaterial);
-    gearStrutR = new THREE.Mesh(mainStrutGeo, strutMetalMaterial);
+    const mainStrutGeo = new THREE.CylinderGeometry(0.09, 0.09, 1.3, 10);
+    gearStrutL = new THREE.Mesh(mainStrutGeo, strutMat);
+    gearStrutR = new THREE.Mesh(mainStrutGeo, strutMat);
     gearStrutL.rotation.z = Math.PI / 2;
     gearStrutR.rotation.z = Math.PI / 2;
-    gearStrutL.position.set(-1.0, -0.95, -1.8);
-    gearStrutR.position.set(-1.0, -0.95, 1.8);
+    gearStrutL.position.set(0.0, 1.1, -1.4);
+    gearStrutR.position.set(0.0, 1.1, 1.4);
     gearStrutL.castShadow = true;
     gearStrutR.castShadow = true;
     jet.add(gearStrutL, gearStrutR);
 
-    const mainWheelGeo = new THREE.TorusGeometry(0.45, 0.16, 12, 24);
-    mainWheelL = new THREE.Mesh(mainWheelGeo, wheelRubberMaterial);
-    mainWheelR = new THREE.Mesh(mainWheelGeo, wheelRubberMaterial);
+    const mainWheelGeo = new THREE.TorusGeometry(0.45, 0.14, 10, 24);
+    mainWheelL = new THREE.Mesh(mainWheelGeo, wheelMat);
+    mainWheelR = new THREE.Mesh(mainWheelGeo, wheelMat);
     mainWheelL.rotation.y = Math.PI / 2;
     mainWheelR.rotation.y = Math.PI / 2;
-    mainWheelL.position.set(-1.9, -1.2, -1.8);
-    mainWheelR.position.set(-1.9, -1.2, 1.8);
+    mainWheelL.position.set(-0.7, 0.7, -1.4);
+    mainWheelR.position.set(-0.7, 0.7, 1.4);
     mainWheelL.castShadow = true;
     mainWheelR.castShadow = true;
     jet.add(mainWheelL, mainWheelR);
 
-    // Yakıt tankı
-    const tankGeo = new THREE.CapsuleGeometry(0.5, 3.6, 8, 16);
-    const tank = new THREE.Mesh(tankGeo, tankMaterial);
-    tank.position.set(-0.8, -0.8, 0);
-    tank.rotation.z = Math.PI / 2;
-    tank.castShadow = true;
-    jet.add(tank);
+    // Motor ve pervane
+    const spinnerGeo = new THREE.SphereGeometry(0.4, 16, 16);
+    const spinner = new THREE.Mesh(spinnerGeo, engineMat);
+    spinner.position.set(6.8, 1.8, 0);
+    jet.add(spinner);
 
-    // Füzeler
-    const missileBodyGeo = new THREE.CylinderGeometry(0.18, 0.2, 2.4, 12);
-    const missileNoseGeo = new THREE.ConeGeometry(0.19, 0.7, 12);
-    const missileFinGeo = new THREE.BoxGeometry(0.02, 0.4, 0.25);
+    const propGroup = new THREE.Group();
+    const hubGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 10);
+    const hub = new THREE.Mesh(hubGeo, panelMat);
+    hub.rotation.z = Math.PI / 2;
+    hub.position.set(6.9, 1.8, 0);
+    propGroup.add(hub);
 
-    function createMissile(offsetZ) {
-        const missile = new THREE.Group();
-        const body = new THREE.Mesh(missileBodyGeo, missileBodyMaterial);
-        body.rotation.z = Math.PI / 2;
-        body.castShadow = true;
-        missile.add(body);
+    const bladeGeo = new THREE.BoxGeometry(0.15, 2.0, 0.25);
+    const blade1 = new THREE.Mesh(bladeGeo, panelMat);
+    blade1.position.set(7.2, 1.8 + 1.0, 0);
+    propGroup.add(blade1);
+    const blade2 = blade1.clone();
+    blade2.position.set(7.2, 1.8 - 1.0, 0);
+    propGroup.add(blade2);
 
-        const nose = new THREE.Mesh(missileNoseGeo, missileNoseMaterial);
-        nose.position.set(1.3, 0, 0);
-        nose.rotation.z = Math.PI / 2;
-        nose.castShadow = true;
-        missile.add(nose);
+    propGroup.userData.center = new THREE.Vector3(7.2, 1.8, 0);
+    propeller = propGroup;
+    jet.add(propeller);
 
-        for (let i = 0; i < 4; i++) {
-            const fin = new THREE.Mesh(missileFinGeo, panelMaterial);
-            const angle = (Math.PI / 2) * i;
-            const r = 0.25;
-            fin.position.set(-0.2, Math.cos(angle) * r, Math.sin(angle) * r);
-            fin.castShadow = true;
-            missile.add(fin);
-        }
+    // Kokpit içi + 3 pencere
+    const cockpitFloorGeo = new THREE.BoxGeometry(2.5, 0.08, 1.8);
+    const cockpitFloor = new THREE.Mesh(cockpitFloorGeo, panelMat);
+    cockpitFloor.position.set(2.0, 1.4, 0);
+    jet.add(cockpitFloor);
 
-        missile.position.set(-1.0, -0.4, offsetZ);
-        return missile;
-    }
+    const seatGeo = new THREE.BoxGeometry(0.7, 0.9, 0.7);
+    const seat1 = new THREE.Mesh(seatGeo, panelMat);
+    const seat2 = new THREE.Mesh(seatGeo, panelMat);
+    seat1.position.set(2.3, 1.7, -0.4);
+    seat2.position.set(2.3, 1.7, 0.4);
+    jet.add(seat1, seat2);
 
-    const missileL1 = createMissile(-3.6);
-    const missileR1 = createMissile(3.6);
-    const missileL2 = createMissile(-2.5);
-    const missileR2 = createMissile(2.5);
-    jet.add(missileL1, missileR1, missileL2, missileR2);
+    const backGeo = new THREE.BoxGeometry(0.7, 0.9, 0.1);
+    const back1 = new THREE.Mesh(backGeo, panelMat);
+    const back2 = new THREE.Mesh(backGeo, panelMat);
+    back1.position.set(1.8, 2.15, -0.4);
+    back2.position.set(1.8, 2.15, 0.4);
+    jet.add(back1, back2);
 
-    // Nav ışıkları
-    const navLightGeo = new THREE.SphereGeometry(0.22, 10, 10);
-    leftNavLight = new THREE.Mesh(navLightGeo, navRedMaterial);
-    rightNavLight = new THREE.Mesh(navLightGeo, navGreenMaterial);
-    tailNavLight = new THREE.Mesh(navLightGeo, navWhiteMaterial);
-    leftNavLight.position.set(-4.5, 0.1, -4.1);
-    rightNavLight.position.set(-4.5, 0.1, 4.1);
-    tailNavLight.position.set(-7.4, 0.6, 0);
-    jet.add(leftNavLight, rightNavLight, tailNavLight);
-
-    // ------------------ KOKPİT İÇİ ------------------
-
-    cockpitRig = new THREE.Object3D();
-    cockpitRig.position.set(2.4, 0.8, 0);
-    jet.add(cockpitRig);
-
-    cockpitRig.add(camera);
-    camera.position.set(0, 0.05, 0);
-
-    const panelGeo = new THREE.BoxGeometry(2.6, 1.0, 0.15);
-    const cockpitPanel = new THREE.Mesh(panelGeo, panelMaterial);
-    cockpitPanel.position.set(3.3, -0.1, 0);
+    const cockpitPanelGeo = new THREE.BoxGeometry(2.3, 0.6, 0.12);
+    const cockpitPanel = new THREE.Mesh(cockpitPanelGeo, panelMat);
+    cockpitPanel.position.set(3.4, 2.1, 0);
     jet.add(cockpitPanel);
 
     const screenGeo = new THREE.PlaneGeometry(0.6, 0.4);
@@ -747,63 +613,80 @@
     ];
 
     function addScreen(x, y, matIdx) {
-        const screen = new THREE.Mesh(screenGeo, screenMats[matIdx]);
+        const m = screenMats[matIdx];
+        const screen = new THREE.Mesh(screenGeo, m);
         screen.position.set(x, y, 0.08);
         cockpitPanel.add(screen);
         cockpitScreens.push(screen);
     }
 
-    addScreen(-0.8, 0.2, 0);
-    addScreen(0.0, 0.15, 1);
-    addScreen(0.8, 0.2, 2);
-    addScreen(-0.4, -0.25, 1);
-    addScreen(0.4, -0.25, 0);
+    addScreen(-0.6, 0.08, 0);
+    addScreen(0.0, 0.10, 1);
+    addScreen(0.6, 0.08, 2);
 
-    const hudGlassGeo = new THREE.PlaneGeometry(1.8, 0.6);
-    const hudGlassMat = new THREE.MeshBasicMaterial({
-        color: 0x38bdf8,
-        transparent: true,
-        opacity: 0.18
-    });
-    const hudGlass = new THREE.Mesh(hudGlassGeo, hudGlassMat);
-    hudGlass.position.set(3.1, 0.5, 0);
-    jet.add(hudGlass);
+    // 3 pencere: ön, sol, sağ
+    const winGeo = new THREE.PlaneGeometry(1.4, 0.7);
+    const frontWin = new THREE.Mesh(winGeo, glassMat);
+    frontWin.position.set(4.1, 2.1, 0);
+    frontWin.rotation.y = 0;
+    jet.add(frontWin);
 
-    controlStick = new THREE.Group();
+    const sideWinGeo = new THREE.PlaneGeometry(1.3, 0.7);
+    const leftWin = new THREE.Mesh(sideWinGeo, glassMat);
+    leftWin.position.set(3.2, 2.1, -0.9);
+    leftWin.rotation.y = THREE.MathUtils.degToRad(90);
+    jet.add(leftWin);
 
-    const stickBaseGeo = new THREE.CylinderGeometry(0.07, 0.1, 0.6, 10);
-    const stickBase = new THREE.Mesh(stickBaseGeo, strutMetalMaterial);
-    stickBase.rotation.z = Math.PI / 2;
-    stickBase.position.set(0, -0.3, 0);
-    controlStick.add(stickBase);
+    const rightWin = new THREE.Mesh(sideWinGeo, glassMat);
+    rightWin.position.set(3.2, 2.1, 0.9);
+    rightWin.rotation.y = THREE.MathUtils.degToRad(-90);
+    jet.add(rightWin);
 
-    const stickHandleGeo = new THREE.BoxGeometry(0.18, 0.45, 0.18);
-    const stickHandle = new THREE.Mesh(stickHandleGeo, panelMaterial);
-    stickHandle.position.set(0.25, 0.05, 0);
-    controlStick.add(stickHandle);
+    // Pencere çerçeveleri
+    const frameBorderGeo = new THREE.BoxGeometry(1.5, 0.05, 0.05);
+    const frontFrameTop = new THREE.Mesh(frameBorderGeo, frameMat);
+    frontFrameTop.position.set(4.1, 2.48, 0);
+    jet.add(frontFrameTop);
+    const frontFrameBottom = frontFrameTop.clone();
+    frontFrameBottom.position.y = 1.82;
+    jet.add(frontFrameBottom);
+    const frontFrameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.7, 0.05), frameMat);
+    frontFrameLeft.position.set(3.4, 2.15, 0);
+    jet.add(frontFrameLeft);
+    const frontFrameRight = frontFrameLeft.clone();
+    frontFrameRight.position.x = 4.8;
+    jet.add(frontFrameRight);
 
-    controlStick.position.set(2.1, -0.1, 0);
-    jet.add(controlStick);
+    const sideFrameTopL = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.05, 0.05), frameMat);
+    sideFrameTopL.position.set(3.2, 2.48, -0.9);
+    sideFrameTopL.rotation.y = THREE.MathUtils.degToRad(90);
+    jet.add(sideFrameTopL);
+    const sideFrameBottomL = sideFrameTopL.clone();
+    sideFrameBottomL.position.y = 1.82;
+    jet.add(sideFrameBottomL);
 
-    const sidePanelGeo = new THREE.BoxGeometry(1.2, 0.6, 0.1);
-    const sidePanelL = new THREE.Mesh(sidePanelGeo, panelMaterial);
-    const sidePanelR = new THREE.Mesh(sidePanelGeo, panelMaterial);
-    sidePanelL.position.set(2.8, -0.3, -1.1);
-    sidePanelR.position.set(2.8, -0.3, 1.1);
-    sidePanelL.rotation.y = THREE.MathUtils.degToRad(15);
-    sidePanelR.rotation.y = THREE.MathUtils.degToRad(-15);
-    jet.add(sidePanelL, sidePanelR);
+    const sideFrameTopR = sideFrameTopL.clone();
+    sideFrameTopR.position.z = 0.9;
+    jet.add(sideFrameTopR);
+    const sideFrameBottomR = sideFrameBottomL.clone();
+    sideFrameBottomR.position.z = 0.9;
+    jet.add(sideFrameBottomR);
 
-    const floorGeo = new THREE.BoxGeometry(2.5, 0.08, 1.6);
-    const floor = new THREE.Mesh(floorGeo, panelMaterial);
-    floor.position.set(2.0, -0.4, 0);
-    jet.add(floor);
+    // Nav ışıkları
+    const navLightGeo = new THREE.SphereGeometry(0.18, 10, 10);
+    leftNavLight = new THREE.Mesh(navLightGeo, navRedMat);
+    rightNavLight = new THREE.Mesh(navLightGeo, navGreenMat);
+    tailNavLight = new THREE.Mesh(navLightGeo, navWhiteMat);
+    leftNavLight.position.set(-0.8, 2.8, -3.0);
+    rightNavLight.position.set(-0.8, 2.8, 3.0);
+    tailNavLight.position.set(-6.6, 2.8, 0);
+    jet.add(leftNavLight, rightNavLight, tailNavLight);
 
     scene.add(jet);
 
-    // -----------------------
+    // ---------------------------------------------------------------------
     // FİZİK & KONTROLLER
-    // -----------------------
+    // ---------------------------------------------------------------------
     let throttle = 0;
     let speed = 0;
     let yawInput = 0;
@@ -818,22 +701,27 @@
     let crashed = false;
     let crashTimer = 0;
 
-    const maxSpeed = 210;
-    const accel = 35;
+    const maxSpeed = 160;
+    const accel = 30;
     const drag = 0.02;
     const gravity = -9.8;
-    const liftFactor = 35;
-    const takeoffSpeed = 90;
+    const liftFactor = 30;
+    const takeoffSpeed = 65;
 
+    // Kamera modları
+    let cameraMode = "cockpit"; // "cockpit" | "external"
     let viewYawOffset = 0;
     let viewPitchOffset = 0;
+    let orbitYaw = Math.PI;    // arkadan bakış
+    let orbitPitch = 0.25;
+    let orbitDist = 35;
 
     const hudInfo = document.getElementById("hud-info");
     const hudTerrain = document.getElementById("hud-terrain");
+    const hudSub = document.getElementById("hud-sub");
 
     function resetFlight() {
-        // Pistin üzerinde kalkışa hazır konum
-        jet.position.set(0, 2.4, 650);
+        jet.position.set(0, 2.0, 650);
         jet.rotation.set(0, -Math.PI / 2, 0);
         speed = 0;
         throttle = 0;
@@ -845,61 +733,40 @@
         landingGearExtended = true;
         crashed = false;
         crashTimer = 0;
+
         viewYawOffset = 0;
         viewPitchOffset = 0;
+        orbitYaw = Math.PI;
+        orbitPitch = 0.25;
+        orbitDist = 35;
 
         hudTerrain.textContent = "TERRAIN";
         hudTerrain.style.opacity = "0";
 
-        [
-            noseWheel, mainWheelL, mainWheelR,
-            gearStrutN, gearStrutL, gearStrutR
-        ].forEach(o => {
+        [noseWheel, mainWheelL, mainWheelR,
+         gearStrutN, gearStrutL, gearStrutR].forEach(o => {
             if (!o) return;
             o.scale.set(1, 1, 1);
         });
 
-        [
-            flapL, flapR, elevonL, elevonR,
-            canardL, canardR, rudderL, rudderR
-        ].forEach(o => {
+        [flapL, flapR, elevonL, elevonR, tail, rudder].forEach(o => {
             if (!o) return;
-            o.rotation.x = 0;
-            o.rotation.y = 0;
-            o.rotation.z = 0;
+            o.rotation.set(0, 0, 0);
         });
     }
 
     resetFlight();
 
     function updateHUD() {
-        const alt = Math.max(0, jet.position.y - 2.4);
+        const alt = Math.max(0, jet.position.y - 2.0);
         const thr = Math.round(throttle * 100);
         const spdKts = Math.round(speed * 1.94384);
         const engTxt = engineOn ? "ENG ON" : "ENG OFF";
         const gearTxt = landingGearExtended || !airborne ? "GEAR DN" : "GEAR UP";
-        hudInfo.textContent = `SPD ${spdKts} KT | ALT ${alt.toFixed(0)} m | THR ${thr}% | ${engTxt} | ${gearTxt}`;
-    }
-
-    function updateAfterburner(t) {
-        const power = engineOn ? throttle : 0;
-        const baseOpacity = power * 0.9;
-        const flicker = 0.18 * Math.sin(t * 45) * power;
-        const o = THREE.MathUtils.clamp(baseOpacity + flicker, 0, 0.95);
-        afterburnerMat.opacity = o;
-
-        const color = new THREE.Color().setHSL(
-            0.62 - 0.18 * power,
-            0.9,
-            0.6 + 0.22 * power
-        );
-        afterburnerMat.color.copy(color);
-
-        const scaleBase = 1.05 + 1.3 * power;
-        const scaleFlicker = 0.23 * Math.sin(t * 33) * power;
-        const s = scaleBase + scaleFlicker;
-        glowL.scale.setScalar(s);
-        glowR.scale.setScalar(s);
+        const viewTxt = cameraMode === "cockpit" ? "COCKPIT" : "EXTERNAL";
+        hudInfo.textContent =
+            `SPD ${spdKts} KT | ALT ${alt.toFixed(0)} m | THR ${thr}% | ${engTxt} | ${gearTxt}`;
+        hudSub.textContent = `SKYRUNNER • CESSNA • ${viewTxt}`;
     }
 
     function updateNavLights(t) {
@@ -919,9 +786,7 @@
             if (!obj) return;
             const current = obj.scale.y;
             const newScaleY = THREE.MathUtils.lerp(current, targetScale, lerpFactor);
-            obj.scale.y = newScaleY;
-            obj.scale.x = newScaleY;
-            obj.scale.z = newScaleY;
+            obj.scale.set(newScaleY, newScaleY, newScaleY);
         }
 
         lerpScale(noseWheel);
@@ -933,11 +798,11 @@
     }
 
     function updateControlSurfaces(dt) {
-        const flapTarget = THREE.MathUtils.degToRad(pitchInput * -10);
-        const elevonTarget = THREE.MathUtils.degToRad(pitchInput * -14);
-        const canardTarget = THREE.MathUtils.degToRad(pitchInput * -16);
-        const rudderTarget = THREE.MathUtils.degToRad(yawInput * -20);
         const factor = 6 * dt;
+        const flapTarget = THREE.MathUtils.degToRad(pitchInput * -10);
+        const elevonTarget = THREE.MathUtils.degToRad(pitchInput * -12);
+        const tailPitchTarget = THREE.MathUtils.degToRad(pitchInput * -8);
+        const rudderTarget = THREE.MathUtils.degToRad(yawInput * -20);
 
         if (flapL && flapR) {
             flapL.rotation.x = THREE.MathUtils.lerp(flapL.rotation.x, flapTarget, factor);
@@ -947,25 +812,15 @@
             elevonL.rotation.x = THREE.MathUtils.lerp(elevonL.rotation.x, elevonTarget, factor);
             elevonR.rotation.x = THREE.MathUtils.lerp(elevonR.rotation.x, elevonTarget, factor);
         }
-        if (canardL && canardR) {
-            canardL.rotation.z = THREE.MathUtils.lerp(canardL.rotation.z, canardTarget, factor);
-            canardR.rotation.z = THREE.MathUtils.lerp(canardR.rotation.z, -canardTarget, factor);
+        if (tail) {
+            tail.rotation.x = THREE.MathUtils.lerp(tail.rotation.x, tailPitchTarget, factor);
         }
-        if (rudderL && rudderR) {
-            rudderL.rotation.y = THREE.MathUtils.lerp(rudderL.rotation.y, rudderTarget, factor);
-            rudderR.rotation.y = THREE.MathUtils.lerp(rudderR.rotation.y, rudderTarget, factor);
-        }
-
-        if (controlStick) {
-            const targetPitch = THREE.MathUtils.degToRad(pitchInput * -18);
-            const targetRoll = THREE.MathUtils.degToRad(yawInput * -22);
-            const s = 5 * dt;
-            controlStick.rotation.x = THREE.MathUtils.lerp(controlStick.rotation.x, targetPitch, s);
-            controlStick.rotation.z = THREE.MathUtils.lerp(controlStick.rotation.z, targetRoll, s);
+        if (rudder) {
+            rudder.rotation.y = THREE.MathUtils.lerp(rudder.rotation.y, rudderTarget, factor);
         }
 
         if (noseWheel && !airborne) {
-            const steerTarget = THREE.MathUtils.degToRad(yawInput * 30);
+            const steerTarget = THREE.MathUtils.degToRad(yawInput * 25);
             const steerFactor = 5 * dt;
             noseWheel.rotation.z = THREE.MathUtils.lerp(noseWheel.rotation.z, steerTarget, steerFactor);
         }
@@ -973,16 +828,16 @@
 
     function updateCockpitScreens(t) {
         cockpitScreens.forEach((screen, idx) => {
-            const phase = t * (1.8 + idx * 0.6);
+            const phase = t * (1.6 + idx * 0.7);
             const glow = 0.6 + 0.4 * Math.sin(phase);
             screen.material.opacity = 0.4 + 0.6 * glow;
         });
     }
 
     function updateTerrainAlarm(t) {
-        const alt = Math.max(0, jet.position.y - 2.4);
-        const descendingFast = verticalSpeed < -6;
-        const nearGround = alt < 25;
+        const alt = Math.max(0, jet.position.y - 2.0);
+        const descendingFast = verticalSpeed < -5;
+        const nearGround = alt < 20;
         terrainAlarmActive = airborne && nearGround && descendingFast;
 
         if (terrainAlarmActive && !crashed) {
@@ -993,15 +848,22 @@
         }
     }
 
+    function updatePropeller(dt) {
+        if (!propeller) return;
+        const center = propeller.userData.center || new THREE.Vector3(7.2, 1.8, 0);
+        const axis = new THREE.Vector3(1, 0, 0);
+        const rpm = engineOn ? THREE.MathUtils.lerp(10, 80, throttle) : 0;
+        const angle = rpm * dt * 2 * Math.PI / 60 * 50; // hız çarpanı
+        propeller.rotateOnWorldAxis(axis, angle);
+    }
+
     function detectCrash() {
-        const alt = Math.max(0, jet.position.y - 2.4);
-        const severeVertical = verticalSpeed < -18;
-        the veryFast = speed > 170;
+        const alt = Math.max(0, jet.position.y - 2.0);
+        const severeVertical = verticalSpeed < -14;
+        const veryFast = speed > 140;
         const crazyPitch = Math.abs(jet.rotation.x) > 0.9;
         const crazyRoll = Math.abs(jet.rotation.z) > 1.2;
-        if (alt < 3 && (severeVertical || veryFast || crazyPitch || crazyRoll)) {
-            return true;
-        }
+        if (alt < 2 && (severeVertical || veryFast || crazyPitch || crazyRoll)) return true;
         return false;
     }
 
@@ -1011,14 +873,14 @@
         throttle = Math.max(0, throttle - 0.5 * dt);
 
         speed *= 0.94;
-        jet.position.y = 2.2;
+        jet.position.y = 2.0;
 
-        const slideDir = new THREE.Vector3(0, 0, 1);
+        const slideDir = new THREE.Vector3(1, 0, 0);
         slideDir.applyQuaternion(jet.quaternion);
         jet.position.addScaledVector(slideDir, speed * 0.4 * dt);
 
-        jet.rotation.x = THREE.MathUtils.lerp(jet.rotation.x, 0.6, 1.5 * dt);
-        jet.rotation.z += 1.2 * dt;
+        jet.rotation.x = THREE.MathUtils.lerp(jet.rotation.x, 0.5, 1.5 * dt);
+        jet.rotation.z += 0.8 * dt;
 
         hudTerrain.textContent = "CRASH";
         const blink = 0.5 + 0.5 * Math.sin(t * 10);
@@ -1026,7 +888,6 @@
 
         updateCockpitScreens(t);
         updateNavLights(t);
-        updateAfterburner(t);
         updateHUD();
 
         if (crashTimer > 3.0) {
@@ -1050,30 +911,30 @@
         speed *= (1 - drag * dt);
         if (speed < 0.01) speed = 0;
 
-        const yawRate = 0.7;
+        const yawRate = 0.6;
         jet.rotation.y += yawInput * yawRate * dt;
 
-        const pitchRate = 0.45;
+        const pitchRate = 0.4;
         jet.rotation.x += pitchInput * pitchRate * dt;
-        jet.rotation.x = THREE.MathUtils.clamp(jet.rotation.x, -0.6, 0.4);
+        jet.rotation.x = THREE.MathUtils.clamp(jet.rotation.x, -0.5, 0.4);
 
-        const rollTarget = yawInput * THREE.MathUtils.degToRad(-20);
-        const rollAutoPitch = pitchInput * THREE.MathUtils.degToRad(5);
+        const rollTarget = yawInput * THREE.MathUtils.degToRad(-15);
+        const rollAutoPitch = pitchInput * THREE.MathUtils.degToRad(4);
         const rollCurrent = jet.rotation.z;
         const rollDiff = (rollTarget + rollAutoPitch) - rollCurrent;
-        jet.rotation.z += rollDiff * 2.4 * dt;
+        jet.rotation.z += rollDiff * 2.0 * dt;
 
         const forwardLocal = new THREE.Vector3(1, 0, 0);
         forwardLocal.applyQuaternion(jet.quaternion);
         jet.position.addScaledVector(forwardLocal, speed * dt);
 
         if (!airborne) {
-            jet.position.y = 2.4;
+            jet.position.y = 2.0;
             verticalSpeed = 0;
 
-            if (speed > takeoffSpeed && pitchInput < -0.15) {
+            if (speed > takeoffSpeed && pitchInput < -0.2) {
                 airborne = true;
-                verticalSpeed = 11;
+                verticalSpeed = 8;
             }
         } else {
             const angleOfAttack = -jet.rotation.x;
@@ -1081,7 +942,7 @@
             verticalSpeed += (gravity + lift) * dt;
             jet.position.y += verticalSpeed * dt;
 
-            const groundLevel = 2.4;
+            const groundLevel = 2.0;
             if (jet.position.y <= groundLevel) {
                 jet.position.y = groundLevel;
                 if (detectCrash()) {
@@ -1089,11 +950,11 @@
                     crashTimer = 0;
                     return;
                 }
-                if (verticalSpeed < -20) {
-                    verticalSpeed = 7;
+                if (verticalSpeed < -12) {
+                    verticalSpeed = 5;
                 } else {
                     verticalSpeed = 0;
-                    if (speed < 70 && Math.abs(angleOfAttack) < 0.2) {
+                    if (speed < 50 && Math.abs(angleOfAttack) < 0.2) {
                         airborne = false;
                         landingGearExtended = true;
                     }
@@ -1105,34 +966,40 @@
             }
         }
 
-        if (cockpitRig) {
-            const cockpitWorld = new THREE.Vector3();
-            cockpitRig.getWorldPosition(cockpitWorld);
-
-            const viewDirLocal = new THREE.Vector3(1, 0, 0);
-            const viewEuler = new THREE.Euler(viewPitchOffset, viewYawOffset, 0, "YXZ");
-            viewDirLocal.applyEuler(viewEuler);
-            const viewDirWorld = viewDirLocal.clone().applyQuaternion(jet.quaternion);
-            const lookTarget = cockpitWorld.clone().add(viewDirWorld.multiplyScalar(200));
-
-            camera.position.set(0, 0.05, 0);
-            camera.lookAt(lookTarget);
-        }
-
-        const wingOsc = Math.sin(t * 6) * 0.02 * throttle;
-        if (leftWing && rightWing && tail) {
-            leftWing.rotation.x = THREE.MathUtils.degToRad(3) + wingOsc;
-            rightWing.rotation.x = THREE.MathUtils.degToRad(-3) - wingOsc;
-            tail.rotation.y = yawInput * THREE.MathUtils.degToRad(8);
-        }
-
         updateControlSurfaces(dt);
         updateLandingGear(dt);
-        updateAfterburner(t);
         updateNavLights(t);
         updateTerrainAlarm(t);
         updateCockpitScreens(t);
+        updatePropeller(dt);
         updateHUD();
+    }
+
+    function updateCamera(dt) {
+        const cockpitOffset = new THREE.Vector3(3.1, 2.1, 0); // kokpit ortası
+        const centerOffset = new THREE.Vector3(0, 2.2, 0);   // dış kamera merkez
+
+        if (cameraMode === "cockpit") {
+            const cockpitWorld = cockpitOffset.clone().applyQuaternion(jet.quaternion).add(jet.position);
+            const viewDirLocal = new THREE.Vector3(1, 0, 0);
+            const viewEuler = new THREE.Euler(viewPitchOffset, viewYawOffset, 0, "YXZ");
+            viewDirLocal.applyEuler(viewEuler);
+            const viewDirWorld = viewDirLocal.applyQuaternion(jet.quaternion);
+            const lookTarget = cockpitWorld.clone().add(viewDirWorld.multiplyScalar(200));
+
+            camera.position.lerp(cockpitWorld, 0.25);
+            camera.lookAt(lookTarget);
+        } else {
+            const center = centerOffset.clone().applyQuaternion(jet.quaternion).add(jet.position);
+            const offset = new THREE.Vector3(
+                Math.cos(orbitPitch) * Math.sin(orbitYaw) * orbitDist,
+                Math.sin(orbitPitch) * orbitDist,
+                Math.cos(orbitPitch) * Math.cos(orbitYaw) * orbitDist
+            );
+            const desiredPos = center.clone().add(offset);
+            camera.position.lerp(desiredPos, 0.15);
+            camera.lookAt(center);
+        }
     }
 
     function updateClouds(dt) {
@@ -1152,6 +1019,9 @@
         });
     }
 
+    // ---------------------------------------------------------------------
+    // BUTONLAR
+    // ---------------------------------------------------------------------
     function bindButton(selector, onPress, onRelease) {
         const el = document.querySelector(selector);
         if (!el) return;
@@ -1181,7 +1051,6 @@
         () => { if (engineOn && !crashed) throttle = Math.max(0, throttle - 0.02); },
         () => {}
     );
-
     bindButton('.btn-pitch-up',
         () => { if (!crashed) pitchInput = -1; },
         () => { pitchInput = 0; }
@@ -1190,7 +1059,6 @@
         () => { if (!crashed) pitchInput = 1; },
         () => { pitchInput = 0; }
     );
-
     bindButton('.btn-yaw-left',
         () => { if (!crashed) yawInput = -1; },
         () => { yawInput = 0; }
@@ -1199,12 +1067,11 @@
         () => { if (!crashed) yawInput = 1; },
         () => { yawInput = 0; }
     );
-
     bindButton('.btn-eng-on',
         () => {
             if (!crashed) {
                 engineOn = true;
-                if (throttle < 0.2) throttle = 0.2;
+                if (throttle < 0.25) throttle = 0.25;
             }
         },
         () => {}
@@ -1215,53 +1082,66 @@
         },
         () => {}
     );
-
     bindButton('.btn-gear',
         () => {
             if (!crashed) {
-                if (airborne) {
-                    landingGearExtended = !landingGearExtended;
-                } else {
-                    landingGearExtended = true;
-                }
+                if (airborne) landingGearExtended = !landingGearExtended;
+                else landingGearExtended = true;
             }
         },
         () => {}
     );
+    bindButton('.btn-view',
+        () => {
+            cameraMode = cameraMode === "cockpit" ? "external" : "cockpit";
+        },
+        () => {}
+    );
 
-    // Kokpitten etrafa bakma (ekrana dokunup sürükle)
-    let looking = false;
-    let lastLookX = 0;
-    let lastLookY = 0;
+    // ---------------------------------------------------------------------
+    // DOKUNARAK / MOUSE İLE BAKMA
+    // ---------------------------------------------------------------------
+    let dragging = false;
+    let dragMode = "cockpit";
+    let lastX = 0;
+    let lastY = 0;
 
     const maxViewYaw = 0.7;
     const maxViewPitch = 0.4;
+    const maxOrbitPitch = 0.9;
+    const minOrbitPitch = -0.2;
 
     function onPointerDown(e) {
         if (e.pointerType === "mouse" && e.button !== 0) return;
         if (crashed) return;
         if (e.target !== canvas) return;
-        looking = true;
-        lastLookX = e.clientX;
-        lastLookY = e.clientY;
+        dragging = true;
+        dragMode = cameraMode;
+        lastX = e.clientX;
+        lastY = e.clientY;
     }
 
     function onPointerMove(e) {
-        if (!looking) return;
-        const dx = e.clientX - lastLookX;
-        const dy = e.clientY - lastLookY;
-        lastLookX = e.clientX;
-        lastLookY = e.clientY;
+        if (!dragging) return;
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+        lastX = e.clientX;
+        lastY = e.clientY;
 
-        viewYawOffset += dx * 0.003;
-        viewPitchOffset += -dy * 0.002;
-
-        viewYawOffset = THREE.MathUtils.clamp(viewYawOffset, -maxViewYaw, maxViewYaw);
-        viewPitchOffset = THREE.MathUtils.clamp(viewPitchOffset, -maxViewPitch, maxViewPitch);
+        if (dragMode === "cockpit") {
+            viewYawOffset += dx * 0.003;
+            viewPitchOffset += -dy * 0.002;
+            viewYawOffset = THREE.MathUtils.clamp(viewYawOffset, -maxViewYaw, maxViewYaw);
+            viewPitchOffset = THREE.MathUtils.clamp(viewPitchOffset, -maxViewPitch, maxViewPitch);
+        } else {
+            orbitYaw -= dx * 0.003;
+            orbitPitch -= dy * 0.002;
+            orbitPitch = THREE.MathUtils.clamp(orbitPitch, minOrbitPitch, maxOrbitPitch);
+        }
     }
 
     function onPointerUp() {
-        looking = false;
+        dragging = false;
     }
 
     canvas.addEventListener('pointerdown', onPointerDown);
@@ -1269,6 +1149,9 @@
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
 
+    // ---------------------------------------------------------------------
+    // ANİMASYON DÖNGÜSÜ
+    // ---------------------------------------------------------------------
     const clock = new THREE.Clock();
 
     function animate() {
@@ -1277,6 +1160,7 @@
         const t = clock.elapsedTime;
 
         updateJetPhysics(dt, t);
+        updateCamera(dt);
         updateClouds(dt);
 
         renderer.render(scene, camera);
@@ -1292,18 +1176,11 @@
         camera.updateProjectionMatrix();
     });
 
-    // ---------------------------------------------------------------------
-    // KISA KULLANIM NOTLARI (yorum satırları)
-    //  - ENG ON: Motoru çalıştırır, throttle en az %20'ye çıkar.
-    //  - ENG OFF: Motoru kapatır, throttle yavaşça düşer.
-    //  - THR +/-: Gazı %0 - %100 arası arttır / azalt.
-    //  - NOSE UP / DOWN: Pitch kontrolü (burun kaldır / indir).
-    //  - YAW ◀ / ▶: Yaw kontrolü (sağa / sola dön).
-    //  - GEAR: Havadayken iniş takımlarını aç / kapat.
-    //  - Ekrana dokunup sürükleyerek kokpitten sağa/sola/yukarı/aşağı bak.
-    //  - Sert iniş / çakılma durumunda CRASH olur, birkaç saniye sonra pistten
-    //    yeniden kalkışa hazır başlarsın.
-    // ---------------------------------------------------------------------
+    // Kısa kullanım:
+    // ENG ON -> motor açılır, THR + ile gaz ver.
+    // VIEW   -> kokpit ve dış kamera arasında geçiş.
+    // Kokpitte: ekrana dokunup sürükle, camlardan etrafa bak.
+    // Dış kamerada: dokunup sürükle, uçağın etrafında dön.
 })();
 </script>
 </body>
