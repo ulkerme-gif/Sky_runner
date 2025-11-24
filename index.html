@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>SkyRunner 3D - Dokunmatik Uçak Oyunu</title>
+    <title>SkyRunner 3D - Mini Flight Sim (Tablet)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -51,7 +51,7 @@
             background: rgba(0, 0, 0, 0.55);
             color: #fff;
             font-size: 11px;
-            max-width: 250px;
+            max-width: 260px;
             backdrop-filter: blur(6px);
         }
 
@@ -61,7 +61,7 @@
         }
 
         .hud-top-left p {
-            opacity: 0.85;
+            opacity: 0.9;
             line-height: 1.4;
         }
 
@@ -98,6 +98,22 @@
             font-weight: 600;
         }
 
+        .hud-top-right {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            font-size: 11px;
+            backdrop-filter: blur(6px);
+        }
+
+        .hud-top-right div {
+            margin-bottom: 2px;
+        }
+
         .hud-bottom-center {
             position: absolute;
             bottom: 10px;
@@ -111,7 +127,7 @@
             backdrop-filter: blur(6px);
         }
 
-        /* Dokunmatik Kontroller */
+        /* Dokunmatik kontroller */
         .touch-controls {
             position: absolute;
             inset: 0;
@@ -122,9 +138,9 @@
         .pad-right {
             position: absolute;
             bottom: 12px;
-            width: 45%;
-            max-width: 260px;
-            height: 40%;
+            width: 46%;
+            max-width: 280px;
+            height: 42%;
             display: flex;
             justify-content: center;
             align-items: flex-end;
@@ -149,17 +165,17 @@
         .ctrl-row {
             display: flex;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
         }
 
         .ctrl-btn {
-            width: 54px;
-            height: 54px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
             border: none;
-            background: radial-gradient(circle at 30% 30%, #ffffff, #c0c0c0);
+            background: radial-gradient(circle at 30% 30%, #ffffff, #bfc3c7);
             box-shadow: 0 4px 0 rgba(0, 0, 0, 0.6);
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
             color: #333;
             cursor: pointer;
@@ -169,26 +185,26 @@
             user-select: none;
         }
 
+        .ctrl-btn.small {
+            width: 52px;
+            height: 52px;
+            font-size: 18px;
+        }
+
         .ctrl-btn:active {
             transform: translateY(2px);
             box-shadow: 0 2px 0 rgba(0, 0, 0, 0.7);
         }
 
-        .ctrl-btn.small {
-            width: 44px;
-            height: 44px;
-            font-size: 18px;
-        }
-
         .ctrl-label {
             text-align: center;
             color: #fff;
-            font-size: 10px;
+            font-size: 11px;
             margin-top: 2px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.9);
         }
 
-        /* Orta nişangâh */
+        /* Reticle */
         .reticle {
             position: absolute;
             top: 50%;
@@ -197,8 +213,8 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.75);
-            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            border: 2px solid rgba(0, 255, 0, 0.85);
+            box-shadow: 0 0 10px rgba(0,255,0,0.8);
             pointer-events: none;
         }
 
@@ -206,24 +222,23 @@
         .reticle::after {
             content: "";
             position: absolute;
-            background: rgba(255,255,255,0.7);
+            background: rgba(0,255,0,0.7);
         }
 
         .reticle::before {
-            width: 120%;
+            width: 130%;
             height: 1px;
             top: 50%;
-            left: -10%;
+            left: -15%;
         }
 
         .reticle::after {
             width: 1px;
-            height: 120%;
+            height: 130%;
             left: 50%;
-            top: -10%;
+            top: -15%;
         }
 
-        /* Başlangıç mesajı */
         .center-message {
             position: absolute;
             top: 22%;
@@ -231,7 +246,7 @@
             transform: translateX(-50%);
             padding: 10px 16px;
             border-radius: 14px;
-            background: rgba(0, 0, 0, 0.55);
+            background: rgba(0, 0, 0, 0.6);
             color: #fff;
             text-align: center;
             font-size: 12px;
@@ -259,7 +274,6 @@
             to   { opacity: 0; visibility: hidden; }
         }
 
-        /* Game over etiketi */
         .game-over-banner {
             position: absolute;
             top: 40%;
@@ -267,7 +281,7 @@
             transform: translateX(-50%);
             padding: 12px 16px;
             border-radius: 10px;
-            background: rgba(120, 0, 0, 0.8);
+            background: rgba(120, 0, 0, 0.88);
             color: #fff;
             font-size: 14px;
             font-weight: 600;
@@ -284,10 +298,10 @@
             opacity: 0.9;
         }
 
-        @media (min-width: 900px) {
-            .hud-top-left { font-size: 12px; }
-            .hud-top-center { font-size: 12px; }
-            .hud-value { font-size: 14px; }
+        @media (max-width: 768px) {
+            .hud-top-left { font-size: 11px; max-width: 230px; }
+            .hud-top-center { font-size: 11px; }
+            .hud-value { font-size: 13px; }
         }
     </style>
 </head>
@@ -299,9 +313,9 @@
         <div class="hud-top-left">
             <h1>SkyRunner 3D</h1>
             <p>
-                Dokunmatik: Sol pad ile <strong>yön</strong>, sağ pad ile <strong>irtifa</strong> ve <strong>gaz</strong> kontrol.<br/>
-                Klavye: W/S (gaz), A/D (yaw), ok tuşları (pitch).<br/>
-                R: Reset · Uçak yere çarparsa oyun biter.
+                Tablet: Soldaki pad <strong>yaw / roll</strong>, sağdaki pad <strong>pitch</strong> ve <strong>gaz</strong>.<br/>
+                Klavye (PC): W/S (gaz), A/D (yaw+roll), ok tuşları (pitch).<br/>
+                R: Reset · Sert inişte CRASH.
             </p>
         </div>
 
@@ -324,8 +338,13 @@
             </div>
         </div>
 
+        <div class="hud-top-right">
+            <div>FPS: <span id="hudFps">0</span></div>
+            <div>Stall: <span id="hudStall">Yok</span></div>
+        </div>
+
         <div class="hud-bottom-center">
-            SkyRunner 3D · Basit fizik, 3D sahne ve dokunmatik kontroller.
+            Mini flight sim: yerçekimi, lift, stall, basit aerodinamik ve tablet dostu kontroller.
         </div>
 
         <div class="reticle"></div>
@@ -333,26 +352,26 @@
         <div class="center-message" id="startMessage">
             <div class="center-message-title">Uçuşa Hazır ✈️</div>
             <div class="center-message-sub">
-                Hız vermek için sağ alttaki <b>+</b> tuşuna dokun veya klavyeden <b>W</b> / <b>Yukarı Ok</b>'a bas.
+                Gaz vermek için sağ alttaki <b>+</b> tuşuna dokun veya klavyeden <b>W</b> / <b>↑</b>'a bas.
             </div>
         </div>
 
         <div class="game-over-banner" id="gameOverBanner">
-            CRASH! Uçak yere çarptı.
-            <span>Yeniden başlatmak için R tuşuna bas veya sayfayı yenile.</span>
+            CRASH! Uçak yere çok sert indi.
+            <span>R tuşuna basarak veya sayfayı yenileyerek yeniden başlayabilirsin.</span>
         </div>
     </div>
 
     <!-- Dokunmatik kontrol padleri -->
     <div class="touch-controls">
-        <!-- Sol pad: yaw (sağ-sol) -->
+        <!-- Sol pad: yaw + roll -->
         <div class="pad-left">
             <div class="ctrl-group">
                 <div class="ctrl-row">
                     <button class="ctrl-btn" id="btnYawLeft">◀</button>
                     <button class="ctrl-btn" id="btnYawRight">▶</button>
                 </div>
-                <div class="ctrl-label">Yön (Yaw)</div>
+                <div class="ctrl-label">Yön / Roll</div>
             </div>
         </div>
 
@@ -368,7 +387,7 @@
                     <button class="ctrl-btn" id="btnPitchUp">▲</button>
                     <button class="ctrl-btn" id="btnPitchDown">▼</button>
                 </div>
-                <div class="ctrl-label">İrtifa (Pitch)</div>
+                <div class="ctrl-label">Pitch / İrtifa</div>
             </div>
         </div>
     </div>
@@ -386,6 +405,8 @@
     const hudAlt   = document.getElementById("hudAlt");
     const hudDist  = document.getElementById("hudDist");
     const hudStatus= document.getElementById("hudStatus");
+    const hudFps   = document.getElementById("hudFps");
+    const hudStall = document.getElementById("hudStall");
     const startMessage = document.getElementById("startMessage");
     const gameOverBanner = document.getElementById("gameOverBanner");
 
@@ -409,14 +430,15 @@
     }
     window.addEventListener("resize", resize);
 
+    // THREE Setup
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x88ccee, 50, 2000);
+    scene.fog = new THREE.Fog(0x88aaff, 100, 2800);
 
     const camera = new THREE.PerspectiveCamera(
         65,
         window.innerWidth / window.innerHeight,
         0.1,
-        5000
+        6000
     );
 
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -424,22 +446,24 @@
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.outputEncoding = THREE.sRGBEncoding;
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x406080, 0.9);
+    // Lights
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x406080, 0.95);
     scene.add(hemiLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    dirLight.position.set(50, 100, -20);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(80, 180, -60);
     scene.add(dirLight);
 
-    // Sky gradient: basit bir büyük küre
-    const skyGeo = new THREE.SphereGeometry(3000, 32, 24);
+    // Sky
+    const skyGeo = new THREE.SphereGeometry(4000, 24, 16);
     const skyMat = new THREE.ShaderMaterial({
         side: THREE.BackSide,
         uniforms: {
-            topColor: { value: new THREE.Color(0x3a7bd5) },
-            bottomColor: { value: new THREE.Color(0x050505) },
+            topColor: { value: new THREE.Color(0x4da0ff) },
+            bottomColor: { value: new THREE.Color(0x02101e) },
             offset: { value: 400 },
-            exponent: { value: 0.6 }
+            exponent: { value: 0.6 },
+            time: { value: 0.0 }
         },
         vertexShader: `
             varying float vHeight;
@@ -454,6 +478,7 @@
             uniform float offset;
             uniform float exponent;
             varying float vHeight;
+
             void main() {
                 float h = normalize(vec3(0.0, vHeight + offset, 0.0)).y;
                 float t = max(pow(max(h, 0.0), exponent), 0.0);
@@ -464,108 +489,146 @@
     const sky = new THREE.Mesh(skyGeo, skyMat);
     scene.add(sky);
 
-    // Zemin
-    const groundGeo = new THREE.PlaneGeometry(6000, 6000, 64, 64);
+    // Ground (daha basit segment, performans için)
+    const groundGeo = new THREE.PlaneGeometry(8000, 8000, 32, 32);
     const groundMat = new THREE.MeshStandardMaterial({
         color: 0x113322,
-        roughness: 0.9,
-        metalness: 0.0
+        roughness: 0.95,
+        metalness: 0.0,
+        vertexColors: true
     });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = 0;
-    ground.receiveShadow = true;
     scene.add(ground);
 
-    // Pist
-    const runwayGeo = new THREE.PlaneGeometry(400, 40);
+    // Basit renk gürültüsü
+    const pos = groundGeo.attributes.position;
+    const colors = [];
+    for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const z = pos.getZ(i);
+        const dist = Math.sqrt(x*x + z*z);
+        const factor = 0.2 + 0.2 * Math.random() + 0.2 * Math.max(0, 1 - dist / 4000);
+        colors.push(0.06, factor, 0.06);
+    }
+    groundGeo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+
+    // Runway
+    const runwayGeo = new THREE.PlaneGeometry(600, 40);
     const runwayMat = new THREE.MeshStandardMaterial({
         color: 0x333333,
         roughness: 0.8
     });
     const runway = new THREE.Mesh(runwayGeo, runwayMat);
     runway.rotation.x = -Math.PI / 2;
-    runway.position.set(0, 0.01, -200);
+    runway.position.set(0, 0.02, -300);
     scene.add(runway);
 
-    // Pist çizgileri için basit mesh
-    const stripeGeo = new THREE.PlaneGeometry(20, 2);
+    const stripeGeo = new THREE.PlaneGeometry(30, 3);
     const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
         const stripe = new THREE.Mesh(stripeGeo, stripeMat);
         stripe.rotation.x = -Math.PI / 2;
-        stripe.position.set(0, 0.02, -200 + i * 20);
+        stripe.position.set(0, 0.03, -300 + i * 50);
         scene.add(stripe);
     }
 
-    // Basit binalar
+    // City
     const cityGroup = new THREE.Group();
     const buildingGeo = new THREE.BoxGeometry(20, 40, 20);
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 45; i++) {
         const mat = new THREE.MeshStandardMaterial({
-            color: new THREE.Color().setHSL(0.55 + Math.random() * 0.05, 0.5, 0.25 + Math.random() * 0.1),
-            roughness: 0.9
+            color: new THREE.Color().setHSL(0.55 + Math.random() * 0.05, 0.35, 0.25 + Math.random() * 0.15),
+            roughness: 0.85
         });
         const b = new THREE.Mesh(buildingGeo, mat);
         b.scale.y = 1 + Math.random() * 4;
         const side = Math.random() < 0.5 ? -1 : 1;
-        const dist = 200 + Math.random() * 1500;
-        const offsetX = side * (80 + Math.random() * 400);
-        const offsetZ = dist + (Math.random() - 0.5) * 400;
+        const dist = 300 + Math.random() * 2500;
+        const offsetX = side * (110 + Math.random() * 450);
+        const offsetZ = dist + (Math.random() - 0.5) * 500;
         b.position.set(offsetX, (b.scale.y * 40) / 2, offsetZ);
-        b.castShadow = true;
-        b.receiveShadow = true;
         cityGroup.add(b);
     }
     scene.add(cityGroup);
 
-    // Uçak
+    // Clouds (hafif)
+    const cloudGroup = new THREE.Group();
+    scene.add(cloudGroup);
+
+    function createCloud(x, y, z) {
+        const cloud = new THREE.Group();
+        const sphereGeo = new THREE.SphereGeometry(20, 12, 10);
+        const mat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+        for (let i = 0; i < 4; i++) {
+            const s = new THREE.Mesh(sphereGeo, mat);
+            s.position.set(
+                (Math.random() - 0.5) * 45,
+                (Math.random() - 0.5) * 12,
+                (Math.random() - 0.5) * 45
+            );
+            const scale = 0.7 + Math.random() * 0.8;
+            s.scale.set(scale, scale, scale);
+            cloud.add(s);
+        }
+        cloud.position.set(x, y, z);
+        cloudGroup.add(cloud);
+    }
+
+    for (let i = 0; i < 22; i++) {
+        const cx = (Math.random() - 0.5) * 1000;
+        const cz = 200 + Math.random() * 2800;
+        const cy = 80 + Math.random() * 140;
+        createCloud(cx, cy, cz);
+    }
+
+    // Plane
     const plane = new THREE.Group();
-    const bodyGeo = new THREE.CylinderGeometry(2, 2, 20, 12);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf5f6fa, metalness: 0.3, roughness: 0.4 });
+    const bodyGeo = new THREE.CylinderGeometry(1.2, 1.2, 18, 12);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf5f6fa, metalness: 0.35, roughness: 0.4 });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.rotation.z = Math.PI / 2;
     plane.add(body);
 
-    const noseGeo = new THREE.ConeGeometry(2.2, 4, 12);
-    const noseMat = new THREE.MeshStandardMaterial({ color: 0x3498db, metalness: 0.4, roughness: 0.3 });
+    const noseGeo = new THREE.ConeGeometry(1.5, 3.5, 12);
+    const noseMat = new THREE.MeshStandardMaterial({ color: 0x3498db, metalness: 0.5, roughness: 0.25 });
     const nose = new THREE.Mesh(noseGeo, noseMat);
-    nose.position.set(10, 0, 0);
+    nose.position.set(9, 0, 0);
     nose.rotation.z = Math.PI / 2;
     plane.add(nose);
 
-    const wingGeo = new THREE.BoxGeometry(2, 18, 0.6);
+    const wingGeo = new THREE.BoxGeometry(1, 16, 0.4);
     const wingMat = new THREE.MeshStandardMaterial({ color: 0x95a5a6, roughness: 0.5 });
     const wingLeft = new THREE.Mesh(wingGeo, wingMat);
-    wingLeft.position.set(0, 0, -7);
+    wingLeft.position.set(0, 0, -6);
     plane.add(wingLeft);
-
     const wingRight = wingLeft.clone();
-    wingRight.position.z = 7;
+    wingRight.position.z = 6;
     plane.add(wingRight);
 
-    const tailGeo = new THREE.BoxGeometry(2, 6, 0.4);
+    const tailGeo = new THREE.BoxGeometry(1.2, 4, 0.2);
     const tail = new THREE.Mesh(tailGeo, wingMat);
-    tail.position.set(-9, 2, 0);
-    tail.rotation.z = Math.PI / 12;
+    tail.position.set(-8, 2, 0);
+    tail.rotation.z = Math.PI / 10;
     plane.add(tail);
 
-    const tailHGeo = new THREE.BoxGeometry(1.2, 5, 0.3);
+    const tailHGeo = new THREE.BoxGeometry(0.8, 4, 0.2);
     const tailHLeft = new THREE.Mesh(tailHGeo, wingMat);
-    tailHLeft.position.set(-8, 0, -3);
+    tailHLeft.position.set(-7, 0, -2.5);
     plane.add(tailHLeft);
     const tailHRight = tailHLeft.clone();
-    tailHRight.position.z = 3;
+    tailHRight.position.z = 2.5;
     plane.add(tailHRight);
 
-    plane.position.set(0, 4, 0);
+    plane.position.set(0, 5, 0);
     plane.rotation.set(0, 0, 0);
     scene.add(plane);
 
-    camera.position.set(-20, 10, 40);
+    camera.position.set(-15, 8, 25);
     camera.lookAt(plane.position);
 
-    // Girdiler
+    // INPUT
     const keys = {};
     const input = {
         yawLeft: false,
@@ -593,21 +656,11 @@
         if (e.key === "d" || e.key === "ArrowRight") input.yawRight = false;
     });
 
-    function bindTouchButton(btn, propName) {
-        const activate = (ev) => {
-            ev.preventDefault();
-            input[propName] = true;
-        };
-        const deactivate = (ev) => {
-            ev.preventDefault();
-            input[propName] = false;
-        };
-        ["touchstart", "mousedown"].forEach(evt => {
-            btn.addEventListener(evt, activate);
-        });
-        ["touchend", "touchcancel", "mouseup", "mouseleave"].forEach(evt => {
-            btn.addEventListener(evt, deactivate);
-        });
+    function bindTouchButton(btn, prop) {
+        const on = (ev) => { ev.preventDefault(); input[prop] = true; };
+        const off= (ev) => { ev.preventDefault(); input[prop] = false; };
+        ["touchstart","mousedown"].forEach(ev => btn.addEventListener(ev, on));
+        ["touchend","touchcancel","mouseup","mouseleave"].forEach(ev => btn.addEventListener(ev, off));
     }
 
     bindTouchButton(btnYawLeft,      "yawLeft");
@@ -617,125 +670,210 @@
     bindTouchButton(btnThrottleUp,   "throttleUp");
     bindTouchButton(btnThrottleDown, "throttleDown");
 
-    // Uçuş durumu
-    let speed = 0;               // kn (simülasyon)
-    const minSpeed = 0;
-    const maxSpeed = 420;
-    let distanceTravelled = 0;   // metre
+    // FLIGHT STATE
+    let throttle = 0;             // 0..1
+    let speed = 0;                // m/s
+    const maxSpeed = 120;         // m/s (~233kn)
+    let distanceTravelled = 0;
     let gameOver = false;
     let hasStarted = false;
 
+    let lastAlt = plane.position.y;
+    let isStalling = false;
+
+    const gravity = 9.81;
+    const stallSpeed = 35;        // m/s
+    const liftCoeff = 2.4;
+    const dragCoeff = 0.025;
+
     const clock = new THREE.Clock();
 
+    let fpsAccum = 0;
+    let fpsFrames = 0;
+    let fpsDisplay = 0;
+    let fpsTimer = 0;
+
     function resetGame() {
+        throttle = 0;
         speed = 0;
         distanceTravelled = 0;
         gameOver = false;
         hasStarted = false;
-        plane.position.set(0, 4, 0);
+        isStalling = false;
+        plane.position.set(0, 5, 0);
         plane.rotation.set(0, 0, 0);
-        camera.position.set(-20, 10, 40);
+        camera.position.set(-15, 8, 25);
         camera.lookAt(plane.position);
         hudStatus.textContent = "IDLE";
         hudSpeed.textContent = "0";
-        hudAlt.textContent = "4";
+        hudAlt.textContent = "5";
         hudDist.textContent = "0.0";
+        hudStall.textContent = "Yok";
         gameOverBanner.style.display = "none";
-        startMessage.classList.remove("fade-out");
-        startMessage.style.opacity = "1";
+        if (startMessage) {
+            startMessage.classList.remove("fade-out");
+            startMessage.style.opacity = "1";
+        }
+        clock.getDelta();
     }
 
     resetGame();
     resize();
 
-    function update(dt) {
+    function updateFlight(dt) {
         if (gameOver) return;
 
-        const throttlePower = 60;     // hızlanma
-        const throttleBrake = 50;     // yavaşlama
-        const airFriction = 15;       // doğal sürtünme
-        const yawSpeed = THREE.MathUtils.degToRad(45); // derece/sn
-        const pitchSpeed = THREE.MathUtils.degToRad(30);
+        dt = Math.min(dt, 0.04); // FPS dalgalanmasında saçma zıplamayı engelle
 
+        const throttleChange = 0.45 * dt;
         if (input.throttleUp) {
-            speed += throttlePower * dt;
+            throttle += throttleChange;
             hasStarted = true;
         }
         if (input.throttleDown) {
-            speed -= throttleBrake * dt;
+            throttle -= throttleChange;
         }
+        throttle = THREE.MathUtils.clamp(throttle, 0, 1);
 
-        speed -= airFriction * dt;
-        speed = THREE.MathUtils.clamp(speed, minSpeed, maxSpeed);
+        const targetSpeed = maxSpeed * throttle;
+        const accelToTarget = (targetSpeed - speed) * (0.75 * dt);
+        speed += accelToTarget;
+        if (speed < 0.1) speed = 0;
+
+        const yawRate   = THREE.MathUtils.degToRad(38);
+        const pitchRate = THREE.MathUtils.degToRad(24);
+        const rollRate  = THREE.MathUtils.degToRad(33);
 
         if (speed > 5) {
             if (input.yawLeft && !input.yawRight) {
-                plane.rotation.y += yawSpeed * dt;
+                plane.rotation.y += yawRate * dt;
+                plane.rotation.z += rollRate * dt * 0.55;
             } else if (input.yawRight && !input.yawLeft) {
-                plane.rotation.y -= yawSpeed * dt;
+                plane.rotation.y -= yawRate * dt;
+                plane.rotation.z -= rollRate * dt * 0.55;
+            } else {
+                plane.rotation.z *= (1 - 1.8 * dt);
             }
 
             if (input.pitchUp && !input.pitchDown) {
-                plane.rotation.z += pitchSpeed * dt * 0.4; // roll efekti
-                plane.rotation.x -= pitchSpeed * dt;
+                plane.rotation.x -= pitchRate * dt;
             } else if (input.pitchDown && !input.pitchUp) {
-                plane.rotation.z -= pitchSpeed * dt * 0.4;
-                plane.rotation.x += pitchSpeed * dt;
+                plane.rotation.x += pitchRate * dt;
+            } else {
+                plane.rotation.x *= (1 - 1.2 * dt);
             }
+        } else {
+            plane.rotation.z *= (1 - 2.0 * dt);
+            plane.rotation.x *= (1 - 1.5 * dt);
         }
 
-        plane.rotation.x = THREE.MathUtils.clamp(plane.rotation.x, -0.6, 0.5);
-        plane.rotation.z = THREE.MathUtils.clamp(plane.rotation.z, -0.6, 0.6);
+        plane.rotation.x = THREE.MathUtils.clamp(plane.rotation.x, -0.6, 0.55);
+        plane.rotation.z = THREE.MathUtils.clamp(plane.rotation.z, -0.9, 0.9);
 
-        const forward = new THREE.Vector3(0, 0, -1).applyEuler(plane.rotation).normalize();
-        const speedMetersPerSec = speed * 0.5; // tamamen uydurma ölçek
-        const move = forward.clone().multiplyScalar(speedMetersPerSec * dt);
+        const forward = new THREE.Vector3(0,0,-1).applyEuler(plane.rotation).normalize();
+
+        // Basitleştirilmiş aerodinamik
+        const speedSq = speed * speed;
+
+        const drag = dragCoeff * speedSq;
+        const dragVec = forward.clone().multiplyScalar(-drag);
+
+        let lift = 0;
+        if (speed > stallSpeed) {
+            const aoa = -plane.rotation.x;
+            lift = liftCoeff * speedSq * Math.max(0, Math.cos(aoa));
+        } else {
+            lift = -20; // stall durumunda uçağı aşağı çeken ek kuvvet
+        }
+
+        const liftVec = new THREE.Vector3(0, lift, 0);
+        const gravityVec = new THREE.Vector3(0, -gravity * 18, 0);
+
+        const thrust = throttle * 150;
+        const thrustVec = forward.clone().multiplyScalar(thrust);
+
+        const accel = new THREE.Vector3();
+        accel.add(thrustVec);
+        accel.add(dragVec);
+        accel.add(liftVec);
+        accel.add(gravityVec);
+
+        // Hızı vektörel taşı
+        let velForward = forward.clone().multiplyScalar(speed);
+        velForward.add(accel.multiplyScalar(dt));
+
+        // Yeni hız büyüklüğü
+        const newSpeed = velForward.length();
+        speed = THREE.MathUtils.clamp(newSpeed, 0, maxSpeed);
+
+        // Tekrar forward yönüne projeksiyon (stabilite için)
+        if (speed > 0.001) {
+            velForward.normalize().multiplyScalar(speed);
+        } else {
+            velForward.set(0,0,0);
+        }
+
+        const move = velForward.clone().multiplyScalar(dt);
         plane.position.add(move);
         distanceTravelled += move.length();
 
-        // Basit lift ve gravity
-        const stallSpeed = 80;
-        let lift = 0;
-        if (speed > stallSpeed) {
-            lift = (speed - stallSpeed) * 0.05 * Math.cos(plane.rotation.x);
-        } else {
-            lift = -10; // stall
-        }
-        plane.position.y += (lift * dt);
+        const groundHeight = 0;
+        const altitude = plane.position.y - groundHeight;
+        const verticalSpeed = (plane.position.y - lastAlt) / dt;
+        lastAlt = plane.position.y;
 
-        if (plane.position.y < 1.5) {
-            plane.position.y = 1.5;
-            if (speed > 40) {
+        if (plane.position.y < groundHeight + 1.5) {
+            plane.position.y = groundHeight + 1.5;
+            if (Math.abs(verticalSpeed) > 10 || speed > 22) {
                 triggerGameOver();
+            } else {
+                // yumuşak iniş
+                speed *= 0.8;
             }
         }
 
-        if (plane.position.y > 800) {
-            plane.position.y = 800;
+        if (plane.position.y > 900) {
+            plane.position.y = 900;
         }
 
-        const cameraOffset = new THREE.Vector3(0, 8, 25);
-        cameraOffset.applyEuler(plane.rotation);
-        const desiredCamPos = plane.position.clone().add(cameraOffset);
-        camera.position.lerp(desiredCamPos, 0.08);
-        const lookAtPoint = plane.position.clone().add(forward.clone().multiplyScalar(30));
+        // Kamera: daha stabil, yumuşak takip
+        const camOffset = new THREE.Vector3(0, 8, 26);
+        camOffset.applyEuler(plane.rotation);
+        const desiredCamPos = plane.position.clone().add(camOffset);
+        camera.position.lerp(desiredCamPos, 0.12);
+        const lookAtPoint = plane.position.clone().add(forward.clone().multiplyScalar(45));
         camera.lookAt(lookAtPoint);
 
-        hudSpeed.textContent = speed.toFixed(0);
-        hudAlt.textContent = plane.position.y.toFixed(0);
+        // Bulut kaydırma (yalnızca z yönünde hafif animasyon)
+        cloudGroup.children.forEach(cloud => {
+            cloud.position.z -= 12 * dt;
+            if (cloud.position.z < -800) {
+                cloud.position.z = 2800 + Math.random() * 600;
+                cloud.position.x = (Math.random() - 0.5) * 1000;
+                cloud.position.y = 80 + Math.random() * 150;
+            }
+        });
+
+        const speedKnots = speed * 1.94384;
+        hudSpeed.textContent = speedKnots.toFixed(0);
+        hudAlt.textContent = altitude.toFixed(0);
         hudDist.textContent = (distanceTravelled / 1000).toFixed(1);
 
-        if (!hasStarted && speed < 5) {
+        // Status & stall
+        if (!hasStarted && speed < 2) {
             hudStatus.textContent = "IDLE";
+        } else if (speed < stallSpeed) {
+            hudStatus.textContent = "STALL/OFF";
+        } else if (speed < stallSpeed + 15) {
+            hudStatus.textContent = "ROTATE";
         } else if (speed < 80) {
-            hudStatus.textContent = "TAXI";
-        } else if (speed < 160) {
             hudStatus.textContent = "CLIMB";
-        } else if (speed < 260) {
-            hudStatus.textContent = "CRUISE";
         } else {
-            hudStatus.textContent = "FAST";
+            hudStatus.textContent = "CRUISE";
         }
+
+        isStalling = speed < stallSpeed && altitude > 5 && throttle < 0.7;
+        hudStall.textContent = isStalling ? "Evet" : "Yok";
 
         if (hasStarted && startMessage && startMessage.style.opacity !== "0") {
             startMessage.classList.add("fade-out");
@@ -749,14 +887,27 @@
         gameOverBanner.style.display = "block";
     }
 
-    function render() {
+    function renderLoop() {
         const dt = clock.getDelta();
-        update(dt);
+        updateFlight(dt);
+
+        const fps = 1 / Math.max(dt, 0.00001);
+        fpsAccum += fps;
+        fpsFrames++;
+        fpsTimer += dt;
+        if (fpsTimer >= 0.5) {
+            fpsDisplay = fpsAccum / fpsFrames;
+            fpsAccum = 0;
+            fpsFrames = 0;
+            fpsTimer = 0;
+            hudFps.textContent = fpsDisplay.toFixed(0);
+        }
+
         renderer.render(scene, camera);
-        requestAnimationFrame(render);
+        requestAnimationFrame(renderLoop);
     }
 
-    render();
+    renderLoop();
 })();
 </script>
 </body>
