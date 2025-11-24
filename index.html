@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>SkyRunner 3D - Cockpit Day Final</title>
+    <title>SkyRunner 3D - Cockpit Day Final V2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -438,7 +438,7 @@
         roughness: 0.08,
         metalness: 0.15,
         transparent: true,
-        opacity: 0.22,  // GÜNDÜZ İÇİN DAHA ŞEFFAF
+        opacity: 0.14,  // DAHA ŞEFFAF CAM
         reflectivity: 1.0,
         clearcoat: 0.9
     });
@@ -446,6 +446,16 @@
         color: 0x020617,
         metalness: 0.9,
         roughness: 0.35
+    });
+    // ÖNDEKİ SİYAH ŞERİT İÇİN CAM MALZEME
+    const frameGlassMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0x9ca3af,
+        roughness: 0.05,
+        metalness: 0.0,
+        transparent: true,
+        opacity: 0.10,
+        reflectivity: 0.6,
+        clearcoat: 0.4
     });
     const navRedMaterial = new THREE.MeshBasicMaterial({
         color: 0xef4444,
@@ -529,7 +539,8 @@
     jet.add(canopyFrame);
 
     const frontFrameGeo = new THREE.BoxGeometry(0.1, 0.9, 1.6);
-    const frontFrame = new THREE.Mesh(frontFrameGeo, canopyFrameMaterial);
+    // ÖNDEKİ SİYAH ÇERÇEVE ARTIK CAM
+    const frontFrame = new THREE.Mesh(frontFrameGeo, frameGlassMaterial);
     frontFrame.position.set(3.4, 0.7, 0);
     jet.add(frontFrame);
 
@@ -985,7 +996,7 @@
     function detectCrash() {
         const alt = Math.max(0, jet.position.y - 2.4);
         const severeVertical = verticalSpeed < -18;
-        const veryFast = speed > 170;
+        the veryFast = speed > 170;
         const crazyPitch = Math.abs(jet.rotation.x) > 0.9;
         const crazyRoll = Math.abs(jet.rotation.z) > 1.2;
         if (alt < 3 && (severeVertical || veryFast || crazyPitch || crazyRoll)) {
@@ -1290,8 +1301,8 @@
     //  - YAW ◀ / ▶: Yaw kontrolü (sağa / sola dön).
     //  - GEAR: Havadayken iniş takımlarını aç / kapat.
     //  - Ekrana dokunup sürükleyerek kokpitten sağa/sola/yukarı/aşağı bak.
-    //  - Çok sert inersen veya garip açıyla piste çakılırsan CRASH olur,
-    //    uçak sürüklenir ve birkaç saniye sonra tekrar pistte baştan başlar.
+    //  - Sert iniş / çakılma durumunda CRASH olur, birkaç saniye sonra pistten
+    //    yeniden kalkışa hazır başlarsın.
     // ---------------------------------------------------------------------
 })();
 </script>
