@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Tablet FlightSim 3D - Stall, Füze, Big Map</title>
+    <title>Tablet FlightSim 3D - Bomb & Nuke Battle</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -38,7 +38,6 @@
             z-index: 0;
         }
 
-        /* HUD GENEL */
         .hud {
             position: absolute;
             inset: 0;
@@ -54,7 +53,7 @@
             right: 0;
             display: flex;
             justify-content: space-between;
-            padding: 0 16px;
+            padding: 0 8px;
             font-size: 12px;
             text-shadow: 0 0 4px #000;
         }
@@ -63,8 +62,8 @@
             background: rgba(0, 0, 0, 0.45);
             border: 1px solid rgba(0, 255, 255, 0.6);
             border-radius: 8px;
-            padding: 6px 8px;
-            min-width: 80px;
+            padding: 4px 6px;
+            min-width: 70px;
             text-align: center;
             backdrop-filter: blur(4px);
         }
@@ -72,16 +71,15 @@
         .hud-title {
             font-weight: 600;
             letter-spacing: 1px;
-            font-size: 11px;
+            font-size: 10px;
             opacity: 0.8;
         }
 
         .hud-value {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
         }
 
-        /* ORTA NİŞANGAH */
         .hud-center {
             position: absolute;
             top: 50%;
@@ -118,7 +116,6 @@
             transform: translateY(-50%);
         }
 
-        /* STALL / CRASH MESAJI */
         .hud-message {
             position: absolute;
             top: 50%;
@@ -133,7 +130,27 @@
             display: none;
         }
 
-        /* JOYSTICK (sadece yukarı-aşağı) */
+        .hud-help {
+            position: absolute;
+            left: 10px;
+            bottom: 190px;
+            font-size: 10px;
+            max-width: 270px;
+            color: #cfe9ff;
+            text-shadow: 0 0 4px #000;
+            background: rgba(0,0,0,0.55);
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            backdrop-filter: blur(3px);
+        }
+
+        .hud-hp {
+            margin-top: 4px;
+            font-size: 10px;
+            opacity: 0.85;
+        }
+
         .joystick-area {
             position: absolute;
             bottom: 110px;
@@ -160,25 +177,24 @@
             box-shadow: 0 0 18px rgba(0, 255, 255, 0.8);
         }
 
-        /* BUTONLAR (TURN + MISSILE) */
         .button-cluster {
             position: absolute;
             bottom: 110px;
-            right: 16px;
+            right: 8px;
             display: grid;
             grid-template-columns: repeat(3, minmax(70px, 90px));
-            grid-gap: 8px;
+            grid-gap: 6px;
             pointer-events: auto;
         }
 
         .btn {
             position: relative;
-            padding: 10px 6px;
+            padding: 8px 4px;
             border-radius: 10px;
             border: 1px solid rgba(0, 255, 255, 0.6);
             background: radial-gradient(circle at 50% 10%, rgba(255,255,255,0.3), rgba(0,0,0,0.95));
             color: #0ff;
-            font-size: 11px;
+            font-size: 10px;
             text-align: center;
             font-weight: 600;
             text-shadow: 0 0 5px #000;
@@ -195,12 +211,11 @@
         .btn-label { display: block; }
         .btn-sub {
             display: block;
-            font-size: 9px;
+            font-size: 8px;
             opacity: 0.7;
             margin-top: 2px;
         }
 
-        /* GAZ */
         .throttle-container {
             position: absolute;
             top: 50%;
@@ -248,22 +263,6 @@
             text-shadow: 0 0 3px #000;
         }
 
-        /* SOL BİLGİ */
-        .hud-help {
-            position: absolute;
-            left: 10px;
-            bottom: 190px;
-            font-size: 10px;
-            max-width: 260px;
-            color: #cfe9ff;
-            text-shadow: 0 0 4px #000;
-            background: rgba(0,0,0,0.55);
-            padding: 6px 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 255, 255, 0.25);
-            backdrop-filter: blur(3px);
-        }
-
         @media (max-width: 800px) {
             .joystick-area {
                 width: 140px;
@@ -284,7 +283,7 @@
                 <div class="hud-value" id="hud-speed">0 kn</div>
             </div>
             <div class="hud-box">
-                <div class="hud-title">TABLET FLIGHTSIM 3D</div>
+                <div class="hud-title">Tablet FlightSim 3D</div>
                 <div class="hud-value" id="hud-mode">DIŞ GÖRÜNÜM</div>
             </div>
             <div class="hud-box">
@@ -299,21 +298,21 @@
         <div class="hud-help">
             Joystick: <b>sadece yukarı / aşağı (Pitch)</b><br/>
             TURN ◀▶: <b>Sağa / sola dönüş + hafif yatış</b><br/>
-            MISSILE: <b>Burnundan füze at</b><br/>
+            MISSILE: <b>Füze – direkt vurma</b><br/>
+            BOMB: <b>Aşağı bomba</b><br/>
+            NUKE: <b>Büyük patlama, geniş alan</b><br/>
             Sağ dikey bar: <b>Gaz</b><br/>
             GÖRÜNÜM: kokpit / dış<br/>
             GEAR: iniş takımı (kapalı inersen patlama 💥)<br/>
             ENGINE: motor aç / kapa<br/>
-            <b>Stall:</b> Yavaş + burnu çok kaldırırsan, ama burnu indirip hızlanınca kurtulabilirsin<br/>
-            <b>Çarpışma:</b> Dağ / bina / yere sert darbe = patlama 💥
+            Rakip uçak: bilgisayar uçuruyor, etrafında geziyor<br/>
+            <div class="hud-hp" id="hud-hp">Biz: 7 / 7  |  Rakip: 7 / 7</div>
         </div>
 
-        <!-- Joystick -->
         <div class="joystick-area" id="joystick-area">
             <div class="joystick-stick" id="joystick-stick"></div>
         </div>
 
-        <!-- Gaz -->
         <div class="throttle-container" id="throttle-area">
             <div class="throttle-label">GAZ</div>
             <div class="throttle-track" id="throttle-track">
@@ -321,7 +320,6 @@
             </div>
         </div>
 
-        <!-- Butonlar -->
         <div class="button-cluster">
             <button class="btn" id="btn-turn-left">
                 <span class="btn-label">TURN ◀</span>
@@ -351,6 +349,14 @@
                 <span class="btn-label">MISSILE</span>
                 <span class="btn-sub">Füze Ateşle</span>
             </button>
+            <button class="btn" id="btn-bomb">
+                <span class="btn-label">BOMB</span>
+                <span class="btn-sub">Bomba</span>
+            </button>
+            <button class="btn" id="btn-nuke">
+                <span class="btn-label">NUKE</span>
+                <span class="btn-sub">Nükleer</span>
+            </button>
         </div>
     </div>
 </div>
@@ -362,11 +368,14 @@
     const container = document.getElementById('game-container');
 
     let scene, camera, renderer;
-    let plane;
+    let plane;           // bizim uçak
+    let enemyPlane;      // rakip uçak (AI)
+    let enemyAngle = 0;  // rakip için açı
+    const ENEMY_RADIUS = 1800;
+    const ENEMY_ALT = 450;
+
     let clock;
-    let yaw = 0;
-    let pitch = 0;
-    let roll = 0;
+    let yaw = 0, pitch = 0, roll = 0;
 
     let speed = 0;
     let throttle = 0;
@@ -379,17 +388,23 @@
     let landingGearDown = true;
     let engineOn = true;
     const gearMeshes = [];
-    const colliders = [];
+    const colliders = []; // binalar, dağlar, tepeler
     const WORLD_RADIUS = 14000;
 
-    // Füze
     const missiles = [];
+    const missileExplosions = [];
     let missileCooldown = 0;
 
-    // Küçük füze patlamaları
-    const missileExplosions = [];
+    const bombs = [];
+    const bombExplosions = [];
 
-    // stall / crash durumları
+    const MAX_HP = 7;
+    let playerHP = MAX_HP;
+    let enemyHP = MAX_HP;
+
+    const PLAYER_HIT_RADIUS = 60;
+    const ENEMY_HIT_RADIUS = 60;
+
     let stalled = false;
     let stallTimer = 0;
     let crashed = false;
@@ -415,6 +430,7 @@
     const engineStatusEl = document.getElementById('engine-status');
     const viewStatusEl = document.getElementById('view-status');
     const hudMessageEl = document.getElementById('hud-message');
+    const hudHpEl = document.getElementById('hud-hp');
 
     const joystickArea = document.getElementById('joystick-area');
     const joystickStick = document.getElementById('joystick-stick');
@@ -428,6 +444,8 @@
     const btnGear = document.getElementById('btn-gear');
     const btnEngine = document.getElementById('btn-engine');
     const btnMissile = document.getElementById('btn-missile');
+    const btnBomb = document.getElementById('btn-bomb');
+    const btnNuke = document.getElementById('btn-nuke');
 
     let throttleTouchActive = false;
 
@@ -480,10 +498,12 @@
 
         createRunway();
         createGroundPatches();
+        createGroundHills(); // yer yükseltili
         createCityBlocks();
         createMountains();
         createClouds();
         createPlane();
+        createEnemyPlane();
 
         updateCamera(1 / 60);
 
@@ -550,11 +570,22 @@
             fireMissile();
         });
 
+        btnBomb.addEventListener('click', e => {
+            e.preventDefault();
+            fireBomb("bomb");
+        });
+
+        btnNuke.addEventListener('click', e => {
+            e.preventDefault();
+            fireBomb("nuke");
+        });
+
         updateThrottleThumb();
         updateGearVisibility();
+        updateHpHud();
     }
 
-    function createPlane() {
+    function buildPlaneModel(colorAccent) {
         const planeGroup = new THREE.Group();
 
         const bodyGeo = new THREE.CapsuleGeometry(1.2, 7, 8, 16);
@@ -569,7 +600,7 @@
 
         const noseGeo = new THREE.ConeGeometry(1.2, 2.4, 24);
         const noseMat = new THREE.MeshPhongMaterial({
-            color: 0x3366ff,
+            color: colorAccent,
             emissive: 0x111133,
             shininess: 40
         });
@@ -599,7 +630,7 @@
 
         const wingletGeo = new THREE.BoxGeometry(0.4, 1.2, 1);
         const wingletMat = new THREE.MeshPhongMaterial({
-            color: 0x3366ff,
+            color: colorAccent,
             emissive: 0x000022
         });
         const wingletL = new THREE.Mesh(wingletGeo, wingletMat);
@@ -655,14 +686,19 @@
         engineR.position.x = 3.8;
         planeGroup.add(engineR);
 
+        return planeGroup;
+    }
+
+    function createPlane() {
+        const planeGroup = buildPlaneModel(0x3366ff);
+
+        // iniş takımı (sadece bizde)
         const gearMat = new THREE.MeshPhongMaterial({
             color: 0x222222,
             emissive: 0x050505
         });
-
         const mainGearGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.2, 8);
         const wheelGeo = new THREE.TorusGeometry(0.25, 0.08, 10, 18);
-
         const wheelMat = new THREE.MeshPhongMaterial({
             color: 0x111111,
             emissive: 0x000000
@@ -705,9 +741,21 @@
         gearMeshes.push(noseWheel);
 
         planeGroup.position.set(0, 5, -180);
-
         plane = planeGroup;
         scene.add(plane);
+    }
+
+    function createEnemyPlane() {
+        enemyPlane = buildPlaneModel(0xff4444);
+        enemyPlane.traverse(o => {
+            if (o.isMesh) {
+                o.material = o.material.clone();
+                o.material.color.offsetHSL(0, 0.2, 0.1);
+            }
+        });
+        enemyAngle = 0;
+        enemyPlane.position.set(ENEMY_RADIUS, ENEMY_ALT, 0);
+        scene.add(enemyPlane);
     }
 
     function updateGearVisibility() {
@@ -772,8 +820,35 @@
                 patchGroup.add(tile);
             }
         }
-
         scene.add(patchGroup);
+    }
+
+    // Toprak yükseltileri
+    function createGroundHills() {
+        const hillGroup = new THREE.Group();
+        for (let i = 0; i < 40; i++) {
+            const radius = 400 + Math.random() * 2000;
+            const angle = Math.random() * Math.PI * 2;
+            const w = 300 + Math.random() * 400;
+            const h = 40 + Math.random() * 80;
+
+            const geo = new THREE.CylinderGeometry(w, w, h, 10);
+            const mat = new THREE.MeshPhongMaterial({
+                color: 0x3f6f3f + (Math.random() * 0x030303),
+                flatShading: true
+            });
+            const hill = new THREE.Mesh(geo, mat);
+            hill.position.set(
+                Math.cos(angle) * radius,
+                h / 2,
+                Math.sin(angle) * radius
+            );
+            hill.rotation.y = Math.random() * Math.PI * 2;
+            hill.userData.radius = w + 40;
+            hillGroup.add(hill);
+            colliders.push(hill);
+        }
+        scene.add(hillGroup);
     }
 
     function createCityBlocks() {
@@ -800,6 +875,7 @@
                 h / 2,
                 Math.sin(angle) * ring
             );
+            b.userData.radius = Math.sqrt(w*w + d*d) * 0.7;
 
             cityGroup.add(b);
             colliders.push(b);
@@ -831,6 +907,7 @@
                 Math.sin(angle) * radius
             );
             mountain.rotation.y = Math.random() * Math.PI * 2;
+            mountain.userData.radius = width + 80;
             mountainGroup.add(mountain);
             colliders.push(mountain);
         }
@@ -891,12 +968,15 @@
 
         if (!crashed) {
             updatePhysics(dt);
+            updateEnemy(dt);
             updateCamera(dt);
         } else {
             updateCrash(dt);
         }
         updateMissiles(dt);
+        updateBombs(dt);
         updateMissileExplosions(dt);
+        updateBombExplosions(dt);
         updateHUD();
 
         renderer.render(scene, camera);
@@ -908,7 +988,6 @@
 
         const altitude = plane.position.y;
 
-        // STALL KONTROLÜ (daha yumuşak)
         if (!stalled) {
             if (speed < 70 && pitch > 0.35 && altitude > 40) {
                 stalled = true;
@@ -917,11 +996,9 @@
             }
         } else {
             stallTimer += dt;
-            // stall'da daha yumuşak savrulma
             pitch -= 0.45 * dt;
             roll += (Math.random() - 0.5) * 1.0 * dt;
 
-            // burnu aşağı verirsen hızlan, stall'dan çık
             if (pitch < 0) {
                 speed += 25 * dt;
             } else {
@@ -929,17 +1006,14 @@
             }
 
             if (speed < 40) speed = 40;
-            // Kurtulma şartı: hız geri geldi + burun çok dik değil
             if (speed > 90 && pitch < 0.15) {
                 stalled = false;
                 hideMessage();
             }
         }
 
-        // Joystick: sadece pitch
         pitch += joystick.yValue * pitchRate * dt;
 
-        // Sağa sola dönüş: ayrı butonlar (yaw + daha smooth roll)
         let yawInput = 0;
         if (turnLeftPressed) yawInput -= 1;
         if (turnRightPressed) yawInput += 1;
@@ -949,7 +1023,6 @@
         const desiredRollFromTurn = -yawInput * 0.6;
         roll += (desiredRollFromTurn - roll) * 3 * dt;
 
-        // Motor
         let accel;
         if (engineOn) {
             accel = (throttle - 0.55) * 55;
@@ -988,13 +1061,16 @@
             speed -= 25 * dt;
         }
 
-        // Yer ve GEAR kontrolü
         if (plane.position.y < 1) {
             plane.position.y = 1;
 
             if (!landingGearDown && speed > 20) {
+                playerHP = 0;
+                updateHpHud();
                 startCrash("Gear up landing");
             } else if (speed > 60) {
+                playerHP = 0;
+                updateHpHud();
                 startCrash("Ground impact");
             } else {
                 stalled = false;
@@ -1004,10 +1080,19 @@
 
         plane.setRotationFromEuler(new THREE.Euler(pitch, yaw, roll, 'XYZ'));
 
-        checkCollisions();
+        checkPlaneCollisions();
     }
 
-    function checkCollisions() {
+    function updateEnemy(dt) {
+        if (!enemyPlane) return;
+        enemyAngle += dt * 0.11;
+        const ex = Math.cos(enemyAngle) * ENEMY_RADIUS;
+        const ez = Math.sin(enemyAngle) * ENEMY_RADIUS;
+        enemyPlane.position.set(ex, ENEMY_ALT, ez);
+        enemyPlane.lookAt(0, ENEMY_ALT, 0);
+    }
+
+    function checkPlaneCollisions() {
         const pos = plane.position;
         for (let i = 0; i < colliders.length; i++) {
             const c = colliders[i];
@@ -1016,8 +1101,12 @@
             const dz = pos.z - c.position.z;
             const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-            const threshold = 120;
+            const baseR = c.userData.radius || 80;
+            const threshold = baseR + 40;
+
             if (dist < threshold) {
+                playerHP = 0;
+                updateHpHud();
                 startCrash("Collision");
                 return;
             }
@@ -1104,10 +1193,23 @@
         updateThrottleThumb();
         updateGearVisibility();
 
-        // füzeleri temizle
+        playerHP = MAX_HP;
+        enemyHP = MAX_HP;
+        enemyAngle = 0;
+        if (enemyPlane) {
+            enemyPlane.position.set(ENEMY_RADIUS, ENEMY_ALT, 0);
+        }
+        updateHpHud();
+
         missiles.forEach(m => scene.remove(m.mesh));
         missiles.length = 0;
         missileExplosions.forEach(e => scene.remove(e.group));
+        missileExplosions.length = 0;
+
+        bombs.forEach(b => scene.remove(b.mesh));
+        bombs.length = 0;
+        bombExplosions.forEach(e => scene.remove(e.group));
+        bombExplosions.length = 0;
     }
 
     function updateCamera(dt) {
@@ -1148,6 +1250,10 @@
         }
     }
 
+    function updateHpHud() {
+        hudHpEl.textContent = `Biz: ${playerHP} / ${MAX_HP}  |  Rakip: ${enemyHP} / ${MAX_HP}`;
+    }
+
     function showMessage(text) {
         hudMessageEl.textContent = text;
         hudMessageEl.style.display = "block";
@@ -1157,10 +1263,10 @@
         hudMessageEl.style.display = "none";
     }
 
-    // Füze atma
+    // FÜZE
     function fireMissile() {
         if (crashed) return;
-        if (missileCooldown > 0.0) return; // spam olmasın
+        if (missileCooldown > 0.0) return;
 
         const forward = new THREE.Vector3(0, 0, 1);
         const up = new THREE.Vector3(0, 1, 0);
@@ -1189,7 +1295,8 @@
         missiles.push({
             mesh,
             vel: forward.clone().multiplyScalar(520),
-            life: 5
+            life: 5,
+            owner: "player"
         });
 
         missileCooldown = 0.4;
@@ -1201,7 +1308,6 @@
             m.mesh.position.addScaledVector(m.vel, dt);
             m.life -= dt;
 
-            // Harita dışına veya süre bitince sil
             const p = m.mesh.position;
             const r = Math.sqrt(p.x*p.x + p.z*p.z);
             if (m.life <= 0 || r > WORLD_RADIUS * 1.1 || p.y < 0 || p.y > 6000) {
@@ -1210,7 +1316,42 @@
                 continue;
             }
 
-            // Füze çarpışması
+            // Rakip uçağa çarpma
+            if (enemyPlane && enemyHP > 0) {
+                const distEnemy = p.distanceTo(enemyPlane.position);
+                if (distEnemy < ENEMY_HIT_RADIUS) {
+                    enemyHP = Math.max(0, enemyHP - 1);
+                    spawnMissileExplosion(p.clone());
+                    scene.remove(m.mesh);
+                    missiles.splice(i, 1);
+                    updateHpHud();
+
+                    if (enemyHP <= 0) {
+                        spawnBigExplosion(enemyPlane.position.clone());
+                    }
+                    continue;
+                }
+            }
+
+            // Bizim uçağa çarpma (teorik)
+            const distPlayer = p.distanceTo(plane.position);
+            if (distPlayer < PLAYER_HIT_RADIUS) {
+                playerHP = Math.max(0, playerHP - 1);
+                spawnMissileExplosion(p.clone());
+                scene.remove(m.mesh);
+                missiles.splice(i, 1);
+                updateHpHud();
+
+                if (playerHP <= 0) {
+                    startCrash("We are shot down");
+                } else {
+                    showMessage("VURULDUK! HP: " + playerHP);
+                    setTimeout(hideMessage, 800);
+                }
+                continue;
+            }
+
+            // Çevreye çarpma
             let hitIndex = -1;
             for (let j = 0; j < colliders.length; j++) {
                 const c = colliders[j];
@@ -1218,7 +1359,8 @@
                 const dy = p.y - c.position.y;
                 const dz = p.z - c.position.z;
                 const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                const threshold = 80; // füze için daha küçük
+                const baseR = c.userData.radius || 80;
+                const threshold = baseR * 0.6;
                 if (dist < threshold) {
                     hitIndex = j;
                     break;
@@ -1279,6 +1421,197 @@
         }
     }
 
+    // BOMBA & NÜK
+    function fireBomb(type) {
+        if (crashed) return;
+
+        const forward = new THREE.Vector3(0, 0, 1);
+        const up = new THREE.Vector3(0, 1, 0);
+        const q = plane.quaternion.clone();
+        forward.applyQuaternion(q);
+        up.applyQuaternion(q);
+
+        const bombGeo = new THREE.SphereGeometry(type === "nuke" ? 0.9 : 0.6, 10, 10);
+        const bombMat = new THREE.MeshPhongMaterial({
+            color: type === "nuke" ? 0x88ff88 : 0xaaaaaa,
+            emissive: type === "nuke" ? 0x114411 : 0x222222,
+            shininess: 30
+        });
+        const mesh = new THREE.Mesh(bombGeo, bombMat);
+
+        const startPos = new THREE.Vector3()
+            .copy(plane.position)
+            .addScaledVector(forward, 3)
+            .addScaledVector(up, -0.5);
+        mesh.position.copy(startPos);
+
+        scene.add(mesh);
+
+        const vel = new THREE.Vector3(forward.x * 60, -80, forward.z * 60);
+
+        bombs.push({
+            mesh,
+            vel,
+            life: 8,
+            type,
+            owner: "player"
+        });
+    }
+
+    function updateBombs(dt) {
+        for (let i = bombs.length - 1; i >= 0; i--) {
+            const b = bombs[i];
+            b.vel.y -= 40 * dt; // yerçekimi
+            b.mesh.position.addScaledVector(b.vel, dt);
+            b.life -= dt;
+
+            const p = b.mesh.position;
+
+            // yere çarptı mı?
+            if (p.y <= 0.5 || b.life <= 0) {
+                triggerBombExplosion(b, p.clone());
+                scene.remove(b.mesh);
+                bombs.splice(i, 1);
+                continue;
+            }
+
+            // yapıya çarpma
+            let hitIndex = -1;
+            for (let j = 0; j < colliders.length; j++) {
+                const c = colliders[j];
+                const dx = p.x - c.position.x;
+                const dy = p.y - c.position.y;
+                const dz = p.z - c.position.z;
+                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                const baseR = c.userData.radius || 80;
+                const threshold = baseR * 0.6;
+                if (dist < threshold) {
+                    hitIndex = j;
+                    break;
+                }
+            }
+
+            if (hitIndex >= 0) {
+                triggerBombExplosion(b, p.clone());
+                scene.remove(b.mesh);
+                bombs.splice(i, 1);
+            }
+        }
+    }
+
+    function triggerBombExplosion(bomb, pos) {
+        const isNuke = bomb.type === "nuke";
+        const radius = isNuke ? 700 : 220;
+
+        spawnGroundExplosion(pos.clone(), isNuke);
+
+        // yapıları yok et
+        for (let j = colliders.length - 1; j >= 0; j--) {
+            const c = colliders[j];
+            const dist = pos.distanceTo(c.position);
+            if (dist < radius + (c.userData.radius || 80)) {
+                scene.remove(c);
+                colliders.splice(j, 1);
+            }
+        }
+
+        // rakip uçağa hasar
+        if (enemyPlane && enemyHP > 0) {
+            const distEnemy = pos.distanceTo(enemyPlane.position);
+            if (distEnemy < radius + ENEMY_HIT_RADIUS) {
+                enemyHP = Math.max(0, enemyHP - 1);
+                updateHpHud();
+                if (enemyHP <= 0) {
+                    spawnBigExplosion(enemyPlane.position.clone());
+                }
+            }
+        }
+
+        // bize hasar
+        const distPlayer = pos.distanceTo(plane.position);
+        if (distPlayer < radius + PLAYER_HIT_RADIUS) {
+            playerHP = Math.max(0, playerHP - 1);
+            updateHpHud();
+            if (playerHP <= 0) {
+                startCrash(isNuke ? "Nuke Kill" : "Bomb Kill");
+            } else {
+                showMessage("Bomb şoku! HP: " + playerHP);
+                setTimeout(hideMessage, 800);
+            }
+        }
+    }
+
+    function spawnGroundExplosion(pos, isNuke) {
+        const group = new THREE.Group();
+        const count = isNuke ? 40 : 20;
+        for (let i = 0; i < count; i++) {
+            const size = (isNuke ? 8 : 3) + Math.random() * (isNuke ? 6 : 2);
+            const geo = new THREE.SphereGeometry(size, 10, 8);
+            const col = isNuke
+                ? ((i % 2 === 0) ? 0x99ff88 : 0xffffaa)
+                : ((i % 2 === 0) ? 0xffaa44 : 0xff6633);
+            const mat = new THREE.MeshBasicMaterial({
+                color: col,
+                transparent: true,
+                opacity: 1
+            });
+            const p = new THREE.Mesh(geo, mat);
+            p.position.copy(pos);
+            const dir = new THREE.Vector3(
+                (Math.random() - 0.5),
+                Math.random(),
+                (Math.random() - 0.5)
+            ).normalize();
+            const spd = (isNuke ? 160 : 90) + Math.random() * (isNuke ? 120 : 60);
+            p.userData.vel = dir.multiplyScalar(spd);
+            group.add(p);
+        }
+        scene.add(group);
+        bombExplosions.push({ group, life: isNuke ? 3.0 : 1.6 });
+    }
+
+    function spawnBigExplosion(pos) {
+        const group = new THREE.Group();
+        for (let i = 0; i < 30; i++) {
+            const size = 5 + Math.random() * 5;
+            const geo = new THREE.SphereGeometry(size, 10, 8);
+            const mat = new THREE.MeshBasicMaterial({
+                color: (i % 2 === 0) ? 0xffdd66 : 0xff6633,
+                transparent: true,
+                opacity: 1
+            });
+            const p = new THREE.Mesh(geo, mat);
+            p.position.copy(pos);
+            const dir = new THREE.Vector3(
+                (Math.random() - 0.5),
+                Math.random(),
+                (Math.random() - 0.5)
+            ).normalize();
+            const spd = 120 + Math.random() * 120;
+            p.userData.vel = dir.multiplyScalar(spd);
+            group.add(p);
+        }
+        scene.add(group);
+        bombExplosions.push({ group, life: 2.0 });
+    }
+
+    function updateBombExplosions(dt) {
+        for (let i = bombExplosions.length - 1; i >= 0; i--) {
+            const e = bombExplosions[i];
+            e.life -= dt;
+            e.group.children.forEach(p => {
+                p.position.addScaledVector(p.userData.vel, dt);
+                p.material.opacity -= 0.6 * dt;
+                if (p.material.opacity < 0) p.material.opacity = 0;
+                p.scale.multiplyScalar(1 + 1.0 * dt);
+            });
+            if (e.life <= 0) {
+                scene.remove(e.group);
+                bombExplosions.splice(i, 1);
+            }
+        }
+    }
+
     // JOYSTICK (sadece yukarı-aşağı)
     function onJoystickDown(e) {
         e.preventDefault();
@@ -1322,7 +1655,6 @@
         joystick.yValue = -ny / maxR;
     }
 
-    // THROTTLE
     function onThrottleDown(e) {
         e.preventDefault();
         throttleTouchActive = true;
