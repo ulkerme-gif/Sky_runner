@@ -274,7 +274,6 @@
             }
         }
 
-        /* Başlangıç / Market / Hesap ekranları */
         .overlay-screen {
             position: absolute;
             inset: 0;
@@ -659,16 +658,13 @@
     let crashTimer = 0;
     let explosion = null;
 
-    // Oyun / market / hesap
     let gameRunning = false;
     let inMarket = false;
     let currentUser = null;
 
-    // Puan sistemi
     let coins = 0;
     let coinAccumulator = 0;
 
-    // Market upgrade durumları
     let upgradeEngine = false;
     let upgradeHP = false;
     let upgradeSkin = false;
@@ -713,7 +709,6 @@
     const btnNuke = document.getElementById('btn-nuke');
     const btnOpenMarketGame = document.getElementById('btn-open-market');
 
-    // Overlay elemanları
     const authScreen = document.getElementById('auth-screen');
     const authUsernameInput = document.getElementById('auth-username');
     const btnAuthCreate = document.getElementById('btn-auth-create');
@@ -859,11 +854,10 @@
             fireBomb("nuke");
         });
 
-        // Başlangıç / Market / Hesap butonları
         btnStartGame.addEventListener('click', () => {
             startScreen.style.display = 'none';
             gameRunning = true;
-            resetGame(); // temiz kalkış
+            resetGame();
             saveProfile();
         });
 
@@ -889,7 +883,6 @@
             });
         });
 
-        // Hesap ekranı butonları
         btnAuthCreate.addEventListener('click', () => handleAuth(true));
         btnAuthLogin.addEventListener('click', () => handleAuth(false));
 
@@ -913,9 +906,7 @@
         try {
             if (!window.localStorage) return;
             window.localStorage.setItem(key, value);
-        } catch (e) {
-            // sessizce yoksay
-        }
+        } catch (e) { }
     }
 
     function saveProfile() {
@@ -934,7 +925,6 @@
     function loadProfile(username) {
         const raw = safeGetItem(STORAGE_PREFIX + username);
         if (!raw) {
-            // Yeni hesap
             coins = 0;
             upgradeEngine = false;
             upgradeHP = false;
@@ -963,7 +953,6 @@
             updateScoreHud();
             updateMarketCoins();
         } catch (e) {
-            // bozuk kayıt ise sıfırla
             coins = 0;
             upgradeEngine = false;
             upgradeHP = false;
@@ -1184,6 +1173,7 @@
         createImprovedAirport(enemyAirportCenter, true);
     }
 
+    // FIX: pist ve apron artık collider değil, bu yüzden oyuna girince direkt crash yok
     function createImprovedAirport(center, isEnemy) {
         const airportGroup = new THREE.Group();
 
@@ -1197,7 +1187,8 @@
         runway.position.set(center.x, 0.02, center.z);
         airportGroup.add(runway);
         runway.userData.radius = 220;
-        colliders.push(runway);
+        // Pistte taxi/kalkış yaptığın için runway'i collider listesine eklemiyoruz
+        // colliders.push(runway);
 
         const stripeGeo = new THREE.PlaneGeometry(12, 2);
         const stripeMat = new THREE.MeshPhongMaterial({
@@ -1221,7 +1212,8 @@
         apron.position.set(center.x - 140, 0.021, center.z - 60);
         airportGroup.add(apron);
         apron.userData.radius = 130;
-        colliders.push(apron);
+        // Apron da yerde gezdiğin alan, çarpışma saymıyoruz
+        // colliders.push(apron);
 
         const terminalGeo = new THREE.BoxGeometry(70, 25, 40);
         const terminalMat = new THREE.MeshPhongMaterial({
@@ -1825,7 +1817,6 @@
         });
     }
 
-    // FÜZE
     function fireMissile() {
         if (crashed || !gameRunning || inMarket) return;
         if (missileCooldown > 0.0) return;
@@ -1982,7 +1973,6 @@
         }
     }
 
-    // BOMBA & NÜK
     function fireBomb(type) {
         if (crashed || !gameRunning || inMarket) return;
 
@@ -2170,7 +2160,6 @@
         }
     }
 
-    // JOYSTICK (sadece yukarı-aşağı)
     function onJoystickDown(e) {
         e.preventDefault();
         joystick.active = true;
