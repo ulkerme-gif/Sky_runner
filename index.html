@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Tablet FlightSim 3D - Big Map, Ground & Controls</title>
+    <title>Tablet FlightSim 3D - Stall, Füze, Big Map</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -133,7 +133,7 @@
             display: none;
         }
 
-        /* JOYSTICK (Artık sadece yukarı-aşağı) */
+        /* JOYSTICK (sadece yukarı-aşağı) */
         .joystick-area {
             position: absolute;
             bottom: 110px;
@@ -160,7 +160,7 @@
             box-shadow: 0 0 18px rgba(0, 255, 255, 0.8);
         }
 
-        /* BUTONLAR (Sağa sola dönüş ayrı) */
+        /* BUTONLAR (TURN + MISSILE) */
         .button-cluster {
             position: absolute;
             bottom: 110px;
@@ -298,12 +298,13 @@
 
         <div class="hud-help">
             Joystick: <b>sadece yukarı / aşağı (Pitch)</b><br/>
-            Sağ TURN ◀▶: <b>Sağa / sola dönüş + hafif yatış</b><br/>
+            TURN ◀▶: <b>Sağa / sola dönüş + hafif yatış</b><br/>
+            MISSILE: <b>Burnundan füze at</b><br/>
             Sağ dikey bar: <b>Gaz</b><br/>
             GÖRÜNÜM: kokpit / dış<br/>
             GEAR: iniş takımı (kapalı inersen patlama 💥)<br/>
             ENGINE: motor aç / kapa<br/>
-            <b>Stall:</b> Yavaş + burnu çok kaldırırsan düşersin<br/>
+            <b>Stall:</b> Yavaş + burnu çok kaldırırsan, ama burnu indirip hızlanınca kurtulabilirsin<br/>
             <b>Çarpışma:</b> Dağ / bina / yere sert darbe = patlama 💥
         </div>
 
@@ -346,6 +347,10 @@
                 <span class="btn-label">ENGINE</span>
                 <span class="btn-sub" id="engine-status">On</span>
             </button>
+            <button class="btn" id="btn-missile">
+                <span class="btn-label">MISSILE</span>
+                <span class="btn-sub">Füze Ateşle</span>
+            </button>
         </div>
     </div>
 </div>
@@ -363,7 +368,6 @@
     let pitch = 0;
     let roll = 0;
 
-    // Başlangıç: pist, hız 0
     let speed = 0;
     let throttle = 0;
     let minSpeed = 0;
@@ -375,8 +379,15 @@
     let landingGearDown = true;
     let engineOn = true;
     const gearMeshes = [];
-    const colliders = [];       // binalar + dağlar
-    const WORLD_RADIUS = 14000; // daha büyük harita
+    const colliders = [];
+    const WORLD_RADIUS = 14000;
+
+    // Füze
+    const missiles = [];
+    let missileCooldown = 0;
+
+    // Küçük füze patlamaları
+    const missileExplosions = [];
 
     // stall / crash durumları
     let stalled = false;
@@ -416,6 +427,7 @@
     const btnView = document.getElementById('btn-view');
     const btnGear = document.getElementById('btn-gear');
     const btnEngine = document.getElementById('btn-engine');
+    const btnMissile = document.getElementById('btn-missile');
 
     let throttleTouchActive = false;
 
@@ -456,7 +468,6 @@
         const sky = new THREE.Mesh(skyGeo, skyMat);
         scene.add(sky);
 
-        // Büyük zemin
         const groundGeo = new THREE.PlaneGeometry(40000, 40000, 1, 1);
         const groundMat = new THREE.MeshPhongMaterial({
             color: 0x356f3a,
@@ -468,7 +479,7 @@
         scene.add(ground);
 
         createRunway();
-        createGroundPatches();   // yer grafikleri
+        createGroundPatches();
         createCityBlocks();
         createMountains();
         createClouds();
@@ -532,6 +543,11 @@
                 throttle = 0;
                 updateThrottleThumb();
             }
+        });
+
+        btnMissile.addEventListener('click', e => {
+            e.preventDefault();
+            fireMissile();
         });
 
         updateThrottleThumb();
@@ -688,7 +704,6 @@
         planeGroup.add(noseWheel);
         gearMeshes.push(noseWheel);
 
-        // Pist başı
         planeGroup.position.set(0, 5, -180);
 
         plane = planeGroup;
@@ -733,7 +748,6 @@
         scene.add(taxi);
     }
 
-    // Yer patch'leri (tarlalar, çim desenleri)
     function createGroundPatches() {
         const patchGroup = new THREE.Group();
         const colors = [
@@ -744,7 +758,6 @@
         const step = 500;
         for (let x = -7000; x <= 7000; x += step) {
             for (let z = -7000; z <= 7000; z += step) {
-                // Pist ve taxiway etrafını boş bırak
                 if (Math.abs(x) < 200 && Math.abs(z) < 300) continue;
                 if (Math.abs(x + 90) < 200 && Math.abs(z + 80) < 200) continue;
 
@@ -780,7 +793,6 @@
             });
             const b = new THREE.Mesh(geo, mat);
 
-            // Şehri biraz uzağa taşı
             const ring = 2500 + Math.random() * 2500;
             const angle = Math.random() * Math.PI * 2;
             b.position.set(
@@ -790,7 +802,7 @@
             );
 
             cityGroup.add(b);
-            colliders.push(b); // çarpışma
+            colliders.push(b);
         }
 
         scene.add(cityGroup);
@@ -862,7 +874,7 @@
             cloudGroup.add(cloud);
         }
 
-        scene.add(cloudGroup); // bulutlar çarpışma yok
+        scene.add(cloudGroup);
     }
 
     function onWindowResize() {
@@ -883,6 +895,8 @@
         } else {
             updateCrash(dt);
         }
+        updateMissiles(dt);
+        updateMissileExplosions(dt);
         updateHUD();
 
         renderer.render(scene, camera);
@@ -894,7 +908,7 @@
 
         const altitude = plane.position.y;
 
-        // STALL KONTROLÜ
+        // STALL KONTROLÜ (daha yumuşak)
         if (!stalled) {
             if (speed < 70 && pitch > 0.35 && altitude > 40) {
                 stalled = true;
@@ -903,25 +917,37 @@
             }
         } else {
             stallTimer += dt;
-            pitch -= 0.7 * dt;
-            roll += (Math.random() - 0.5) * 1.8 * dt;
-            speed -= 15 * dt;
-            if (speed < 20) speed = 20;
+            // stall'da daha yumuşak savrulma
+            pitch -= 0.45 * dt;
+            roll += (Math.random() - 0.5) * 1.0 * dt;
+
+            // burnu aşağı verirsen hızlan, stall'dan çık
+            if (pitch < 0) {
+                speed += 25 * dt;
+            } else {
+                speed -= 10 * dt;
+            }
+
+            if (speed < 40) speed = 40;
+            // Kurtulma şartı: hız geri geldi + burun çok dik değil
+            if (speed > 90 && pitch < 0.15) {
+                stalled = false;
+                hideMessage();
+            }
         }
 
         // Joystick: sadece pitch
         pitch += joystick.yValue * pitchRate * dt;
 
-        // Sağa sola dönüş: ayrı butonlar (yaw + otomatik roll)
+        // Sağa sola dönüş: ayrı butonlar (yaw + daha smooth roll)
         let yawInput = 0;
         if (turnLeftPressed) yawInput -= 1;
         if (turnRightPressed) yawInput += 1;
 
         yaw += yawInput * yawRate * dt;
 
-        // Dönüşte otomatik yatış (roll)
-        const desiredRollFromTurn = -yawInput * 0.6; // sola dönerken sola yat
-        roll += (desiredRollFromTurn - roll) * 4 * dt;
+        const desiredRollFromTurn = -yawInput * 0.6;
+        roll += (desiredRollFromTurn - roll) * 3 * dt;
 
         // Motor
         let accel;
@@ -941,7 +967,6 @@
         const speedMS = speed * 0.52;
         plane.position.addScaledVector(forward, speedMS * dt);
 
-        // Harita sınırı
         const x = plane.position.x;
         const z = plane.position.z;
         const r = Math.sqrt(x*x + z*z);
@@ -951,22 +976,19 @@
             plane.position.z *= s;
         }
 
-        // Yere yakınken hafif düzeltme
         if (altitude > 10) {
-            pitch -= 0.08 * dt;
+            pitch -= 0.06 * dt;
         }
 
-        // Joystick bırakınca roll'ü yavaşça düzelt (sadece dönmüyorsan)
         if (!joystick.active && Math.abs(yawInput) < 0.01) {
-            roll *= (1 - 1.9 * dt);
+            roll *= (1 - 1.5 * dt);
         }
 
-        // İniş takımı açıkken düşük irtifada sürüklenme
         if (landingGearDown && altitude < 60 && speed > 140) {
             speed -= 25 * dt;
         }
 
-        // YER TEMASI & GEAR KONTROLÜ
+        // Yer ve GEAR kontrolü
         if (plane.position.y < 1) {
             plane.position.y = 1;
 
@@ -982,7 +1004,6 @@
 
         plane.setRotationFromEuler(new THREE.Euler(pitch, yaw, roll, 'XYZ'));
 
-        // Dağ / binalarla çarpışma
         checkCollisions();
     }
 
@@ -1082,6 +1103,11 @@
         gearStatusEl.textContent = "Açık";
         updateThrottleThumb();
         updateGearVisibility();
+
+        // füzeleri temizle
+        missiles.forEach(m => scene.remove(m.mesh));
+        missiles.length = 0;
+        missileExplosions.forEach(e => scene.remove(e.group));
     }
 
     function updateCamera(dt) {
@@ -1104,7 +1130,7 @@
             targetLook.copy(plane.position).addScaledVector(forward, 120).addScaledVector(up, 6);
         }
 
-        camera.position.lerp(targetPos, 0.16);
+        camera.position.lerp(targetPos, 0.18);
         camera.lookAt(targetLook);
     }
 
@@ -1115,6 +1141,11 @@
         if (!stalled && hudMessageEl.textContent === "STALL!") {
             hideMessage();
         }
+
+        if (missileCooldown > 0) {
+            missileCooldown -= 0.02;
+            if (missileCooldown < 0) missileCooldown = 0;
+        }
     }
 
     function showMessage(text) {
@@ -1124,6 +1155,128 @@
 
     function hideMessage() {
         hudMessageEl.style.display = "none";
+    }
+
+    // Füze atma
+    function fireMissile() {
+        if (crashed) return;
+        if (missileCooldown > 0.0) return; // spam olmasın
+
+        const forward = new THREE.Vector3(0, 0, 1);
+        const up = new THREE.Vector3(0, 1, 0);
+        const q = plane.quaternion.clone();
+        forward.applyQuaternion(q);
+        up.applyQuaternion(q);
+
+        const missileGeo = new THREE.CylinderGeometry(0.18, 0.25, 3.5, 10);
+        const missileMat = new THREE.MeshPhongMaterial({
+            color: 0xff4444,
+            emissive: 0x330000,
+            shininess: 40
+        });
+        const mesh = new THREE.Mesh(missileGeo, missileMat);
+        mesh.rotation.z = Math.PI / 2;
+        mesh.quaternion.copy(q);
+
+        const startPos = new THREE.Vector3()
+            .copy(plane.position)
+            .addScaledVector(forward, 7)
+            .addScaledVector(up, 0.2);
+        mesh.position.copy(startPos);
+
+        scene.add(mesh);
+
+        missiles.push({
+            mesh,
+            vel: forward.clone().multiplyScalar(520),
+            life: 5
+        });
+
+        missileCooldown = 0.4;
+    }
+
+    function updateMissiles(dt) {
+        for (let i = missiles.length - 1; i >= 0; i--) {
+            const m = missiles[i];
+            m.mesh.position.addScaledVector(m.vel, dt);
+            m.life -= dt;
+
+            // Harita dışına veya süre bitince sil
+            const p = m.mesh.position;
+            const r = Math.sqrt(p.x*p.x + p.z*p.z);
+            if (m.life <= 0 || r > WORLD_RADIUS * 1.1 || p.y < 0 || p.y > 6000) {
+                scene.remove(m.mesh);
+                missiles.splice(i, 1);
+                continue;
+            }
+
+            // Füze çarpışması
+            let hitIndex = -1;
+            for (let j = 0; j < colliders.length; j++) {
+                const c = colliders[j];
+                const dx = p.x - c.position.x;
+                const dy = p.y - c.position.y;
+                const dz = p.z - c.position.z;
+                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                const threshold = 80; // füze için daha küçük
+                if (dist < threshold) {
+                    hitIndex = j;
+                    break;
+                }
+            }
+
+            if (hitIndex >= 0) {
+                const hitObj = colliders[hitIndex];
+                spawnMissileExplosion(p.clone());
+                scene.remove(hitObj);
+                colliders.splice(hitIndex, 1);
+
+                scene.remove(m.mesh);
+                missiles.splice(i, 1);
+            }
+        }
+    }
+
+    function spawnMissileExplosion(pos) {
+        const group = new THREE.Group();
+        for (let i = 0; i < 12; i++) {
+            const size = 1 + Math.random() * 1.5;
+            const geo = new THREE.SphereGeometry(size, 8, 6);
+            const mat = new THREE.MeshBasicMaterial({
+                color: (i % 2 === 0) ? 0xffdd66 : 0xff6633,
+                transparent: true,
+                opacity: 1
+            });
+            const p = new THREE.Mesh(geo, mat);
+            p.position.copy(pos);
+            const dir = new THREE.Vector3(
+                (Math.random() - 0.5),
+                Math.random(),
+                (Math.random() - 0.5)
+            ).normalize();
+            const spd = 60 + Math.random() * 60;
+            p.userData.vel = dir.multiplyScalar(spd);
+            group.add(p);
+        }
+        scene.add(group);
+        missileExplosions.push({ group, life: 1.2 });
+    }
+
+    function updateMissileExplosions(dt) {
+        for (let i = missileExplosions.length - 1; i >= 0; i--) {
+            const e = missileExplosions[i];
+            e.life -= dt;
+            e.group.children.forEach(p => {
+                p.position.addScaledVector(p.userData.vel, dt);
+                p.material.opacity -= 0.9 * dt;
+                if (p.material.opacity < 0) p.material.opacity = 0;
+                p.scale.multiplyScalar(1 + 1.2 * dt);
+            });
+            if (e.life <= 0) {
+                scene.remove(e.group);
+                missileExplosions.splice(i, 1);
+            }
+        }
     }
 
     // JOYSTICK (sadece yukarı-aşağı)
@@ -1156,7 +1309,6 @@
         const dy = cy - joystick.startY;
         const maxR = joystick.maxRadius;
 
-        // Sadece dikey hareket
         let ny = dy;
         if (Math.abs(ny) > maxR) {
             ny = maxR * Math.sign(ny);
@@ -1166,8 +1318,8 @@
         joystickStick.style.transform =
             `translate(calc(-50%), calc(-50% + ${ny}px))`;
 
-        joystick.xValue = 0;               // sağa sola hiç etki yok
-        joystick.yValue = -ny / maxR;      // sadece pitch
+        joystick.xValue = 0;
+        joystick.yValue = -ny / maxR;
     }
 
     // THROTTLE
