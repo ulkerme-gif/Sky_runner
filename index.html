@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Tablet FlightSim 3D</title>
+    <title>Tablet FlightSim 3D - Pro Görsel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -26,7 +26,7 @@
             width: 100vw;
             height: 100vh;
             overflow: hidden;
-            background: radial-gradient(circle at 50% 20%, #4ea9ff 0, #1c2a3d 40%, #050810 100%);
+            background: radial-gradient(circle at 50% 15%, #7dd4ff 0, #264a7f 45%, #050810 100%);
         }
 
         canvas {
@@ -35,7 +35,7 @@
             width: 100%;
             height: 100%;
             display: block;
-            z-index: 0; /* OYUN ARKADA */
+            z-index: 0; /* Oyun arkada */
         }
 
         /* HUD GENEL */
@@ -44,7 +44,7 @@
             inset: 0;
             pointer-events: none;
             color: #0ff;
-            z-index: 1; /* KONTROLLER ÖNDE */
+            z-index: 1; /* Kontroller önde */
         }
 
         .hud-top {
@@ -60,12 +60,13 @@
         }
 
         .hud-box {
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(0, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(0, 255, 255, 0.6);
             border-radius: 8px;
             padding: 6px 8px;
             min-width: 80px;
             text-align: center;
+            backdrop-filter: blur(4px);
         }
 
         .hud-title {
@@ -90,15 +91,15 @@
             margin-left: -18px;
             margin-top: -18px;
             border-radius: 50%;
-            border: 2px solid rgba(0, 255, 255, 0.7);
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+            border: 2px solid rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
         }
 
         .hud-center::before,
         .hud-center::after {
             content: "";
             position: absolute;
-            background: rgba(0, 255, 255, 0.7);
+            background: rgba(0, 255, 255, 0.9);
         }
 
         .hud-center::before {
@@ -125,8 +126,8 @@
             width: 160px;
             height: 160px;
             border-radius: 50%;
-            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.12), rgba(0, 0, 0, 0.8));
-            border: 1px solid rgba(0, 255, 255, 0.3);
+            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.2), rgba(0, 0, 0, 0.9));
+            border: 1px solid rgba(0, 255, 255, 0.4);
             pointer-events: auto;
             touch-action: none;
         }
@@ -136,12 +137,12 @@
             width: 64px;
             height: 64px;
             border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), rgba(0,255,255,0.7));
-            border: 2px solid rgba(0, 255, 255, 0.9);
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(0,255,255,0.9));
+            border: 2px solid rgba(0, 255, 255, 1);
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 16px rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.8);
         }
 
         /* SAĞ ALT BUTONLAR */
@@ -160,20 +161,20 @@
             padding: 10px 6px;
             border-radius: 10px;
             border: 1px solid rgba(0, 255, 255, 0.6);
-            background: radial-gradient(circle at 50% 10%, rgba(255,255,255,0.28), rgba(0,0,0,0.9));
+            background: radial-gradient(circle at 50% 10%, rgba(255,255,255,0.3), rgba(0,0,0,0.95));
             color: #0ff;
             font-size: 11px;
             text-align: center;
             font-weight: 600;
             text-shadow: 0 0 5px #000;
-            box-shadow: 0 0 12px rgba(0,255,255,0.5);
+            box-shadow: 0 0 12px rgba(0,255,255,0.7);
             touch-action: manipulation;
         }
 
         .btn:active {
             transform: scale(0.95);
-            box-shadow: 0 0 4px rgba(0,255,255,0.7) inset;
-            background: radial-gradient(circle at 50% 90%, rgba(0,255,255,0.45), rgba(0,0,0,0.9));
+            box-shadow: 0 0 4px rgba(0,255,255,0.9) inset;
+            background: radial-gradient(circle at 50% 90%, rgba(0,255,255,0.55), rgba(0,0,0,0.95));
         }
 
         .btn-label {
@@ -196,7 +197,7 @@
             margin-top: -90px;
             border-radius: 20px;
             border: 1px solid rgba(0,255,255,0.5);
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,255,255,0.25));
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(0,255,255,0.35));
             pointer-events: auto;
             touch-action: none;
             display: flex;
@@ -209,7 +210,7 @@
             width: 8px;
             height: 140px;
             border-radius: 6px;
-            background: linear-gradient(to bottom, #0ff, #044);
+            background: linear-gradient(to bottom, #0ff, #023);
         }
 
         .throttle-thumb {
@@ -219,9 +220,9 @@
             height: 10px;
             margin-left: -13px;
             border-radius: 8px;
-            background: rgba(0,0,0,0.9);
-            border: 1px solid rgba(0,255,255,0.9);
-            box-shadow: 0 0 10px rgba(0,255,255,0.6);
+            background: rgba(0,0,0,0.95);
+            border: 1px solid rgba(0,255,255,1);
+            box-shadow: 0 0 10px rgba(0,255,255,0.9);
         }
 
         .throttle-label {
@@ -234,19 +235,20 @@
             text-shadow: 0 0 3px #000;
         }
 
-        /* SOL ÜST YARDIM */
+        /* SOL TARAF YARDIM */
         .hud-help {
             position: absolute;
             left: 10px;
             bottom: 190px;
             font-size: 10px;
-            max-width: 180px;
-            color: #9cf;
+            max-width: 200px;
+            color: #cfe9ff;
             text-shadow: 0 0 4px #000;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.55);
             padding: 6px 8px;
             border-radius: 8px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            backdrop-filter: blur(3px);
         }
 
         @media (max-width: 800px) {
@@ -283,10 +285,10 @@
         <div class="hud-center"></div>
 
         <div class="hud-help">
-            Sol yuvarlak joystick: <b>Pitch/Roll</b> <br/>
-            Sağ dikey bar: <b>Gaz</b> <br/>
-            Yaw L/R: yön dümeni <br/>
-            Görünüm: kokpit / dış kamera
+            Sol yuvarlak joystick: <b>Pitch / Roll</b><br/>
+            Sağ dikey bar: <b>Gaz</b><br/>
+            YAW ◀▶: yön dümeni<br/>
+            GÖRÜNÜM: kokpit / dış kamera
         </div>
 
         <!-- Joystick -->
@@ -337,10 +339,10 @@
     let yaw = 0;
     let pitch = 0;
     let roll = 0;
-    let speed = 60;        // knots benzeri
-    let throttle = 0.5;    // 0-1
-    let minSpeed = 30;
-    let maxSpeed = 180;
+    let speed = 90;        // başlangıç hızı
+    let throttle = 0.6;    // 0-1
+    let minSpeed = 40;
+    let maxSpeed = 220;
     let yawInput = 0;
 
     const joystick = {
@@ -378,112 +380,69 @@
 
     function init() {
         scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x203040, 0.0015);
+
+        // Hafif sis – ufka doğru gerçekçi görünüm
+        scene.fog = new THREE.FogExp2(0x7bb4ff, 0.00045);
 
         camera = new THREE.PerspectiveCamera(
-            60,
+            68,
             container.clientWidth / container.clientHeight,
             0.1,
-            20000
+            30000
         );
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setClearColor(0x050a12, 1);
+        renderer.setClearColor(0x6fa8ff, 1);
         container.appendChild(renderer.domElement);
 
         clock = new THREE.Clock();
 
         // IŞIKLAR
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.55);
         scene.add(ambient);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(200, 300, 100);
-        scene.add(dirLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.1);
+        sunLight.position.set(5000, 8000, 2000);
+        sunLight.castShadow = false;
+        scene.add(sunLight);
 
-        // ZEMİN
-        const groundGeo = new THREE.PlaneGeometry(20000, 20000, 50, 50);
+        // GÖKYÜZÜ KUBBESİ
+        const skyGeo = new THREE.SphereGeometry(15000, 32, 32);
+        const skyMat = new THREE.MeshBasicMaterial({
+            color: 0x7fc8ff,
+            side: THREE.BackSide
+        });
+        const sky = new THREE.Mesh(skyGeo, skyMat);
+        scene.add(sky);
+
+        // ZEMİN (daha yumuşak renk geçişleri)
+        const groundGeo = new THREE.PlaneGeometry(25000, 25000, 1, 1);
         const groundMat = new THREE.MeshPhongMaterial({
-            color: 0x0f4c2a,
-            shininess: 10,
-            wireframe: false
+            color: 0x2f7f4a,
+            shininess: 8
         });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
+        ground.position.y = 0;
         scene.add(ground);
 
-        const grid = new THREE.GridHelper(20000, 200, 0x224422, 0x113311);
-        grid.position.y = 0.01;
-        scene.add(grid);
+        // RUNWAY (pist)
+        createRunway();
 
-        // UÇAK MODELİ (BASİT)
-        const planeGroup = new THREE.Group();
+        // BASİT ŞEHİR BİNALARI
+        createCityBlocks();
 
-        const bodyGeo = new THREE.BoxGeometry(3, 1, 10);
-        const bodyMat = new THREE.MeshPhongMaterial({
-            color: 0xcccccc,
-            emissive: 0x111111
-        });
-        const body = new THREE.Mesh(bodyGeo, bodyMat);
-        body.position.set(0, 0, 0);
-        planeGroup.add(body);
+        // DAĞLAR
+        createMountains();
 
-        const noseGeo = new THREE.ConeGeometry(1.2, 3, 16);
-        const noseMat = new THREE.MeshPhongMaterial({
-            color: 0x8888ff,
-            emissive: 0x111133
-        });
-        const nose = new THREE.Mesh(noseGeo, noseMat);
-        nose.rotation.x = Math.PI / 2;
-        nose.position.set(0, 0, 6.5);
-        planeGroup.add(nose);
+        // BULUTLAR
+        createClouds();
 
-        const tailGeo = new THREE.BoxGeometry(1, 1.5, 2.5);
-        const tailMat = new THREE.MeshPhongMaterial({
-            color: 0xcccccc,
-            emissive: 0x111111
-        });
-        const tail = new THREE.Mesh(tailGeo, tailMat);
-        tail.position.set(0, 0.5, -5.5);
-        planeGroup.add(tail);
-
-        const wingGeo = new THREE.BoxGeometry(14, 0.3, 3.5);
-        const wingMat = new THREE.MeshPhongMaterial({
-            color: 0x444444,
-            emissive: 0x111111,
-            transparent: true,
-            opacity: 0.85
-        });
-        const wing = new THREE.Mesh(wingGeo, wingMat);
-        wing.position.set(0, -0.1, 0);
-        planeGroup.add(wing);
-
-        const vFinGeo = new THREE.BoxGeometry(0.4, 2.5, 1.6);
-        const vFinMat = new THREE.MeshPhongMaterial({
-            color: 0x444444,
-            emissive: 0x111111
-        });
-        const fin = new THREE.Mesh(vFinGeo, vFinMat);
-        fin.position.set(0, 1.5, -6);
-        planeGroup.add(fin);
-
-        const cockpitGeo = new THREE.SphereGeometry(1.3, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2);
-        const cockpitMat = new THREE.MeshPhongMaterial({
-            color: 0x66aaff,
-            emissive: 0x000011,
-            transparent: true,
-            opacity: 0.7
-        });
-        const cockpit = new THREE.Mesh(cockpitGeo, cockpitMat);
-        cockpit.position.set(0, 0.7, 1.5);
-        planeGroup.add(cockpit);
-
-        planeGroup.position.set(0, 300, 0);
-        plane = planeGroup;
-        scene.add(plane);
+        // UÇAK MODELİ
+        createPlane();
 
         // KAMERA BAŞLANGIÇ
         updateCamera(1 / 60);
@@ -503,7 +462,7 @@
         window.addEventListener('pointerup', onThrottleUp);
         window.addEventListener('pointercancel', onThrottleUp);
 
-        // Butonlar - yaw
+        // Yaw butonları
         btnYawLeft.addEventListener('pointerdown', function(e) {
             e.preventDefault();
             yawLeftPressed = true;
@@ -550,6 +509,256 @@
         updateThrottleThumb();
     }
 
+    function createPlane() {
+        const planeGroup = new THREE.Group();
+
+        // Gövde
+        const bodyGeo = new THREE.CapsuleGeometry(1.2, 7, 8, 16);
+        const bodyMat = new THREE.MeshPhongMaterial({
+            color: 0xd9d9d9,
+            emissive: 0x111111,
+            shininess: 30
+        });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.rotation.x = Math.PI / 2;
+        planeGroup.add(body);
+
+        // Burun
+        const noseGeo = new THREE.ConeGeometry(1.2, 2.4, 24);
+        const noseMat = new THREE.MeshPhongMaterial({
+            color: 0x3366ff,
+            emissive: 0x111133,
+            shininess: 40
+        });
+        const nose = new THREE.Mesh(noseGeo, noseMat);
+        nose.rotation.x = Math.PI / 2;
+        nose.position.set(0, 0, 5);
+        planeGroup.add(nose);
+
+        // Kuyruk gövde
+        const tailGeo = new THREE.BoxGeometry(0.9, 1.6, 2.2);
+        const tailMat = new THREE.MeshPhongMaterial({
+            color: 0xd9d9d9,
+            emissive: 0x111111
+        });
+        const tail = new THREE.Mesh(tailGeo, tailMat);
+        tail.position.set(0, 0.4, -4.8);
+        planeGroup.add(tail);
+
+        // Kanatlar
+        const wingGeo = new THREE.BoxGeometry(13, 0.25, 3.2);
+        const wingMat = new THREE.MeshPhongMaterial({
+            color: 0x444b55,
+            emissive: 0x111111,
+            shininess: 20
+        });
+        const wing = new THREE.Mesh(wingGeo, wingMat);
+        wing.position.set(0, -0.1, -0.2);
+        planeGroup.add(wing);
+
+        // Wingletler
+        const wingletGeo = new THREE.BoxGeometry(0.4, 1.2, 1);
+        const wingletMat = new THREE.MeshPhongMaterial({
+            color: 0x3366ff,
+            emissive: 0x000022
+        });
+        const wingletL = new THREE.Mesh(wingletGeo, wingletMat);
+        wingletL.position.set(-6.3, 0.5, -0.1);
+        planeGroup.add(wingletL);
+
+        const wingletR = wingletL.clone();
+        wingletR.position.x = 6.3;
+        planeGroup.add(wingletR);
+
+        // Dikey kuyruk
+        const vFinGeo = new THREE.BoxGeometry(0.45, 2.4, 1.5);
+        const vFinMat = new THREE.MeshPhongMaterial({
+            color: 0x444b55,
+            emissive: 0x111111
+        });
+        const vFin = new THREE.Mesh(vFinGeo, vFinMat);
+        vFin.position.set(0, 1.6, -5.2);
+        planeGroup.add(vFin);
+
+        // Yatay kuyruk
+        const hFinGeo = new THREE.BoxGeometry(4.5, 0.2, 1.2);
+        const hFinMat = new THREE.MeshPhongMaterial({
+            color: 0x444b55,
+            emissive: 0x111111
+        });
+        const hFin = new THREE.Mesh(hFinGeo, hFinMat);
+        hFin.position.set(0, 0.3, -5.3);
+        planeGroup.add(hFin);
+
+        // Kokpit camı
+        const cockpitGeo = new THREE.SphereGeometry(1.4, 20, 14, 0, Math.PI * 2, 0, Math.PI / 2);
+        const cockpitMat = new THREE.MeshPhongMaterial({
+            color: 0x66aaff,
+            emissive: 0x00001a,
+            transparent: true,
+            opacity: 0.75,
+            shininess: 80
+        });
+        const cockpit = new THREE.Mesh(cockpitGeo, cockpitMat);
+        cockpit.position.set(0, 0.8, 1.8);
+        planeGroup.add(cockpit);
+
+        // Motorlar
+        const engineGeo = new THREE.CylinderGeometry(0.7, 0.7, 2.2, 16);
+        const engineMat = new THREE.MeshPhongMaterial({
+            color: 0x555555,
+            emissive: 0x141414,
+            shininess: 25
+        });
+        const engineL = new THREE.Mesh(engineGeo, engineMat);
+        engineL.rotation.z = Math.PI / 2;
+        engineL.position.set(-3.8, -0.7, -0.6);
+        planeGroup.add(engineL);
+
+        const engineR = engineL.clone();
+        engineR.position.x = 3.8;
+        planeGroup.add(engineR);
+
+        planeGroup.position.set(0, 350, -2000);
+        plane = planeGroup;
+        scene.add(plane);
+    }
+
+    function createRunway() {
+        const runwayGeo = new THREE.PlaneGeometry(400, 30);
+        const runwayMat = new THREE.MeshPhongMaterial({
+            color: 0x222428,
+            shininess: 30
+        });
+        const runway = new THREE.Mesh(runwayGeo, runwayMat);
+        runway.rotation.x = -Math.PI / 2;
+        runway.position.set(0, 0.01, 0);
+        scene.add(runway);
+
+        // Pist çizgileri
+        const stripeGeo = new THREE.PlaneGeometry(12, 2);
+        const stripeMat = new THREE.MeshPhongMaterial({
+            color: 0xf5f5f5,
+            emissive: 0x111111,
+            side: THREE.DoubleSide
+        });
+        for (let i = -5; i <= 5; i++) {
+            const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+            stripe.rotation.x = -Math.PI / 2;
+            stripe.position.set(0, 0.02, i * 14);
+            scene.add(stripe);
+        }
+
+        // Apron / taxiway
+        const taxiGeo = new THREE.PlaneGeometry(280, 22);
+        const taxiMat = new THREE.MeshPhongMaterial({
+            color: 0x3b3f45
+        });
+        const taxi = new THREE.Mesh(taxiGeo, taxiMat);
+        taxi.rotation.x = -Math.PI / 2;
+        taxi.position.set(-90, 0.01, -80);
+        scene.add(taxi);
+    }
+
+    function createCityBlocks() {
+        const cityGroup = new THREE.Group();
+        const colors = [0xcccccc, 0x999999, 0x777777, 0xb0c4de];
+
+        for (let i = 0; i < 60; i++) {
+            const w = 20 + Math.random() * 30;
+            const d = 20 + Math.random() * 30;
+            const h = 30 + Math.random() * 120;
+
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const mat = new THREE.MeshPhongMaterial({
+                color: colors[Math.floor(Math.random() * colors.length)],
+                emissive: 0x111111,
+                shininess: 12
+            });
+            const b = new THREE.Mesh(geo, mat);
+
+            const ring = 1200 + Math.random() * 800;
+            const angle = Math.random() * Math.PI * 2;
+            b.position.set(
+                Math.cos(angle) * ring,
+                h / 2,
+                Math.sin(angle) * ring
+            );
+
+            cityGroup.add(b);
+        }
+
+        scene.add(cityGroup);
+    }
+
+    function createMountains() {
+        const mountainGroup = new THREE.Group();
+        const baseColor = 0x35553a;
+
+        for (let i = 0; i < 25; i++) {
+            const radius = 6000 + Math.random() * 4000;
+            const angle = (i / 25) * Math.PI * 2 + Math.random() * 0.2;
+
+            const width = 800 + Math.random() * 1000;
+            const height = 900 + Math.random() * 1200;
+
+            const geo = new THREE.ConeGeometry(width, height, 6);
+            const mat = new THREE.MeshPhongMaterial({
+                color: baseColor + (Math.random() * 0x111111),
+                flatShading: true
+            });
+            const mountain = new THREE.Mesh(geo, mat);
+            mountain.position.set(
+                Math.cos(angle) * radius,
+                height / 2 - 50,
+                Math.sin(angle) * radius
+            );
+            mountain.rotation.y = Math.random() * Math.PI * 2;
+            mountainGroup.add(mountain);
+        }
+
+        scene.add(mountainGroup);
+    }
+
+    function createClouds() {
+        const cloudGroup = new THREE.Group();
+
+        for (let i = 0; i < 45; i++) {
+            const numSpheres = 3 + Math.floor(Math.random() * 3);
+            const cloud = new THREE.Group();
+
+            for (let j = 0; j < numSpheres; j++) {
+                const size = 60 + Math.random() * 40;
+                const geo = new THREE.SphereGeometry(size, 12, 10);
+                const mat = new THREE.MeshPhongMaterial({
+                    color: 0xffffff,
+                    emissive: 0x111111,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const puff = new THREE.Mesh(geo, mat);
+                puff.position.set(
+                    (Math.random() - 0.5) * 120,
+                    (Math.random() - 0.5) * 60,
+                    (Math.random() - 0.5) * 80
+                );
+                cloud.add(puff);
+            }
+
+            const radius = 1200 + Math.random() * 4000;
+            const angle = Math.random() * Math.PI * 2;
+            cloud.position.set(
+                Math.cos(angle) * radius,
+                900 + Math.random() * 600,
+                Math.sin(angle) * radius
+            );
+
+            cloudGroup.add(cloud);
+        }
+
+        scene.add(cloudGroup);
+    }
+
     function onWindowResize() {
         const w = container.clientWidth;
         const h = container.clientHeight;
@@ -560,7 +769,7 @@
 
     function animate() {
         requestAnimationFrame(animate);
-        const dt = Math.min(clock.getDelta(), 0.05); // delta sınırlama
+        const dt = Math.min(clock.getDelta(), 0.05);
 
         updatePhysics(dt);
         updateCamera(dt);
@@ -571,12 +780,12 @@
 
     function updatePhysics(dt) {
         // Joystick değerleri: -1..1
-        const pitchRate = 0.8;  // ne kadar hızlı burnu kaldır/indir
-        const rollRate = 1.2;
-        const yawRate = 0.8;
+        const pitchRate = 0.85;
+        const rollRate  = 1.3;
+        const yawRate   = 0.9;
 
         pitch += joystick.yValue * pitchRate * dt;
-        roll  -= joystick.xValue * rollRate * dt; // sağa ilerleyince sağa yatır
+        roll  -= joystick.xValue * rollRate * dt;
 
         // Yaw butonları
         yawInput = 0;
@@ -585,34 +794,33 @@
         yaw += yawInput * yawRate * dt;
 
         // Hız güncelle
-        const accel = (throttle - 0.5) * 40; // hafif ivme
+        const accel = (throttle - 0.55) * 55;
         speed += accel * dt;
         speed = Math.max(minSpeed, Math.min(maxSpeed, speed));
 
-        // Uçağın yön vektörü
+        // Uçağın ileri yön vektörü
         const forward = new THREE.Vector3(0, 0, 1);
         const q = new THREE.Quaternion()
             .setFromEuler(new THREE.Euler(pitch, yaw, roll, 'XYZ'));
         forward.applyQuaternion(q);
 
-        const speedMS = speed * 0.51; // kabaca knots -> m/s benzetme
+        const speedMS = speed * 0.52;
         plane.position.addScaledVector(forward, speedMS * dt);
 
         // Basit "yer çekimi" ve dengeleme
         const altitude = plane.position.y;
-        if (altitude > 5) {
-            pitch -= 0.1 * dt;
+        if (altitude > 10) {
+            pitch -= 0.08 * dt;
         }
 
         if (!joystick.active) {
-            roll *= (1 - 1.5 * dt); // zamanla roll’u küçült
+            roll *= (1 - 1.9 * dt);
         }
 
-        if (plane.position.y < 3) {
-            plane.position.y = 3;
+        if (plane.position.y < 5) {
+            plane.position.y = 5;
         }
 
-        // Rotasyon uygula
         plane.setRotationFromEuler(new THREE.Euler(pitch, yaw, roll, 'XYZ'));
     }
 
@@ -627,17 +835,16 @@
         let targetLook = new THREE.Vector3();
 
         if (viewMode === 'chase') {
-            const offset = new THREE.Vector3(0, 5, -18).applyQuaternion(q);
+            const offset = new THREE.Vector3(0, 7, -22).applyQuaternion(q);
             targetPos.copy(plane.position).add(offset);
-            targetLook.copy(plane.position).addScaledVector(forward, 50);
+            targetLook.copy(plane.position).addScaledVector(forward, 60);
         } else {
-            const cockpitOffset = new THREE.Vector3(0, 1.3, 3.5).applyQuaternion(q);
+            const cockpitOffset = new THREE.Vector3(0, 1.4, 2.8).applyQuaternion(q);
             targetPos.copy(plane.position).add(cockpitOffset);
-            targetLook.copy(plane.position).addScaledVector(forward, 100).addScaledVector(up, 5);
+            targetLook.copy(plane.position).addScaledVector(forward, 120).addScaledVector(up, 6);
         }
 
-        // Smooth kamera geçişi
-        camera.position.lerp(targetPos, 0.15);
+        camera.position.lerp(targetPos, 0.16);
         camera.lookAt(targetLook);
     }
 
