@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8" />
-    <title>Tablet FlightSim 3D - Crash, Stall & Gear Landing</title>
+    <title>Tablet FlightSim 3D - Big Map, Ground & Controls</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <style>
@@ -133,7 +133,7 @@
             display: none;
         }
 
-        /* JOYSTICK */
+        /* JOYSTICK (Artık sadece yukarı-aşağı) */
         .joystick-area {
             position: absolute;
             bottom: 110px;
@@ -160,7 +160,7 @@
             box-shadow: 0 0 18px rgba(0, 255, 255, 0.8);
         }
 
-        /* BUTONLAR */
+        /* BUTONLAR (Sağa sola dönüş ayrı) */
         .button-cluster {
             position: absolute;
             bottom: 110px;
@@ -254,7 +254,7 @@
             left: 10px;
             bottom: 190px;
             font-size: 10px;
-            max-width: 220px;
+            max-width: 260px;
             color: #cfe9ff;
             text-shadow: 0 0 4px #000;
             background: rgba(0,0,0,0.55);
@@ -297,15 +297,14 @@
         <div class="hud-message" id="hud-message">STALL!</div>
 
         <div class="hud-help">
-            Sol joystick: <b>Pitch / Roll</b><br/>
+            Joystick: <b>sadece yukarı / aşağı (Pitch)</b><br/>
+            Sağ TURN ◀▶: <b>Sağa / sola dönüş + hafif yatış</b><br/>
             Sağ dikey bar: <b>Gaz</b><br/>
-            YAW ◀▶: yön dümeni<br/>
             GÖRÜNÜM: kokpit / dış<br/>
-            GEAR: iniş takımı<br/>
+            GEAR: iniş takımı (kapalı inersen patlama 💥)<br/>
             ENGINE: motor aç / kapa<br/>
             <b>Stall:</b> Yavaş + burnu çok kaldırırsan düşersin<br/>
-            <b>Çarpışma:</b> Dağ / bina / yere sert darbe = patlama 💥<br/>
-            <b>Yeni:</b> GEAR kapalı inersen = patlama 💥
+            <b>Çarpışma:</b> Dağ / bina / yere sert darbe = patlama 💥
         </div>
 
         <!-- Joystick -->
@@ -323,13 +322,13 @@
 
         <!-- Butonlar -->
         <div class="button-cluster">
-            <button class="btn" id="btn-yaw-left">
-                <span class="btn-label">YAW ◀</span>
-                <span class="btn-sub">Sol</span>
+            <button class="btn" id="btn-turn-left">
+                <span class="btn-label">TURN ◀</span>
+                <span class="btn-sub">Sol Dön</span>
             </button>
-            <button class="btn" id="btn-yaw-right">
-                <span class="btn-label">YAW ▶</span>
-                <span class="btn-sub">Sağ</span>
+            <button class="btn" id="btn-turn-right">
+                <span class="btn-label">TURN ▶</span>
+                <span class="btn-sub">Sağ Dön</span>
             </button>
             <button class="btn" id="btn-level">
                 <span class="btn-label">LEVEL</span>
@@ -364,18 +363,20 @@
     let pitch = 0;
     let roll = 0;
 
-    // Başlangıç: pist başı, hız 0
+    // Başlangıç: pist, hız 0
     let speed = 0;
     let throttle = 0;
     let minSpeed = 0;
     let maxSpeed = 220;
-    let yawInput = 0;
+
+    let turnLeftPressed = false;
+    let turnRightPressed = false;
 
     let landingGearDown = true;
     let engineOn = true;
     const gearMeshes = [];
     const colliders = [];       // binalar + dağlar
-    const WORLD_RADIUS = 8000;  // harita sınırı
+    const WORLD_RADIUS = 14000; // daha büyük harita
 
     // stall / crash durumları
     let stalled = false;
@@ -409,15 +410,13 @@
     const throttleArea = document.getElementById('throttle-area');
     const throttleTrack = document.getElementById('throttle-track');
     const throttleThumb = document.getElementById('throttle-thumb');
-    const btnYawLeft = document.getElementById('btn-yaw-left');
-    const btnYawRight = document.getElementById('btn-yaw-right');
+    const btnTurnLeft = document.getElementById('btn-turn-left');
+    const btnTurnRight = document.getElementById('btn-turn-right');
     const btnLevel = document.getElementById('btn-level');
     const btnView = document.getElementById('btn-view');
     const btnGear = document.getElementById('btn-gear');
     const btnEngine = document.getElementById('btn-engine');
 
-    let yawLeftPressed = false;
-    let yawRightPressed = false;
     let throttleTouchActive = false;
 
     init();
@@ -425,13 +424,13 @@
 
     function init() {
         scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x7bb4ff, 0.00045);
+        scene.fog = new THREE.FogExp2(0x7bb4ff, 0.00035);
 
         camera = new THREE.PerspectiveCamera(
             68,
             container.clientWidth / container.clientHeight,
             0.1,
-            30000
+            40000
         );
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -449,7 +448,7 @@
         sunLight.position.set(5000, 8000, 2000);
         scene.add(sunLight);
 
-        const skyGeo = new THREE.SphereGeometry(15000, 32, 32);
+        const skyGeo = new THREE.SphereGeometry(25000, 32, 32);
         const skyMat = new THREE.MeshBasicMaterial({
             color: 0x7fc8ff,
             side: THREE.BackSide
@@ -457,10 +456,11 @@
         const sky = new THREE.Mesh(skyGeo, skyMat);
         scene.add(sky);
 
-        const groundGeo = new THREE.PlaneGeometry(25000, 25000, 1, 1);
+        // Büyük zemin
+        const groundGeo = new THREE.PlaneGeometry(40000, 40000, 1, 1);
         const groundMat = new THREE.MeshPhongMaterial({
-            color: 0x2f7f4a,
-            shininess: 8
+            color: 0x356f3a,
+            shininess: 6
         });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;
@@ -468,6 +468,7 @@
         scene.add(ground);
 
         createRunway();
+        createGroundPatches();   // yer grafikleri
         createCityBlocks();
         createMountains();
         createClouds();
@@ -487,21 +488,21 @@
         window.addEventListener('pointerup', onThrottleUp);
         window.addEventListener('pointercancel', onThrottleUp);
 
-        btnYawLeft.addEventListener('pointerdown', e => {
-            e.preventDefault(); yawLeftPressed = true;
+        btnTurnLeft.addEventListener('pointerdown', e => {
+            e.preventDefault(); turnLeftPressed = true;
         });
-        btnYawLeft.addEventListener('pointerup', e => {
-            e.preventDefault(); yawLeftPressed = false;
+        btnTurnLeft.addEventListener('pointerup', e => {
+            e.preventDefault(); turnLeftPressed = false;
         });
-        btnYawLeft.addEventListener('pointercancel', () => yawLeftPressed = false);
+        btnTurnLeft.addEventListener('pointercancel', () => turnLeftPressed = false);
 
-        btnYawRight.addEventListener('pointerdown', e => {
-            e.preventDefault(); yawRightPressed = true;
+        btnTurnRight.addEventListener('pointerdown', e => {
+            e.preventDefault(); turnRightPressed = true;
         });
-        btnYawRight.addEventListener('pointerup', e => {
-            e.preventDefault(); yawRightPressed = false;
+        btnTurnRight.addEventListener('pointerup', e => {
+            e.preventDefault(); turnRightPressed = false;
         });
-        btnYawRight.addEventListener('pointercancel', () => yawRightPressed = false);
+        btnTurnRight.addEventListener('pointercancel', () => turnRightPressed = false);
 
         btnLevel.addEventListener('click', e => {
             e.preventDefault();
@@ -732,14 +733,44 @@
         scene.add(taxi);
     }
 
+    // Yer patch'leri (tarlalar, çim desenleri)
+    function createGroundPatches() {
+        const patchGroup = new THREE.Group();
+        const colors = [
+            0x3a7f3a, 0x497f4f, 0x6a8f3f,
+            0xa2a878, 0x7f6f3a
+        ];
+
+        const step = 500;
+        for (let x = -7000; x <= 7000; x += step) {
+            for (let z = -7000; z <= 7000; z += step) {
+                // Pist ve taxiway etrafını boş bırak
+                if (Math.abs(x) < 200 && Math.abs(z) < 300) continue;
+                if (Math.abs(x + 90) < 200 && Math.abs(z + 80) < 200) continue;
+
+                const geo = new THREE.PlaneGeometry(step, step);
+                const mat = new THREE.MeshPhongMaterial({
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    shininess: 4
+                });
+                const tile = new THREE.Mesh(geo, mat);
+                tile.rotation.x = -Math.PI / 2;
+                tile.position.set(x, 0.015, z);
+                patchGroup.add(tile);
+            }
+        }
+
+        scene.add(patchGroup);
+    }
+
     function createCityBlocks() {
         const cityGroup = new THREE.Group();
         const colors = [0xcccccc, 0x999999, 0x777777, 0xb0c4de];
 
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 80; i++) {
             const w = 20 + Math.random() * 30;
             const d = 20 + Math.random() * 30;
-            const h = 30 + Math.random() * 120;
+            const h = 30 + Math.random() * 140;
 
             const geo = new THREE.BoxGeometry(w, h, d);
             const mat = new THREE.MeshPhongMaterial({
@@ -749,7 +780,8 @@
             });
             const b = new THREE.Mesh(geo, mat);
 
-            const ring = 1200 + Math.random() * 800;
+            // Şehri biraz uzağa taşı
+            const ring = 2500 + Math.random() * 2500;
             const angle = Math.random() * Math.PI * 2;
             b.position.set(
                 Math.cos(angle) * ring,
@@ -758,7 +790,7 @@
             );
 
             cityGroup.add(b);
-            colliders.push(b); // binalar çarpışma hedefi
+            colliders.push(b); // çarpışma
         }
 
         scene.add(cityGroup);
@@ -768,12 +800,12 @@
         const mountainGroup = new THREE.Group();
         const baseColor = 0x35553a;
 
-        for (let i = 0; i < 25; i++) {
-            const radius = 6000 + Math.random() * 4000;
-            const angle = (i / 25) * Math.PI * 2 + Math.random() * 0.2;
+        for (let i = 0; i < 30; i++) {
+            const radius = 8000 + Math.random() * 6000;
+            const angle = (i / 30) * Math.PI * 2 + Math.random() * 0.2;
 
-            const width = 800 + Math.random() * 1000;
-            const height = 900 + Math.random() * 1200;
+            const width = 900 + Math.random() * 1200;
+            const height = 1000 + Math.random() * 1500;
 
             const geo = new THREE.ConeGeometry(width, height, 6);
             const mat = new THREE.MeshPhongMaterial({
@@ -788,7 +820,7 @@
             );
             mountain.rotation.y = Math.random() * Math.PI * 2;
             mountainGroup.add(mountain);
-            colliders.push(mountain); // dağlar da çarpışma hedefi
+            colliders.push(mountain);
         }
 
         scene.add(mountainGroup);
@@ -797,7 +829,7 @@
     function createClouds() {
         const cloudGroup = new THREE.Group();
 
-        for (let i = 0; i < 45; i++) {
+        for (let i = 0; i < 50; i++) {
             const numSpheres = 3 + Math.floor(Math.random() * 3);
             const cloud = new THREE.Group();
 
@@ -819,7 +851,7 @@
                 cloud.add(puff);
             }
 
-            const radius = 1200 + Math.random() * 4000;
+            const radius = 2000 + Math.random() * 6000;
             const angle = Math.random() * Math.PI * 2;
             cloud.position.set(
                 Math.cos(angle) * radius,
@@ -830,7 +862,7 @@
             cloudGroup.add(cloud);
         }
 
-        scene.add(cloudGroup); // bulutlar çarpışmaya dahil DEĞİL
+        scene.add(cloudGroup); // bulutlar çarpışma yok
     }
 
     function onWindowResize() {
@@ -858,7 +890,6 @@
 
     function updatePhysics(dt) {
         const pitchRate = 0.85;
-        const rollRate  = 1.3;
         const yawRate   = 0.9;
 
         const altitude = plane.position.y;
@@ -878,14 +909,19 @@
             if (speed < 20) speed = 20;
         }
 
-        // Normal kontrol girdileri
+        // Joystick: sadece pitch
         pitch += joystick.yValue * pitchRate * dt;
-        roll  -= joystick.xValue * rollRate * dt;
 
-        yawInput = 0;
-        if (yawLeftPressed) yawInput -= 1;
-        if (yawRightPressed) yawInput += 1;
+        // Sağa sola dönüş: ayrı butonlar (yaw + otomatik roll)
+        let yawInput = 0;
+        if (turnLeftPressed) yawInput -= 1;
+        if (turnRightPressed) yawInput += 1;
+
         yaw += yawInput * yawRate * dt;
+
+        // Dönüşte otomatik yatış (roll)
+        const desiredRollFromTurn = -yawInput * 0.6; // sola dönerken sola yat
+        roll += (desiredRollFromTurn - roll) * 4 * dt;
 
         // Motor
         let accel;
@@ -915,12 +951,13 @@
             plane.position.z *= s;
         }
 
-        // Yere yakınken burun hafif toparlama
+        // Yere yakınken hafif düzeltme
         if (altitude > 10) {
             pitch -= 0.08 * dt;
         }
 
-        if (!joystick.active) {
+        // Joystick bırakınca roll'ü yavaşça düzelt (sadece dönmüyorsan)
+        if (!joystick.active && Math.abs(yawInput) < 0.01) {
             roll *= (1 - 1.9 * dt);
         }
 
@@ -929,18 +966,15 @@
             speed -= 25 * dt;
         }
 
-        // *** YER TEMASI & GEAR KONTROLÜ (BURASI YENİ DAVRANIŞ) ***
+        // YER TEMASI & GEAR KONTROLÜ
         if (plane.position.y < 1) {
             plane.position.y = 1;
 
             if (!landingGearDown && speed > 20) {
-                // GEAR kapalı iniş → patlama
                 startCrash("Gear up landing");
             } else if (speed > 60) {
-                // İniş takımı açık ama çok hızlı → sert çarpma
                 startCrash("Ground impact");
             } else {
-                // Yumuşak iniş → stall bitsin, mesaj kapansın
                 stalled = false;
                 hideMessage();
             }
@@ -1092,7 +1126,7 @@
         hudMessageEl.style.display = "none";
     }
 
-    // JOYSTICK
+    // JOYSTICK (sadece yukarı-aşağı)
     function onJoystickDown(e) {
         e.preventDefault();
         joystick.active = true;
@@ -1119,24 +1153,21 @@
     }
 
     function moveJoystickStick(cx, cy) {
-        const dx = cx - joystick.startX;
         const dy = cy - joystick.startY;
-        const dist = Math.sqrt(dx*dx + dy*dy);
         const maxR = joystick.maxRadius;
-        let nx = dx;
-        let ny = dy;
 
-        if (dist > maxR) {
-            const ratio = maxR / dist;
-            nx *= ratio;
-            ny *= ratio;
+        // Sadece dikey hareket
+        let ny = dy;
+        if (Math.abs(ny) > maxR) {
+            ny = maxR * Math.sign(ny);
         }
+        const nx = 0;
 
         joystickStick.style.transform =
-            `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
+            `translate(calc(-50%), calc(-50% + ${ny}px))`;
 
-        joystick.xValue = nx / maxR;
-        joystick.yValue = -ny / maxR;
+        joystick.xValue = 0;               // sağa sola hiç etki yok
+        joystick.yValue = -ny / maxR;      // sadece pitch
     }
 
     // THROTTLE
