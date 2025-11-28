@@ -23,8 +23,8 @@
 
         #game-container {
             position: relative;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
             background: radial-gradient(circle at 50% 15%, #7dd4ff 0, #264a7f 45%, #050810 100%);
         }
@@ -449,7 +449,7 @@
         <div class="hud-help">
             Joystick: <b>sadece yukarı / aşağı (Pitch)</b><br/>
             TURN ◀▶: <b>Sağa / sola dönüş + hafif yatış</b><br/>
-            MISSILE: <b>Füze – direkt vurma, LOCK olursa takip eder</b><br/>
+            MISSILE: <b>Füze – direkt vurma</b><br/>
             BOMB: <b>Aşağı bomba</b><br/>
             NUKE: <b>Büyük patlama, geniş alan</b><br/>
             Sağ dikey bar: <b>Gaz</b><br/>
@@ -459,9 +459,11 @@
             MARKET: oyun içi market, puanla upgrade al<br/>
             Rakip uçak: önündeki ikinci havalimanı çevresinde gezen AI uçak<br/>
             Üzerinde <b>kırmızı işaret çubuğu</b> var, kolay görürsün.<br/>
-            <b>PC Klavye:</b> Ok tuşları = pitch/turn, W/S = gaz, Space = füze, B = bomba, N = nuke, V = görünüm, G = gear, E = engine, M = market<br/>
-            <b>Gamepad:</b> Sol çubuk = yön, Sağ tetik = gaz, A = füze<br/>
             <div class="hud-hp" id="hud-hp">Biz: 7 / 7  |  Rakip: 7 / 7</div>
+            <div style="margin-top:4px;font-size:9px;opacity:0.8;">
+                PC kısayolları: W/S = Pitch, A/D = Turn, Space = Missile, B = Bomb, N = Nuke,  
+                G = Gear, V = Görünüm, E = Motor, [ ve ] = Gaz -, +
+            </div>
         </div>
 
         <div class="joystick-area" id="joystick-area">
@@ -549,7 +551,7 @@
             <div class="overlay-info">
                 🎮 <b>Kısa Özet:</b><br/>
                 • Uçtukça <b>puan</b> kazanırsın.<br/>
-                • Puanla marketten <b>Motor Boost</b>, <b>Ek Can</b>, <b>Altın Boya</b> alabilirsin.<br/>
+                • Puanla marketten <b>Motor Boost</b>, <b>Ek Can</b>, <b>Bomba Güçlendirme</b>, <b>Altın Boya</b> alabilirsin.<br/>
                 • İlerleme hesabına kaydedilir.
             </div>
             <div class="overlay-buttons">
@@ -591,6 +593,16 @@
                     </div>
                 </div>
                 <div class="market-item">
+                    <div class="market-item-title">Bomba Güçlendirme (Seviye)</div>
+                    <div class="market-item-desc">
+                        Bombalarının patlama alanını büyütür. Maksimum 3 seviye.
+                    </div>
+                    <div class="market-item-footer">
+                        <div class="market-cost">Maliyet: 70 puan / seviye</div>
+                        <button class="market-buy" data-item="bomb">Satın Al</button>
+                    </div>
+                </div>
+                <div class="market-item">
                     <div class="market-item-title">Altın Boya</div>
                     <div class="market-item-desc">
                         Uçağın altın rengine döner, çok daha havalı görünür ✨
@@ -622,7 +634,6 @@
     const ENEMY_ALT = 450;
     const ENEMY_ORBIT_RADIUS = 800;
     const enemyAirportCenter = new THREE.Vector3(0, 0, 1400);
-
     let enemyAlive = true;
     let enemyRespawnTimer = 0;
 
@@ -636,12 +647,6 @@
 
     let turnLeftPressed = false;
     let turnRightPressed = false;
-
-    // Klavye + gamepad pitch
-    let keyboardPitch = 0;
-    let gamepadPitch = 0;
-    let gamepadYaw = 0;
-    let lastGamepadMissile = false;
 
     let landingGearDown = true;
     let engineOn = true;
@@ -679,6 +684,7 @@
     let upgradeEngine = false;
     let upgradeHP = false;
     let upgradeSkin = false;
+    let bombLevel = 1;   // 1–3 arası, marketten yükseltiliyor
 
     const STORAGE_PREFIX = "TabletFlightSimProfile_";
 
@@ -734,6 +740,12 @@
     const marketBuyButtons = document.querySelectorAll('.market-buy');
 
     let throttleTouchActive = false;
+
+    // Gamepad
+    let prevGamepadButtons = [];
+
+    const MISSILE_HOMING_FOV = 0.94;
+    const MISSILE_HOMING_STRENGTH = 4.0;
 
     init();
     animate();
@@ -806,7 +818,7 @@
         window.addEventListener('pointerup', onThrottleUp);
         window.addEventListener('pointercancel', onThrottleUp);
 
-        // Ekran butonları
+        // Butonlar (mobil)
         btnTurnLeft.addEventListener('pointerdown', e => {
             e.preventDefault(); turnLeftPressed = true;
         });
@@ -831,7 +843,7 @@
 
         btnView.addEventListener('click', e => {
             e.preventDefault();
-            toggleView();
+            toggleViewMode();
         });
 
         btnGear.addEventListener('click', e => {
@@ -891,112 +903,15 @@
         btnAuthCreate.addEventListener('click', () => handleAuth(true));
         btnAuthLogin.addEventListener('click', () => handleAuth(false));
 
-        // KLAVYE KONTROLLERİ
-        document.addEventListener('keydown', e => {
-            // toggle tarzı tuşlarda repeat'i engelle
-            if (e.repeat) return;
-
-            switch (e.code) {
-                case 'ArrowUp':
-                    keyboardPitch = 1;
-                    break;
-                case 'ArrowDown':
-                    keyboardPitch = -1;
-                    break;
-                case 'ArrowLeft':
-                    turnLeftPressed = true;
-                    break;
-                case 'ArrowRight':
-                    turnRightPressed = true;
-                    break;
-                case 'KeyW':
-                    if (engineOn) {
-                        throttle = Math.min(1, throttle + 0.08);
-                        updateThrottleThumb();
-                    }
-                    break;
-                case 'KeyS':
-                    if (engineOn) {
-                        throttle = Math.max(0, throttle - 0.08);
-                        updateThrottleThumb();
-                    }
-                    break;
-                case 'Space':
-                    fireMissile();
-                    break;
-                case 'KeyB':
-                    fireBomb('bomb');
-                    break;
-                case 'KeyN':
-                    fireBomb('nuke');
-                    break;
-                case 'KeyV':
-                    toggleView();
-                    break;
-                case 'KeyG':
-                    toggleGear();
-                    break;
-                case 'KeyE':
-                    toggleEngine();
-                    break;
-                case 'KeyM':
-                    if (!inMarket) {
-                        inMarket = true;
-                        marketScreen.style.display = 'flex';
-                        updateMarketCoins();
-                    } else {
-                        inMarket = false;
-                        marketScreen.style.display = 'none';
-                    }
-                    break;
-                case 'KeyL':
-                    pitch = 0;
-                    roll = 0;
-                    break;
-            }
-        });
-
-        document.addEventListener('keyup', e => {
-            switch (e.code) {
-                case 'ArrowUp':
-                case 'ArrowDown':
-                    keyboardPitch = 0;
-                    break;
-                case 'ArrowLeft':
-                    turnLeftPressed = false;
-                    break;
-                case 'ArrowRight':
-                    turnRightPressed = false;
-                    break;
-            }
-        });
+        // PC klavye kontrolleri
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('keyup', onKeyUp);
 
         updateThrottleThumb();
         updateGearVisibility();
         updateHpHud();
         updateMarketCoins();
         updateScoreHud();
-    }
-
-    function toggleView() {
-        viewMode = (viewMode === 'chase') ? 'cockpit' : 'chase';
-        hudModeEl.textContent = (viewMode === 'chase') ? 'DIŞ GÖRÜNÜM' : 'KOKPİT';
-        viewStatusEl.textContent = (viewMode === 'chase') ? 'Dış' : 'Kokpit';
-    }
-
-    function toggleGear() {
-        landingGearDown = !landingGearDown;
-        updateGearVisibility();
-        gearStatusEl.textContent = landingGearDown ? 'Açık' : 'Kapalı';
-    }
-
-    function toggleEngine() {
-        engineOn = !engineOn;
-        engineStatusEl.textContent = engineOn ? 'On' : 'Off';
-        if (!engineOn) {
-            throttle = 0;
-            updateThrottleThumb();
-        }
     }
 
     function safeGetItem(key) {
@@ -1023,7 +938,8 @@
             upgradeHP,
             upgradeSkin,
             MAX_HP,
-            maxSpeed
+            maxSpeed,
+            bombLevel
         };
         safeSetItem(STORAGE_PREFIX + currentUser, JSON.stringify(data));
     }
@@ -1035,6 +951,7 @@
             upgradeEngine = false;
             upgradeHP = false;
             upgradeSkin = false;
+            bombLevel = 1;
             MAX_HP = 7;
             playerHP = MAX_HP;
             maxSpeed = 220;
@@ -1049,6 +966,7 @@
             upgradeEngine = !!data.upgradeEngine;
             upgradeHP = !!data.upgradeHP;
             upgradeSkin = !!data.upgradeSkin;
+            bombLevel = data.bombLevel || 1;
             MAX_HP = data.MAX_HP || 7;
             maxSpeed = data.maxSpeed || 220;
             playerHP = MAX_HP;
@@ -1063,6 +981,7 @@
             upgradeEngine = false;
             upgradeHP = false;
             upgradeSkin = false;
+            bombLevel = 1;
             MAX_HP = 7;
             playerHP = MAX_HP;
             maxSpeed = 220;
@@ -1131,7 +1050,7 @@
         planeGroup.add(wing);
 
         const wingletGeo = new THREE.BoxGeometry(0.4, 1.2, 1);
-               const wingletMat = new THREE.MeshPhongMaterial({
+        const wingletMat = new THREE.MeshPhongMaterial({
             color: colorAccent,
             emissive: 0x000022
         });
@@ -1262,16 +1181,27 @@
         enemyPlane.add(topSphere);
 
         enemyAngle = 0;
-        enemyAlive = true;
-        enemyRespawnTimer = 0;
-        enemyHP = MAX_HP;
-
         enemyPlane.position.set(
             enemyAirportCenter.x + ENEMY_ORBIT_RADIUS,
             ENEMY_ALT,
             enemyAirportCenter.z
         );
+        enemyAlive = true;
+        enemyHP = MAX_HP;
         scene.add(enemyPlane);
+    }
+
+    function respawnEnemy() {
+        if (!enemyPlane) return;
+        enemyHP = MAX_HP;
+        enemyAlive = true;
+        enemyAngle = 0;
+        enemyPlane.position.set(
+            enemyAirportCenter.x + ENEMY_ORBIT_RADIUS,
+            ENEMY_ALT,
+            enemyAirportCenter.z
+        );
+        updateHpHud();
     }
 
     function updateGearVisibility() {
@@ -1528,10 +1458,12 @@
         requestAnimationFrame(animate);
         const dt = Math.min(clock.getDelta(), 0.05);
 
+        updateGamepadInput(dt);
+
         if (gameRunning && !crashed && !inMarket) {
-            updateGamepadControls(dt);
             updatePhysics(dt);
             updateEnemy(dt);
+            updateEnemyRespawn(dt);
         }
 
         if (crashed && !inMarket) {
@@ -1551,46 +1483,13 @@
         renderer.render(scene, camera);
     }
 
-    // GAMEPAD KONTROLLERİ
-    function updateGamepadControls(dt) {
-        const gps = navigator.getGamepads ? navigator.getGamepads() : null;
-        if (!gps) {
-            gamepadPitch = 0;
-            gamepadYaw = 0;
-            return;
-        }
-        const gp = gps[0];
-        if (!gp) {
-            gamepadPitch = 0;
-            gamepadYaw = 0;
-            return;
-        }
-
-        const deadzone = 0.2;
-        const applyDeadzone = v => (Math.abs(v) < deadzone ? 0 : v);
-
-        const ax0 = gp.axes[0] || 0; // sol çubuk X
-        const ax1 = gp.axes[1] || 0; // sol çubuk Y
-
-        gamepadYaw = applyDeadzone(ax0);
-        gamepadPitch = -applyDeadzone(ax1); // çubuğu geri çekince pitch up
-
-        if (engineOn) {
-            let rt = gp.axes[5];
-            if (rt === undefined) rt = 0;
-            rt = (rt + 1) / 2; // -1..1 -> 0..1
-            if (!isNaN(rt)) {
-                throttle = Math.max(0, Math.min(1, rt));
-                updateThrottleThumb();
+    function updateEnemyRespawn(dt) {
+        if (!enemyAlive) {
+            enemyRespawnTimer -= dt;
+            if (enemyRespawnTimer <= 0) {
+                respawnEnemy();
             }
         }
-
-        // A butonu ile füze
-        const fire = gp.buttons[0] && gp.buttons[0].pressed;
-        if (fire && !lastGamepadMissile) {
-            fireMissile();
-        }
-        lastGamepadMissile = !!fire;
     }
 
     function updatePhysics(dt) {
@@ -1598,8 +1497,6 @@
         const yawRate   = 0.9;
 
         const altitude = plane.position.y;
-
-        const totalPitchInput = joystick.yValue + keyboardPitch + gamepadPitch;
 
         if (!stalled) {
             if (speed < 70 && pitch > 0.35 && altitude > 40) {
@@ -1625,12 +1522,11 @@
             }
         }
 
-        pitch += totalPitchInput * pitchRate * dt;
+        pitch += joystick.yValue * pitchRate * dt;
 
         let yawInput = 0;
         if (turnLeftPressed) yawInput -= 1;
         if (turnRightPressed) yawInput += 1;
-        yawInput += gamepadYaw; // analog yaw
 
         yaw += yawInput * yawRate * dt;
 
@@ -1698,27 +1594,7 @@
     }
 
     function updateEnemy(dt) {
-        if (!enemyPlane) return;
-
-        // Öldüyse respawn bekle
-        if (!enemyAlive) {
-            enemyRespawnTimer += dt;
-            if (enemyRespawnTimer > 3) {
-                enemyAlive = true;
-                enemyRespawnTimer = 0;
-                enemyHP = MAX_HP;
-                enemyPlane.visible = true;
-                enemyAngle = 0;
-                enemyPlane.position.set(
-                    enemyAirportCenter.x + ENEMY_ORBIT_RADIUS,
-                    ENEMY_ALT,
-                    enemyAirportCenter.z
-                );
-                updateHpHud();
-            }
-            return;
-        }
-
+        if (!enemyPlane || !enemyAlive) return;
         enemyAngle += dt * 0.11;
         const ex = enemyAirportCenter.x + Math.cos(enemyAngle) * ENEMY_ORBIT_RADIUS;
         const ez = enemyAirportCenter.z + Math.sin(enemyAngle) * ENEMY_ORBIT_RADIUS;
@@ -1830,13 +1706,10 @@
         updateGearVisibility();
 
         playerHP = MAX_HP;
-
         enemyHP = MAX_HP;
         enemyAlive = true;
-        enemyRespawnTimer = 0;
         enemyAngle = 0;
         if (enemyPlane) {
-            enemyPlane.visible = true;
             enemyPlane.position.set(
                 enemyAirportCenter.x + ENEMY_ORBIT_RADIUS,
                 ENEMY_ALT,
@@ -1918,7 +1791,7 @@
     }
 
     function updateHpHud() {
-        hudHpEl.textContent = `Biz: ${playerHP} / ${MAX_HP}  |  Rakip: ${enemyHP} / ${MAX_HP}`;
+        hudHpEl.textContent = `Biz: ${playerHP} / ${MAX_HP}  |  Rakip: ${enemyAlive ? enemyHP : 0} / ${MAX_HP}`;
     }
 
     function showMessage(text) {
@@ -1932,9 +1805,12 @@
 
     function handleMarketPurchase(item) {
         let cost = 0;
+        const bombMaxLevel = 3;
+
         if (item === "engine") cost = 60;
         else if (item === "hp") cost = 80;
         else if (item === "skin") cost = 50;
+        else if (item === "bomb") cost = 70;
 
         if (item === "engine" && upgradeEngine) {
             showMessage("Motor zaten upgrade edildi");
@@ -1948,6 +1824,11 @@
         }
         if (item === "skin" && upgradeSkin) {
             showMessage("Altın boya zaten aktif");
+            setTimeout(hideMessage, 700);
+            return;
+        }
+        if (item === "bomb" && bombLevel >= bombMaxLevel) {
+            showMessage("Bomba zaten maksimum seviyede");
             setTimeout(hideMessage, 700);
             return;
         }
@@ -1977,6 +1858,9 @@
             upgradeSkin = true;
             applyPlaneSkin(0xffd700);
             showMessage("Altın boya aktif ✨");
+        } else if (item === "bomb") {
+            bombLevel++;
+            showMessage("Bomba seviye " + bombLevel + "! Patlama alanı büyüdü.");
         }
 
         saveProfile();
@@ -1992,7 +1876,6 @@
         });
     }
 
-    // LOCK-ON + SELF-HIT FIX
     function fireMissile() {
         if (crashed || !gameRunning || inMarket) return;
         if (missileCooldown > 0.0) return;
@@ -2013,26 +1896,25 @@
         mesh.rotation.z = Math.PI / 2;
         mesh.quaternion.copy(q);
 
+        // Uçağın burnundan daha ileride spawn, kendine çarpma ihtimalini fiziksel olarak da ortadan kaldır
         const startPos = new THREE.Vector3()
             .copy(plane.position)
-            .addScaledVector(forward, 7)
-            .addScaledVector(up, 0.2);
+            .addScaledVector(forward, 14)  // öne
+            .addScaledVector(up, 0.5);     // biraz yukarı
         mesh.position.copy(startPos);
 
-        // Düşman LOCK kontrolü (önümüzde mi)
+        scene.add(mesh);
+
+        // Lock-on: Uçak düşmana bakıyorsa homing aktif
         let homing = false;
         if (enemyPlane && enemyAlive && enemyHP > 0) {
             const toEnemy = enemyPlane.position.clone().sub(plane.position).normalize();
-            const planeForward = new THREE.Vector3(0, 0, 1).applyQuaternion(plane.quaternion);
-            const dot = planeForward.dot(toEnemy); // 1 = tam ön
-            if (dot > 0.6) {
+            const forwardDir = forward.clone().normalize();
+            const dot = forwardDir.dot(toEnemy);
+            if (dot > MISSILE_HOMING_FOV) {
                 homing = true;
-                showMessage("LOCK ON");
-                setTimeout(hideMessage, 600);
             }
         }
-
-        scene.add(mesh);
 
         missiles.push({
             mesh,
@@ -2046,18 +1928,15 @@
     }
 
     function updateMissiles(dt) {
-        const HOMING_STRENGTH = 4.0;
-
         for (let i = missiles.length - 1; i >= 0; i--) {
             const m = missiles[i];
 
-            // HOMING: sadece player füzeleri ve LOCK varsa
+            // HOMING: sadece player füzeleri ve lock varsa
             if (m.owner === "player" && m.homing && enemyPlane && enemyAlive && enemyHP > 0) {
-                const toEnemy = enemyPlane.position.clone().sub(m.mesh.position);
-                const desiredDir = toEnemy.normalize();
+                const toEnemy = enemyPlane.position.clone().sub(m.mesh.position).normalize();
                 const currentSpeed = m.vel.length();
                 const currentDir = m.vel.clone().normalize();
-                currentDir.lerp(desiredDir, HOMING_STRENGTH * dt);
+                currentDir.lerp(toEnemy, MISSILE_HOMING_STRENGTH * dt);
                 m.vel = currentDir.normalize().multiplyScalar(currentSpeed);
             }
 
@@ -2072,8 +1951,8 @@
                 continue;
             }
 
-            // DÜŞMAN VURMA (kendi füzemiz düşmanı vurabilir)
-            if (enemyPlane && enemyAlive && enemyHP > 0 && m.owner !== "enemy") {
+            // DÜŞMAN VURMA (füze sadece düşmana, ASLA bize bakmıyor)
+            if (enemyPlane && enemyAlive && enemyHP > 0 && m.owner === "player") {
                 const distEnemy = p.distanceTo(enemyPlane.position);
                 if (distEnemy < ENEMY_HIT_RADIUS) {
                     enemyHP = Math.max(0, enemyHP - 1);
@@ -2083,32 +1962,18 @@
                     updateHpHud();
 
                     if (enemyHP <= 0) {
+                        enemyAlive = false;
+                        enemyRespawnTimer = 6;
                         spawnBigExplosion(enemyPlane.position.clone());
+                        coins += 30; // ödül
+                        updateScoreHud();
                     }
                     saveProfile();
                     continue;
                 }
             }
 
-            // KENDİNİ VURMA KAPATILDI: owner kontrolü ile
-            const distPlayer = p.distanceTo(plane.position);
-            if (m.owner !== "player" && distPlayer < PLAYER_HIT_RADIUS) {
-                playerHP = Math.max(0, playerHP - 1);
-                spawnMissileExplosion(p.clone());
-                scene.remove(m.mesh);
-                missiles.splice(i, 1);
-                updateHpHud();
-
-                if (playerHP <= 0) {
-                    startCrash("We are shot down");
-                } else {
-                    showMessage("VURULDUK! HP: " + playerHP);
-                    setTimeout(hideMessage, 800);
-                }
-                saveProfile();
-                continue;
-            }
-
+            // YAPIYA ÇARPMA
             let hitIndex = -1;
             for (let j = 0; j < colliders.length; j++) {
                 const c = colliders[j];
@@ -2255,9 +2120,10 @@
 
     function triggerBombExplosion(bomb, pos) {
         const isNuke = bomb.type === "nuke";
-        const radius = isNuke ? 700 : 220;
+        const baseRadius = isNuke ? 700 : 220;
+        const radius = baseRadius * (1 + 0.4 * (bombLevel - 1)); // seviye ile büyüt
 
-        spawnGroundExplosion(pos.clone(), isNuke);
+        spawnGroundExplosion(pos.clone(), isNuke, radius);
 
         for (let j = colliders.length - 1; j >= 0; j--) {
             const c = colliders[j];
@@ -2271,10 +2137,15 @@
         if (enemyPlane && enemyAlive && enemyHP > 0) {
             const distEnemy = pos.distanceTo(enemyPlane.position);
             if (distEnemy < radius + ENEMY_HIT_RADIUS) {
-                enemyHP = Math.max(0, enemyHP - 1);
+                enemyHP = Math.max(0, enemyHP - (isNuke ? 2 : 1));
+                if (enemyHP < 0) enemyHP = 0;
                 updateHpHud();
                 if (enemyHP <= 0) {
+                    enemyAlive = false;
+                    enemyRespawnTimer = 6;
                     spawnBigExplosion(enemyPlane.position.clone());
+                    coins += isNuke ? 40 : 25;
+                    updateScoreHud();
                 }
                 saveProfile();
             }
@@ -2282,7 +2153,7 @@
 
         const distPlayer = pos.distanceTo(plane.position);
         if (distPlayer < radius + PLAYER_HIT_RADIUS) {
-            playerHP = Math.max(0, playerHP - 1);
+            playerHP = Math.max(0, playerHP - (isNuke ? 2 : 1));
             updateHpHud();
             if (playerHP <= 0) {
                 startCrash(isNuke ? "Nuke Kill" : "Bomb Kill");
@@ -2294,11 +2165,12 @@
         }
     }
 
-    function spawnGroundExplosion(pos, isNuke) {
+    function spawnGroundExplosion(pos, isNuke, radius) {
         const group = new THREE.Group();
         const count = isNuke ? 40 : 20;
         for (let i = 0; i < count; i++) {
-            const size = (isNuke ? 8 : 3) + Math.random() * (isNuke ? 6 : 2);
+            const sizeBase = isNuke ? 8 : 3;
+            const size = sizeBase + Math.random() * (isNuke ? 6 : 2);
             const geo = new THREE.SphereGeometry(size, 10, 8);
             const col = isNuke
                 ? ((i % 2 === 0) ? 0x99ff88 : 0xffffaa)
@@ -2315,8 +2187,9 @@
                 Math.random(),
                 (Math.random() - 0.5)
             ).normalize();
-            const spd = (isNuke ? 160 : 90) + Math.random() * (isNuke ? 120 : 60);
-            p.userData.vel = dir.multiplyScalar(spd);
+            const speedBase = isNuke ? 160 : 90;
+            const spd = speedBase + Math.random() * (isNuke ? 120 : 60);
+            p.userData.vel = dir.multiplyScalar(spd * (1 + 0.2 * (bombLevel - 1)));
             group.add(p);
         }
         scene.add(group);
@@ -2346,20 +2219,6 @@
         }
         scene.add(group);
         bombExplosions.push({ group, life: 2.0 });
-
-        // DÜŞMAN ÖLDÜ: despawn + zamanla yeni spawn
-        if (enemyPlane) {
-            enemyAlive = false;
-            enemyRespawnTimer = 0;
-            enemyPlane.visible = false;
-            // Ödül puan
-            coins += 50;
-            updateScoreHud();
-            updateMarketCoins();
-            saveProfile();
-            showMessage("Düşman düşürüldü! +50 puan");
-            setTimeout(hideMessage, 900);
-        }
     }
 
     function updateBombExplosions(dt) {
@@ -2379,6 +2238,7 @@
         }
     }
 
+    // Joystick (dokunmatik)
     function onJoystickDown(e) {
         e.preventDefault();
         joystick.active = true;
@@ -2420,6 +2280,7 @@
         joystick.yValue = -ny / maxR;
     }
 
+    // Throttle (dokunmatik)
     function onThrottleDown(e) {
         e.preventDefault();
         throttleTouchActive = true;
@@ -2454,6 +2315,148 @@
         const thumbH = throttleThumb.offsetHeight || 10;
         const y = (1 - throttle) * h;
         throttleThumb.style.top = (y - thumbH / 2) + 'px';
+    }
+
+    // Klavye
+    function onKeyDown(e) {
+        if (e.repeat) return;
+        switch (e.code) {
+            case 'KeyW':
+            case 'ArrowUp':
+                joystick.yValue = 1;
+                break;
+            case 'KeyS':
+            case 'ArrowDown':
+                joystick.yValue = -1;
+                break;
+            case 'KeyA':
+            case 'ArrowLeft':
+                turnLeftPressed = true;
+                break;
+            case 'KeyD':
+            case 'ArrowRight':
+                turnRightPressed = true;
+                break;
+            case 'Space':
+                fireMissile();
+                break;
+            case 'KeyB':
+                fireBomb("bomb");
+                break;
+            case 'KeyN':
+                fireBomb("nuke");
+                break;
+            case 'KeyG':
+                toggleGear();
+                break;
+            case 'KeyV':
+                toggleViewMode();
+                break;
+            case 'KeyE':
+                toggleEngine();
+                break;
+            case 'BracketRight':
+                throttle = Math.min(1, throttle + 0.05);
+                updateThrottleThumb();
+                break;
+            case 'BracketLeft':
+                throttle = Math.max(0, throttle - 0.05);
+                updateThrottleThumb();
+                break;
+        }
+    }
+
+    function onKeyUp(e) {
+        switch (e.code) {
+            case 'KeyW':
+            case 'ArrowUp':
+            case 'KeyS':
+            case 'ArrowDown':
+                joystick.yValue = 0;
+                break;
+            case 'KeyA':
+            case 'ArrowLeft':
+                turnLeftPressed = false;
+                break;
+            case 'KeyD':
+            case 'ArrowRight':
+                turnRightPressed = false;
+                break;
+        }
+    }
+
+    function toggleViewMode() {
+        viewMode = (viewMode === 'chase') ? 'cockpit' : 'chase';
+        hudModeEl.textContent = (viewMode === 'chase') ? 'DIŞ GÖRÜNÜM' : 'KOKPİT';
+        viewStatusEl.textContent = (viewMode === 'chase') ? 'Dış' : 'Kokpit';
+    }
+
+    function toggleGear() {
+        landingGearDown = !landingGearDown;
+        updateGearVisibility();
+        gearStatusEl.textContent = landingGearDown ? 'Açık' : 'Kapalı';
+    }
+
+    function toggleEngine() {
+        engineOn = !engineOn;
+        engineStatusEl.textContent = engineOn ? 'On' : 'Off';
+        if (!engineOn) {
+            throttle = 0;
+            updateThrottleThumb();
+        }
+    }
+
+    // Gamepad (mobil konsol / PC gamepad)
+    function updateGamepadInput(dt) {
+        if (!navigator.getGamepads) return;
+        const pads = navigator.getGamepads();
+        if (!pads) return;
+        const gp = pads[0];
+        if (!gp) return;
+
+        const lx = gp.axes[0] || 0;
+        const ly = gp.axes[1] || 0;
+
+        joystick.yValue = -ly; // yukarı ittiğinde pitch up
+
+        turnLeftPressed  = lx < -0.3;
+        turnRightPressed = lx >  0.3;
+
+        const rt = (gp.buttons[7] && gp.buttons[7].value) || 0;
+        const lt = (gp.buttons[6] && gp.buttons[6].value) || 0;
+        const delta = (rt - lt) * dt * 0.8;
+        if (engineOn) {
+            throttle = Math.min(1, Math.max(0, throttle + delta));
+            updateThrottleThumb();
+        }
+
+        if (!prevGamepadButtons.length) {
+            prevGamepadButtons = gp.buttons.map(b => b.pressed);
+        }
+
+        function justPressed(index) {
+            const now = gp.buttons[index] && gp.buttons[index].pressed;
+            const before = prevGamepadButtons[index];
+            return now && !before;
+        }
+
+        if (justPressed(0)) { // A
+            fireMissile();
+        }
+        if (justPressed(1)) { // B
+            fireBomb("bomb");
+        }
+        if (justPressed(2)) { // X
+            fireBomb("nuke");
+        }
+        if (justPressed(4)) { // LB
+            toggleViewMode();
+        }
+        if (justPressed(5)) { // RB
+            toggleGear();
+        }
+
+        prevGamepadButtons = gp.buttons.map(b => b.pressed);
     }
 
 })();
