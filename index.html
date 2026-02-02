@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <title>Tablet FlightSim 3D - Uçuş Modu (FINAL: Runway + Twin Engine + Gear)</title>
+  <title>Tablet FlightSim 3D - Yoke + Yaw Damper + Ground Fix</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
   <style>
@@ -86,36 +86,100 @@
       font-size:10px;
       text-shadow:0 0 4px #000;
       backdrop-filter: blur(3px);
-      width:min(380px, 95vw);
+      width:min(410px, 95vw);
       line-height:1.25;
     }
     .hud-mini b{ color:#e8ffff; }
     .hud-mini .line{ opacity:.95; }
     .hud-mini .dim{ opacity:.75; }
 
-    /* Joystick */
-    .joystick-area{
-      position:absolute; bottom:110px; left:20px;
-      width:160px; height:160px; border-radius:50%;
-      background: radial-gradient(circle at 50% 50%, rgba(0,255,255,.22), rgba(0,0,0,.92));
-      border:1px solid rgba(0,255,255,.42);
-      pointer-events:auto; touch-action:none;
+    /* --- YOKE (instead of joystick) --- */
+    .yoke-area{
+      position:absolute;
+      left:14px;
+      bottom:96px;
+      width:200px;
+      height:200px;
+      border-radius:22px;
+      background: radial-gradient(circle at 50% 35%, rgba(0,255,255,.18), rgba(0,0,0,.92));
+      border:1px solid rgba(0,255,255,.38);
+      pointer-events:auto;
+      touch-action:none;
+      z-index:2;
+      box-shadow: 0 0 14px rgba(0,255,255,0.22);
     }
-    .joystick-stick{
-      position:absolute; width:64px; height:64px; border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.38), rgba(0,255,255,.92));
-      border:2px solid rgba(0,255,255,1);
+    .yoke-grid{
+      position:absolute; inset:12px;
+      border-radius:18px;
+      border:1px dashed rgba(0,255,255,0.18);
+      background:
+        linear-gradient(to right, rgba(0,255,255,0.08) 1px, transparent 1px) 0 0 / 25px 25px,
+        linear-gradient(to bottom, rgba(0,255,255,0.08) 1px, transparent 1px) 0 0 / 25px 25px;
+      opacity:0.65;
+    }
+    .yoke-center-dot{
+      position:absolute; left:50%; top:50%;
+      width:8px; height:8px;
+      border-radius:50%;
+      background:rgba(0,255,255,0.85);
+      transform:translate(-50%,-50%);
+      box-shadow:0 0 10px rgba(0,255,255,0.55);
+      pointer-events:none;
+    }
+
+    /* Y shaped handle */
+    .yoke-handle{
+      position:absolute;
       left:50%; top:50%;
-      transform:translate(-50%, -50%);
-      box-shadow:0 0 18px rgba(0,255,255,.78);
+      width:110px; height:110px;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      filter: drop-shadow(0 0 10px rgba(0,255,255,0.35));
+    }
+    .yoke-stem{
+      position:absolute; left:50%; top:32px;
+      width:14px; height:62px;
+      transform:translateX(-50%);
+      background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,255,255,0.7));
+      border:1px solid rgba(0,255,255,0.75);
+      border-radius:10px;
+    }
+    .yoke-bar{
+      position:absolute; left:50%; top:16px;
+      width:96px; height:18px;
+      transform:translateX(-50%);
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), rgba(0,255,255,0.85));
+      border:1px solid rgba(0,255,255,0.9);
+      border-radius:14px;
+      box-shadow:0 0 12px rgba(0,255,255,0.25) inset;
+    }
+    .yoke-arm{
+      position:absolute; top:16px; width:26px; height:26px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), rgba(0,255,255,0.85));
+      border:1px solid rgba(0,255,255,0.95);
+      border-radius:50%;
+    }
+    .yoke-arm.left{ left:4px; }
+    .yoke-arm.right{ right:4px; }
+
+    /* a movable "knob" (invisible drag point) */
+    .yoke-knob{
+      position:absolute;
+      left:50%; top:50%;
+      width:64px; height:64px;
+      transform:translate(-50%,-50%);
+      border-radius:18px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(0,255,255,.20), rgba(0,0,0,.55));
+      border:1px solid rgba(0,255,255,0.45);
+      box-shadow:0 0 18px rgba(0,255,255,0.22);
+      pointer-events:none;
     }
 
     /* --- THROTTLES (TWIN) --- */
-    /* throttles + button cluster çakışmasın diye: throttles yukarı, butonlar aşağı */
     .throttle-panel{
       position:absolute;
       right:12px;
-      bottom:260px;   /* butonların ÜSTÜNDE kalsın */
+      bottom:260px;
       display:flex;
       gap:10px;
       pointer-events:auto;
@@ -182,7 +246,7 @@
     .btn-label{ display:block; }
     .btn-sub{ display:block; font-size:8px; opacity:0.72; margin-top:2px; }
 
-    /* Engine status chip (HUD-like) */
+    /* Engine status chip */
     .engine-chip{
       position:absolute;
       right:12px;
@@ -251,9 +315,8 @@
     }
     .auth-input::placeholder{ color:rgba(200,255,255,0.6); }
 
-    /* Responsive: küçük ekranda butonlar biraz daralsın */
     @media (max-width: 820px){
-      .joystick-area{ width:140px; height:140px; bottom:105px; }
+      .yoke-area{ width:180px; height:180px; bottom:90px; }
       .button-cluster{ grid-template-columns: repeat(3, minmax(62px, 82px)); bottom:100px; }
       .throttle-panel{ bottom:245px; }
       .engine-chip{ bottom:470px; }
@@ -303,28 +366,41 @@
     <div class="hud-warning" id="hud-warning">TERRAIN! PULL UP!</div>
 
     <div class="hud-mini" id="hud-mini">
-      <div class="line"><b>Joystick</b>: Pitch (Yukarı/Aşağı)</div>
-      <div class="line"><b>TURN ◀▶</b>: Yaw (dönüş) + otomatik yatış</div>
+      <div class="line"><b>Yoke</b>: Pitch + Roll</div>
+      <div class="line"><b>Yoke Ters</b>: Aşağı çek → <b>Yukarı</b>, Yukarı it → <b>Aşağı</b></div>
+      <div class="line"><b>YD</b>: Yaw Damper (havada yalpalamayı azaltır)</div>
+      <div class="line"><b>PARK</b>: Park freni (yerde stabil)</div>
       <div class="line"><b>GAZ ENG1</b>: Sağ üst throttle</div>
       <div class="line"><b>GAZ ENG2</b>: Sağ alt throttle</div>
       <div class="line"><b>ENG1/ENG2</b>: Motor aç/kapa (asimetrik → spin)</div>
-      <div class="line"><b>GEAR</b>: İniş takımı (G tuşu da olur)</div>
+      <div class="line"><b>GEAR</b>: İniş takımı</div>
       <div class="line"><b>VIEW</b>: Kokpit / Dış</div>
       <div class="line"><b>AP</b>: Basit Auto-level</div>
       <div class="line"><b>NAV</b>: Sonraki havalimanı</div>
       <div class="line"><b>Q</b>: Grafik Performans/Kalite</div>
       <div class="dim" style="margin-top:6px;">
-        Pist çevresi <b>geniş düz plato</b> olarak düzeltildi. Pist “dağın içinde” kalmaz.<br/>
-        Not: Bu sürüm uçuş modudur — düşman/füze/bomba yoktur.
+        Yerdeyken (düşük hız + teker yerde) uçuş manevrası kilitlenir: artık ters takla / kendi kendine yatış olmaz.<br/>
+        Kalkış için hızlan, burunu hafif kaldır (rotate).
       </div>
       <div class="dim" style="margin-top:6px;">
-        PC: W/S Pitch, A/D Turn, V View, P AP, N NAV, Q Quality, G Gear<br/>
+        PC: W/S Pitch, A/D Roll+Yaw, V View, P AP, N NAV, Q Quality, G Gear, B Park, Y YawDamper<br/>
         1/2: ENG1/ENG2 toggle, [ ]: ENG1 throttle, ; ' : ENG2 throttle
       </div>
     </div>
 
-    <div class="joystick-area" id="joystick-area">
-      <div class="joystick-stick" id="joystick-stick"></div>
+    <!-- YOKE -->
+    <div class="yoke-area" id="yoke-area">
+      <div class="yoke-grid"></div>
+      <div class="yoke-center-dot"></div>
+
+      <div class="yoke-knob" id="yoke-knob"></div>
+
+      <div class="yoke-handle" id="yoke-handle">
+        <div class="yoke-bar"></div>
+        <div class="yoke-arm left"></div>
+        <div class="yoke-arm right"></div>
+        <div class="yoke-stem"></div>
+      </div>
     </div>
 
     <!-- ENGINE STATUS -->
@@ -353,14 +429,15 @@
       </div>
     </div>
 
+    <!-- BUTTONS: TURN buttons removed, replaced with YD + PARK -->
     <div class="button-cluster">
-      <button class="btn" id="btn-turn-left">
-        <span class="btn-label">TURN ◀</span>
-        <span class="btn-sub">Sol</span>
+      <button class="btn" id="btn-yd">
+        <span class="btn-label">YD</span>
+        <span class="btn-sub" id="yd-status">On</span>
       </button>
-      <button class="btn" id="btn-turn-right">
-        <span class="btn-label">TURN ▶</span>
-        <span class="btn-sub">Sağ</span>
+      <button class="btn" id="btn-park">
+        <span class="btn-label">PARK</span>
+        <span class="btn-sub" id="park-status">Off</span>
       </button>
       <button class="btn" id="btn-level">
         <span class="btn-label">LEVEL</span>
@@ -408,13 +485,13 @@
     </div>
   </div>
 
-  <!-- HESAP / OTURUM AÇ -->
+  <!-- AUTH -->
   <div class="overlay-screen auth-screen" id="auth-screen">
     <div class="overlay-card">
       <div class="overlay-title">Tablet FlightSim 3D</div>
       <div class="overlay-subtitle">
-        Bu sürüm: <b>Runway Takeoff + Twin Engine + Gear</b>.<br/>
-        İstersen kullanıcı adı ile ayarlarını bu cihazda saklayalım.
+        Bu sürüm: <b>Yoke + Yaw Damper + Ground Fix</b>.<br/>
+        Kullanıcı adı ile ayarlarını bu cihazda saklayabiliriz.
       </div>
       <input class="auth-input" id="auth-username" placeholder="Kullanıcı adı (örnek: pilotTuna)" />
       <div class="overlay-buttons">
@@ -427,19 +504,19 @@
     </div>
   </div>
 
-  <!-- BAŞLANGIÇ EKRANI -->
+  <!-- START -->
   <div class="overlay-screen start-screen" id="start-screen">
     <div class="overlay-card">
       <div class="overlay-title">Pistten Kalkışa Hazır!</div>
       <div class="overlay-subtitle">
         Uçak <b>pist üzerinde hizalı</b> başlar.<br/>
-        Pist çevresi <b>geniş düz plato</b> olarak düzeltildi.
+        Yerdeyken pitch/roll kilitli → artık saçma takla yok.
       </div>
       <div class="overlay-info">
         • Sağda <b>ENG1/ENG2</b> ayrı throttle<br/>
-        • <b>ENG1/ENG2</b> butonlarıyla motor kapat/aç (asimetrik → spin)<br/>
-        • <b>GEAR</b> ile iniş takımı<br/>
-        • <b>AP</b> ile basit dengeleme, <b>NAV</b> ile havalimanı seç
+        • <b>YD</b> yaw damper (havada stabil)<br/>
+        • <b>PARK</b> park freni (yerde stabil)<br/>
+        • <b>GEAR</b> iniş takımı, <b>AP</b> dengeleme, <b>NAV</b> hedef
       </div>
       <div class="overlay-buttons">
         <button class="overlay-btn" id="btn-start-game">UÇUŞA BAŞLA</button>
@@ -455,57 +532,59 @@
 (() => {
   const container = document.getElementById('game-container');
 
-  // ----------------------------
-  // Perf / Memory helpers
-  // ----------------------------
+  // Helpers
   const V3 = () => new THREE.Vector3();
   const _vA = V3(), _vB = V3(), _vC = V3(), _vD = V3(), _vE = V3();
   const _qA = new THREE.Quaternion();
   const _eA = new THREE.Euler(0,0,0,'XYZ');
 
-  // ----------------------------
   // State
-  // ----------------------------
   let scene, camera, renderer, clock;
   let plane;
-  let viewMode = 'chase';        // chase | cockpit
-  let autopilot = false;         // AP: auto-level + gentle heading hold
+
+  let viewMode = 'chase';
+  let autopilot = false;
   let showHelp = true;
 
-  let qualityMode = "perf";      // perf | quality
+  let qualityMode = "perf";
   let pixelRatioPerf = 1.0;
   let pixelRatioQuality = Math.min(window.devicePixelRatio || 1, 2);
 
   // Orientation
   let yaw = 0, pitch = 0, roll = 0;
 
+  // Add a bit more stable control by using angular velocities
+  let yawVel = 0;
+  let rollVel = 0;
+  let pitchVel = 0;
+
   // Flight
-  let speed = 0;                 // knots-ish
+  let speed = 0; // knots-ish
   let minSpeed = 45;
   let maxSpeedPerf = 260;
   let maxSpeedQuality = 300;
   let maxSpeed = maxSpeedPerf;
 
   // Twin engines
-  let throttle1 = 0.00;          // 0..1
-  let throttle2 = 0.00;          // 0..1
+  let throttle1 = 0.00;
+  let throttle2 = 0.00;
   let eng1On = true;
   let eng2On = true;
 
   // landing gear
   let gearDown = true;
-  let gearAnim = 1.0;            // 1 = down, 0 = up
+  let gearAnim = 1.0;
   let gearTarget = 1.0;
 
-  // Turn buttons
-  let turnLeftPressed = false;
-  let turnRightPressed = false;
+  // NEW: Yaw Damper + Parking brake
+  let yawDamperOn = true;
+  let parkingBrake = false;
 
   // Wind & turbulence
-  let windDir = 0;               // radians
-  let windSpeed = 0;             // knots-ish
+  let windDir = 0;
+  let windSpeed = 0;
   let gustTimer = 0;
-  let turbulence = 0;            // 0..1
+  let turbulence = 0;
 
   // Terrain world
   const WORLD_RADIUS = 16000;
@@ -513,7 +592,7 @@
   const SEA_LEVEL = 0;
 
   // Airports
-  const airports = [];           // {id,name,center,heading,runwayLength,runwayWidth,hasLights,beaconMesh,group}
+  const airports = [];
   let navIndex = 0;
 
   // Warning system
@@ -523,7 +602,7 @@
   let terrainWarn = false;
   let warnHold = 0;
 
-  // UI
+  // UI refs
   const hudSpeedEl   = document.getElementById('hud-speed');
   const hudAltEl     = document.getElementById('hud-altitude');
   const hudHeadingEl = document.getElementById('hud-heading');
@@ -547,11 +626,11 @@
   const throttle2Thumb= document.getElementById('throttle2-thumb');
   const throttle2Sub  = document.getElementById('throttle2-sub');
 
-  const joystickArea = document.getElementById('joystick-area');
-  const joystickStick= document.getElementById('joystick-stick');
+  // Yoke UI
+  const yokeArea = document.getElementById('yoke-area');
+  const yokeKnob = document.getElementById('yoke-knob');
+  const yokeHandle = document.getElementById('yoke-handle');
 
-  const btnTurnLeft  = document.getElementById('btn-turn-left');
-  const btnTurnRight = document.getElementById('btn-turn-right');
   const btnLevel     = document.getElementById('btn-level');
   const btnView      = document.getElementById('btn-view');
   const btnAp        = document.getElementById('btn-ap');
@@ -564,6 +643,9 @@
   const btnEng2      = document.getElementById('btn-eng2');
   const btnGear      = document.getElementById('btn-gear');
 
+  const btnYD        = document.getElementById('btn-yd');
+  const btnPark      = document.getElementById('btn-park');
+
   const viewStatusEl   = document.getElementById('view-status');
   const apStatusEl     = document.getElementById('ap-status');
   const qualityStatusEl= document.getElementById('quality-status');
@@ -571,6 +653,9 @@
   const eng1StatusEl   = document.getElementById('eng1-status');
   const eng2StatusEl   = document.getElementById('eng2-status');
   const gearStatusEl   = document.getElementById('gear-status');
+
+  const ydStatusEl     = document.getElementById('yd-status');
+  const parkStatusEl   = document.getElementById('park-status');
 
   const authScreen  = document.getElementById('auth-screen');
   const startScreen = document.getElementById('start-screen');
@@ -584,21 +669,21 @@
   let currentUser = null;
   let storageEnabled = false;
 
-  // Input: joystick
-  const joystick = {
+  // Input: Yoke
+  const yoke = {
     active:false, id:null,
     startX:0, startY:0,
-    maxRadius:60,
+    maxRadius:70,
     xValue:0, yValue:0
   };
 
-  // Throttle touches (independent, no self-change)
+  // Throttle touches
   const tTouch = { active:false, id:null, which:0 };
 
   // Game loop
   let gameRunning = false;
 
-  // Render-side caches
+  // Render caches
   let skyMesh, sunLight;
   let cloudGroup;
   let cityInstanced;
@@ -607,9 +692,6 @@
   let terrainGeo, terrainMat;
   let runwayDecalMatCache = new Map();
 
-  // ---------------------------------------------------------
-  // INIT
-  // ---------------------------------------------------------
   init();
   animate();
 
@@ -634,10 +716,10 @@
     clock = new THREE.Clock();
 
     // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 0.58);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.60);
     scene.add(ambient);
 
-    sunLight = new THREE.DirectionalLight(0xffffff, 1.05);
+    sunLight = new THREE.DirectionalLight(0xffffff, 1.10);
     sunLight.position.set(6000, 9000, 2500);
     scene.add(sunLight);
 
@@ -647,7 +729,7 @@
     skyMesh = new THREE.Mesh(skyGeo, skyMat);
     scene.add(skyMesh);
 
-    // Airports first (important: terrain flatten uses airports)
+    // Airports (used by terrain flatten)
     createAirportsNetwork();
 
     // Terrain
@@ -659,9 +741,6 @@
     createTreesInstanced();
     createMountainsAccents();
 
-    // Airports visuals (runway etc.)
-    // (already created inside createAirportsNetwork via createImprovedAirport)
-
     // Plane
     createPlane();
 
@@ -671,27 +750,20 @@
     // Events
     window.addEventListener('resize', onWindowResize, false);
 
-    joystickArea.addEventListener('pointerdown', onJoystickDown);
-    window.addEventListener('pointermove', onJoystickMove);
-    window.addEventListener('pointerup', onJoystickUp);
-    window.addEventListener('pointercancel', onJoystickUp);
+    // Yoke input
+    yokeArea.addEventListener('pointerdown', onYokeDown);
+    window.addEventListener('pointermove', onYokeMove);
+    window.addEventListener('pointerup', onYokeUp);
+    window.addEventListener('pointercancel', onYokeUp);
 
-    // Twin throttles
+    // Throttles
     throttle1Area.addEventListener('pointerdown', (e)=>onThrottleDown(e,1));
     throttle2Area.addEventListener('pointerdown', (e)=>onThrottleDown(e,2));
     window.addEventListener('pointermove', onThrottleMove);
     window.addEventListener('pointerup', onThrottleUp);
     window.addEventListener('pointercancel', onThrottleUp);
 
-    // Turn
-    btnTurnLeft.addEventListener('pointerdown', e => { e.preventDefault(); turnLeftPressed = true; });
-    btnTurnLeft.addEventListener('pointerup',   e => { e.preventDefault(); turnLeftPressed = false; });
-    btnTurnLeft.addEventListener('pointercancel', () => turnLeftPressed = false);
-
-    btnTurnRight.addEventListener('pointerdown', e => { e.preventDefault(); turnRightPressed = true; });
-    btnTurnRight.addEventListener('pointerup',   e => { e.preventDefault(); turnRightPressed = false; });
-    btnTurnRight.addEventListener('pointercancel', () => turnRightPressed = false);
-
+    // Buttons
     btnLevel.addEventListener('click', e => { e.preventDefault(); manualLevel(); });
     btnView.addEventListener('click', e => { e.preventDefault(); toggleViewMode(); });
     btnAp.addEventListener('click', e => { e.preventDefault(); toggleAutopilot(); });
@@ -700,10 +772,12 @@
     btnRecenter.addEventListener('click', e => { e.preventDefault(); recenterCameraHint(); });
     btnHelp.addEventListener('click', e => { e.preventDefault(); toggleHelp(); });
 
-    // Engine toggles + gear
     btnEng1.addEventListener('click', e => { e.preventDefault(); toggleEngine(1); });
     btnEng2.addEventListener('click', e => { e.preventDefault(); toggleEngine(2); });
     btnGear.addEventListener('click', e => { e.preventDefault(); toggleGear(); });
+
+    btnYD.addEventListener('click', e => { e.preventDefault(); toggleYawDamper(); });
+    btnPark.addEventListener('click', e => { e.preventDefault(); toggleParkingBrake(); });
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -714,13 +788,13 @@
     btnStartGame.addEventListener('click',  () => {
       startScreen.style.display = 'none';
       gameRunning = true;
-      resetFlightToRunway(); // ✅ pistten kalkışa hazır başlat
-      showMessage("Pistte hazırsın. ENG1/ENG2 throttle ver → hızlan → rotate!");
+      resetFlightToRunway();
+      showMessage("Pistte hazırsın. Throttle ver → hızlan → rotate!");
       setTimeout(hideMessage, 1400);
       saveProfile();
     });
 
-    // Initial UI states
+    // Initial UI
     updateThrottleThumbs(true);
     updateHUD(0);
     applyQualityToUI();
@@ -729,15 +803,16 @@
     updateAutopilotHud();
     updateEngineHud();
     updateGearHud();
+    updateYawDamperHud();
+    updateParkingHud();
 
-    // Start screen
     authScreen.style.display = 'flex';
     startScreen.style.display = 'none';
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // STORAGE
-  // ---------------------------------------------------------
+  // ----------------------------
   function safeGetItem(key){
     try{ if(!window.localStorage) return null; return window.localStorage.getItem(key); }catch(e){ return null; }
   }
@@ -750,7 +825,9 @@
       qualityMode,
       viewMode,
       autopilot,
-      navIndex
+      navIndex,
+      yawDamperOn,
+      parkingBrake
     };
     safeSetItem(STORAGE_PREFIX + currentUser, JSON.stringify(data));
   }
@@ -763,6 +840,8 @@
       if(data.viewMode) viewMode = data.viewMode;
       if(typeof data.autopilot === "boolean") autopilot = data.autopilot;
       if(typeof data.navIndex === "number") navIndex = data.navIndex % Math.max(1, airports.length);
+      if(typeof data.yawDamperOn === "boolean") yawDamperOn = data.yawDamperOn;
+      if(typeof data.parkingBrake === "boolean") parkingBrake = data.parkingBrake;
     }catch(e){}
   }
 
@@ -786,6 +865,8 @@
     updateViewHud();
     updateAutopilotHud();
     updateNavHud();
+    updateYawDamperHud();
+    updateParkingHud();
 
     authScreen.style.display = 'none';
     startScreen.style.display = 'flex';
@@ -793,9 +874,9 @@
     setTimeout(hideMessage, 900);
   }
 
-  // ---------------------------------------------------------
-  // WORLD: TERRAIN (FIXED: runway plateau)
-  // ---------------------------------------------------------
+  // ----------------------------
+  // TERRAIN
+  // ----------------------------
   function hash2i(ix, iz){
     let h = ix * 374761393 + iz * 668265263;
     h = (h ^ (h >> 13)) * 1274126177;
@@ -849,7 +930,6 @@
     return n*n;
   }
 
-  // ✅ Runway plateau: airport çevresinde geniş düz alan + yumuşak geçiş
   function terrainHeightAt(x, z){
     const r = Math.sqrt(x*x + z*z);
     const rNorm = Math.min(1, r / WORLD_RADIUS);
@@ -862,21 +942,18 @@
     h += n2 * 880;
     h *= (0.25 + 0.75*rNorm);
 
-    // 🔥 Pist çevresi düzleştirme (dağın içine girme + pist altına girme biter)
-    // - flatRadius: tam düz
-    // - blendRadius: yumuşak geçiş
+    // airport plateau
     for(let i=0;i<airports.length;i++){
       const a = airports[i];
       const dx = x - a.center.x;
       const dz = z - a.center.z;
       const d = Math.sqrt(dx*dx + dz*dz);
 
-      const flatRadius  = 950;   // geniş düz plato (pist+taxi+margin)
-      const blendRadius = 1300;  // doğal geçiş bölgesi
+      const flatRadius  = 950;
+      const blendRadius = 1300;
 
       if(d < flatRadius){
-        // Havalimanı taban yüksekliği: center.y baz alınır (stabil)
-        h = a.center.y - 0.03; // pist plane ile aynı seviyeye yakın
+        h = a.center.y - 0.03;
       } else if(d < blendRadius){
         const t = (d - flatRadius) / (blendRadius - flatRadius);
         const k = smoothstep(t);
@@ -921,7 +998,7 @@
 
     terrainMat = new THREE.MeshPhongMaterial({
       vertexColors:true,
-      shininess:8,
+      shininess:10,
       specular: new THREE.Color(0x111111)
     });
 
@@ -929,9 +1006,9 @@
     scene.add(terrainMesh);
   }
 
-  // ---------------------------------------------------------
-  // WORLD: CLOUDS
-  // ---------------------------------------------------------
+  // ----------------------------
+  // CLOUDS
+  // ----------------------------
   function createClouds(){
     cloudGroup = new THREE.Group();
     const cloudMat = new THREE.MeshPhongMaterial({
@@ -976,9 +1053,9 @@
     }
   }
 
-  // ---------------------------------------------------------
-  // WORLD: CITIES & TREES
-  // ---------------------------------------------------------
+  // ----------------------------
+  // CITIES & TREES
+  // ----------------------------
   function createCitiesInstanced(){
     const count = 140;
     const geo = new THREE.BoxGeometry(1,1,1);
@@ -1029,7 +1106,7 @@
         const a = airports[k];
         const dx = x - a.center.x;
         const dz = z - a.center.z;
-        if(dx*dx + dz*dz < 900*900){ ok=false; break; } // daha geniş boşluk
+        if(dx*dx + dz*dz < 900*900){ ok=false; break; }
       }
       if(!ok){ i--; continue; }
 
@@ -1046,9 +1123,6 @@
     scene.add(treeInstanced);
   }
 
-  // ---------------------------------------------------------
-  // WORLD: MOUNTAIN ACCENTS (visual)
-  // ---------------------------------------------------------
   function createMountainsAccents(){
     const group = new THREE.Group();
     const mat = new THREE.MeshPhongMaterial({ color:0x55614b, flatShading:true, shininess:2 });
@@ -1072,9 +1146,9 @@
     scene.add(group);
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // AIRPORTS
-  // ---------------------------------------------------------
+  // ----------------------------
   function createAirportsNetwork(){
     const defs = [
       { id:"IST-0", name:"Alpha Field",   x:0,     z:0,     hdg:0.12, len:520, w:44, lights:true },
@@ -1087,10 +1161,6 @@
 
     for(const d of defs){
       const center = new THREE.Vector3(d.x, 0, d.z);
-      // IMPORTANT: center.y should be consistent target level for plateau
-      // Temporarily assume near-flat baseline, later terrainHeightAt will flatten around it.
-      // We'll compute an initial base using fbm without airport loop influence.
-      // But simplest: set to 10 + small bias, then terrain flatten will use it.
       center.y = 10.05;
       const a = createImprovedAirport({
         id:d.id, name:d.name,
@@ -1117,6 +1187,7 @@
     ctx.fillStyle = '#1f2328';
     ctx.fillRect(0,0,c.width,c.height);
 
+    // asphalt noise
     for(let i=0;i<24000;i++){
       const x = Math.random()*c.width;
       const y = Math.random()*c.height;
@@ -1125,22 +1196,26 @@
       ctx.fillRect(x,y,1,1);
     }
 
+    // center dash
     ctx.fillStyle = 'rgba(245,245,245,0.95)';
     const dashW = 36, dashH = 8;
     for(let x=60; x<c.width-60; x+= 64){
       ctx.fillRect(x, c.height*0.5 - dashH/2, dashW, dashH);
     }
 
+    // edges
     ctx.fillStyle = 'rgba(245,245,245,0.75)';
     ctx.fillRect(20, 40, c.width-40, 4);
     ctx.fillRect(20, c.height-44, c.width-40, 4);
 
+    // threshold blocks
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     for(let i=0;i<6;i++){
       ctx.fillRect(70, 70 + i*20, 90, 10);
       ctx.fillRect(c.width-160, 70 + i*20, 90, 10);
     }
 
+    // runway numbers
     ctx.font = 'bold 72px system-ui, sans-serif';
     ctx.fillStyle = 'rgba(240,240,240,0.92)';
     ctx.save();
@@ -1162,7 +1237,8 @@
     const mat = new THREE.MeshPhongMaterial({
       map: tex,
       transparent:false,
-      shininess: 28
+      shininess: 30,
+      specular: new THREE.Color(0x222222)
     });
 
     runwayDecalMatCache.set(key, mat);
@@ -1174,15 +1250,13 @@
 
     const group = new THREE.Group();
 
-    // Pad (visual)
     const padGeo = new THREE.CircleGeometry(520, 42);
-    const padMat = new THREE.MeshPhongMaterial({ color:0x2c3a2f, shininess:5 });
+    const padMat = new THREE.MeshPhongMaterial({ color:0x2c3a2f, shininess:6 });
     const pad = new THREE.Mesh(padGeo, padMat);
     pad.rotation.x = -Math.PI/2;
     pad.position.set(center.x, center.y + 0.02, center.z);
     group.add(pad);
 
-    // Runway
     const runwayGeo = new THREE.PlaneGeometry(runwayLength, runwayWidth);
     const rwMat = runwayTextureCanvas({
       numA: String(((Math.abs(heading)*180/Math.PI)/10|0)).padStart(2,'0'),
@@ -1194,7 +1268,6 @@
     runway.position.set(center.x, center.y + 0.035, center.z);
     group.add(runway);
 
-    // Taxiway
     const taxiGeo = new THREE.PlaneGeometry(240, 18);
     const taxiMat = new THREE.MeshPhongMaterial({ color:0x2a2f36, shininess:18 });
     const taxi = new THREE.Mesh(taxiGeo, taxiMat);
@@ -1203,9 +1276,8 @@
     taxi.position.set(center.x - 160, center.y + 0.033, center.z - 90);
     group.add(taxi);
 
-    // Simple terminal/tower
-    const termMat = new THREE.MeshPhongMaterial({ color:0xcfd3da, emissive:0x111111, shininess:10 });
-    const glassMat= new THREE.MeshPhongMaterial({ color:0x66aaff, emissive:0x00001a, transparent:true, opacity:0.65, shininess:80 });
+    const termMat = new THREE.MeshPhongMaterial({ color:0xcfd3da, emissive:0x111111, shininess:12 });
+    const glassMat= new THREE.MeshPhongMaterial({ color:0x66aaff, emissive:0x00001a, transparent:true, opacity:0.65, shininess:90 });
 
     const terminal = new THREE.Mesh(new THREE.BoxGeometry(80, 24, 42), termMat);
     terminal.position.set(center.x - 220, center.y + 12, center.z - 70);
@@ -1223,7 +1295,6 @@
     towerTop.position.set(center.x + 110, center.y + 36, center.z - 60);
     group.add(towerTop);
 
-    // Lights
     if(hasLights){
       const lightGeo = new THREE.SphereGeometry(0.9, 10, 10);
       const edgeMat  = new THREE.MeshBasicMaterial({ color:0x00ff88 });
@@ -1263,7 +1334,6 @@
       }
     }
 
-    // Beacon
     const beacon = new THREE.Mesh(
       new THREE.SphereGeometry(3.2, 12, 12),
       new THREE.MeshBasicMaterial({ color:0x00e5ff })
@@ -1286,75 +1356,78 @@
     };
   }
 
-  // ---------------------------------------------------------
-  // PLANE MODEL (with landing gear)
-  // ---------------------------------------------------------
+  // ----------------------------
+  // PLANE MODEL (improved visuals)
+  // ----------------------------
   function buildPlaneModel(colorAccent){
     const g = new THREE.Group();
 
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(1.25, 7.6, 8, 16),
-      new THREE.MeshPhongMaterial({ color:0xe5e5e5, emissive:0x111111, shininess:35 })
-    );
+    const metal = new THREE.MeshPhongMaterial({ color:0xe6e6e6, emissive:0x111111, shininess:45, specular: new THREE.Color(0x333333) });
+    const dark  = new THREE.MeshPhongMaterial({ color:0x2e3440, emissive:0x0d0f12, shininess:25 });
+    const accent= new THREE.MeshPhongMaterial({ color:colorAccent, emissive:0x000022, shininess:55, specular: new THREE.Color(0x3355aa) });
+    const glass = new THREE.MeshPhongMaterial({ color:0x66aaff, emissive:0x00001a, transparent:true, opacity:0.78, shininess:100 });
+
+    // Fuselage
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(1.25, 7.6, 8, 16), metal);
     body.rotation.x = Math.PI/2;
     g.add(body);
 
-    const nose = new THREE.Mesh(
-      new THREE.ConeGeometry(1.25, 2.8, 28),
-      new THREE.MeshPhongMaterial({ color:colorAccent, emissive:0x111133, shininess:55 })
-    );
+    // Belly shadow (fake AO)
+    const belly = new THREE.Mesh(new THREE.CylinderGeometry(1.10,1.10,8.7,18,1,true), new THREE.MeshPhongMaterial({
+      color:0x808080, emissive:0x0a0a0a, transparent:true, opacity:0.20, shininess:5
+    }));
+    belly.rotation.z = Math.PI/2;
+    belly.position.y = -0.35;
+    g.add(belly);
+
+    // Nose cone
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.25, 2.8, 28), accent);
     nose.rotation.x = Math.PI/2;
     nose.position.set(0, 0.02, 5.25);
     g.add(nose);
 
-    const wing = new THREE.Mesh(
-      new THREE.BoxGeometry(14.4, 0.28, 3.35),
-      new THREE.MeshPhongMaterial({ color:0x414b57, emissive:0x111111, shininess:20 })
-    );
+    // Canopy
+    const cockpit = new THREE.Mesh(new THREE.SphereGeometry(1.48, 22, 14, 0, Math.PI*2, 0, Math.PI/2), glass);
+    cockpit.position.set(0, 0.85, 1.95);
+    g.add(cockpit);
+
+    // Wing
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.28, 3.45), dark);
     wing.position.set(0, -0.1, 0.0);
     wing.rotation.y = 0.06;
     g.add(wing);
 
+    // Wing stripe
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(14.7, 0.06, 0.40), accent);
+    stripe.position.set(0, 0.05, -0.95);
+    stripe.rotation.y = 0.06;
+    g.add(stripe);
+
+    // Winglets
     const wingletGeo = new THREE.BoxGeometry(0.45, 1.3, 1.1);
-    const wingletMat = new THREE.MeshPhongMaterial({ color:colorAccent, emissive:0x000022, shininess:20 });
-    const wingletL = new THREE.Mesh(wingletGeo, wingletMat);
+    const wingletL = new THREE.Mesh(wingletGeo, accent);
     wingletL.position.set(-7.1, 0.55, 0.0);
     g.add(wingletL);
     const wingletR = wingletL.clone();
     wingletR.position.x = 7.1;
     g.add(wingletR);
 
-    const tail = new THREE.Mesh(
-      new THREE.BoxGeometry(0.95, 1.75, 2.35),
-      new THREE.MeshPhongMaterial({ color:0xdadada, emissive:0x111111 })
-    );
+    // Tail
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.75, 2.35), metal);
     tail.position.set(0, 0.45, -5.05);
     g.add(tail);
 
-    const vFin = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 2.85, 1.65),
-      new THREE.MeshPhongMaterial({ color:0x3e4650, emissive:0x111111 })
-    );
+    const vFin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.85, 1.65), dark);
     vFin.position.set(0, 1.85, -5.45);
     g.add(vFin);
 
-    const hFin = new THREE.Mesh(
-      new THREE.BoxGeometry(4.9, 0.22, 1.25),
-      new THREE.MeshPhongMaterial({ color:0x3e4650, emissive:0x111111 })
-    );
+    const hFin = new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.22, 1.25), dark);
     hFin.position.set(0, 0.35, -5.55);
     g.add(hFin);
 
-    const cockpit = new THREE.Mesh(
-      new THREE.SphereGeometry(1.48, 22, 14, 0, Math.PI*2, 0, Math.PI/2),
-      new THREE.MeshPhongMaterial({ color:0x66aaff, emissive:0x00001a, transparent:true, opacity:0.78, shininess:90 })
-    );
-    cockpit.position.set(0, 0.85, 1.95);
-    g.add(cockpit);
-
     // Engines
     const engGeo = new THREE.CylinderGeometry(0.74, 0.74, 2.4, 16);
-    const engMat = new THREE.MeshPhongMaterial({ color:0x5b5b5b, emissive:0x141414, shininess:25 });
+    const engMat = new THREE.MeshPhongMaterial({ color:0x4f4f4f, emissive:0x141414, shininess:30, specular: new THREE.Color(0x333333) });
     const engL = new THREE.Mesh(engGeo, engMat);
     engL.rotation.z = Math.PI/2;
     engL.position.set(-4.15, -0.72, -0.55);
@@ -1373,10 +1446,19 @@
     glowR.position.x = 4.95;
     g.add(glowR);
 
-    // Landing gear (simple but visible + animated)
+    // Nav lights (simple)
+    const navGeo = new THREE.SphereGeometry(0.22, 10, 10);
+    const navL = new THREE.Mesh(navGeo, new THREE.MeshBasicMaterial({ color:0x00ff44 }));
+    navL.position.set(-7.4, 0.4, 0.5);
+    g.add(navL);
+    const navR = new THREE.Mesh(navGeo, new THREE.MeshBasicMaterial({ color:0xff3344 }));
+    navR.position.set(7.4, 0.4, 0.5);
+    g.add(navR);
+
+    // Landing gear
     const gearGroup = new THREE.Group();
-    const strutMat = new THREE.MeshPhongMaterial({ color:0x888888, emissive:0x111111, shininess:20 });
-    const wheelMat = new THREE.MeshPhongMaterial({ color:0x222222, emissive:0x050505, shininess:10 });
+    const strutMat = new THREE.MeshPhongMaterial({ color:0x8e8e8e, emissive:0x111111, shininess:25 });
+    const wheelMat = new THREE.MeshPhongMaterial({ color:0x1a1a1a, emissive:0x050505, shininess:12 });
 
     function makeWheel(){
       const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,0.22,16), wheelMat);
@@ -1387,7 +1469,6 @@
       return new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,h,10), strutMat);
     }
 
-    // Nose gear
     const noseGear = new THREE.Group();
     const ns = makeStrut(1.1);
     ns.position.set(0, -0.65, 0);
@@ -1398,7 +1479,6 @@
     noseGear.position.set(0, -0.2, 3.7);
     gearGroup.add(noseGear);
 
-    // Main gear left/right
     const mainL = new THREE.Group();
     const msL = makeStrut(1.2);
     msL.position.set(0, -0.65, 0);
@@ -1420,6 +1500,7 @@
     g.userData.noseGear = noseGear;
     g.userData.mainGearL = mainL;
     g.userData.mainGearR = mainR;
+
     return g;
   }
 
@@ -1429,61 +1510,46 @@
     scene.add(plane);
   }
 
-  // ---------------------------------------------------------
-  // RESET: START ON RUNWAY (REALISTIC)
-  // ---------------------------------------------------------
+  // ----------------------------
+  // RESET: runway start
+  // ----------------------------
   function resetFlightToRunway(){
     const a = airports[navIndex] || airports[0];
     if(!a){
-      // fallback
       plane.position.set(0, 20, -220);
       yaw = 0; pitch = 0; roll = 0;
+      yawVel = rollVel = pitchVel = 0;
       speed = 0;
       throttle1 = throttle2 = 0;
       eng1On = eng2On = true;
       gearDown = true; gearTarget = 1; gearAnim = 1;
+      parkingBrake = false;
       updateThrottleThumbs(true);
       updateEngineHud();
       updateGearHud();
+      updateParkingHud();
       return;
     }
 
-    // Runway start: place on runway centerline, near one end, aligned with heading
     const hdg = a.heading;
-    // runway direction in world (plane forward is +Z local; yaw defines orientation)
-    // We'll align plane yaw to runway heading (approx)
-    // Our runway plane rotated z by heading; runway axis in XZ: (cos, sin)
     const axisX = Math.cos(hdg);
     const axisZ = Math.sin(hdg);
 
-    const startOffset = -(a.runwayLength*0.5 - 60); // 60m inside threshold
+    const startOffset = -(a.runwayLength*0.5 - 60);
     const sx = a.center.x + axisX * startOffset;
     const sz = a.center.z + axisZ * startOffset;
 
-    // ground at runway plateau (should be same)
     const ground = terrainHeightAt(sx, sz);
-
-    // Put plane on ground with gear down: clearance is small
-    // Use gearDown; plane "belly" is near y=0, so set a safe y
     plane.position.set(sx, ground + 6.2, sz);
 
-    // yaw: make plane face along runway axis.
-    // Our forward vector uses Euler(pitch,yaw,roll) applied to (0,0,1).
-    // With yaw=0, forward points +Z. We want forward to match runway axis (axisX, axisZ).
-    // Heading angle in world for +Z is atan2(z,x) but for forward it's atan2(fwd.z, fwd.x).
-    // Solve yaw so that fwd ≈ (axisX, axisZ): yawWanted = atan2(axisX?, axisZ?) depends on basis
-    // We'll use a simple mapping consistent with previous code's NAV logic:
-    // If yaw=0 -> forward = +Z. So yawWanted should rotate +Z towards axis.
-    // In XZ plane, +Z corresponds angle 90° in atan2(z,x) (since atan2(1,0)=90°).
-    // desired = atan2(axisZ, axisX). Need yaw ≈ desired - 90°
     const desired = Math.atan2(axisZ, axisX);
     yaw = desired - Math.PI/2;
-
     pitch = 0;
     roll = 0;
+    yawVel = rollVel = pitchVel = 0;
+
     plane.setRotationFromEuler(_eA.set(pitch,yaw,roll));
 
-    // start cold-ish: small taxi thrust
     speed = 0;
     throttle1 = 0.0;
     throttle2 = 0.0;
@@ -1494,6 +1560,9 @@
     gearDown = true;
     gearTarget = 1.0;
     gearAnim = 1.0;
+
+    parkingBrake = false;
+    updateParkingHud();
 
     stalled = overspeed = sinkRate = terrainWarn = false;
     warnHold = 0;
@@ -1507,9 +1576,9 @@
     setTimeout(hideMessage, 1100);
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // UI helpers
-  // ---------------------------------------------------------
+  // ----------------------------
   function showMessage(text){
     hudMessageEl.textContent = text;
     hudMessageEl.style.display = "block";
@@ -1521,9 +1590,9 @@
     hudWarningEl.style.display = on ? "block" : "none";
   }
 
-  // ---------------------------------------------------------
-  // GAME LOOP
-  // ---------------------------------------------------------
+  // ----------------------------
+  // LOOP
+  // ----------------------------
   function animate(){
     requestAnimationFrame(animate);
     const dt = Math.min(clock.getDelta(), 0.05);
@@ -1542,9 +1611,9 @@
     renderer.render(scene, camera);
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // WIND
-  // ---------------------------------------------------------
+  // ----------------------------
   function randomizeWind(first=false){
     windDir = Math.random()*Math.PI*2;
     windSpeed = first ? (4 + Math.random()*8) : (4 + Math.random()*18);
@@ -1569,20 +1638,18 @@
     while(a < -Math.PI) a += Math.PI*2;
     return a;
   }
+  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
-  // ---------------------------------------------------------
-  // GEAR ANIMATION
-  // ---------------------------------------------------------
+  // ----------------------------
+  // GEAR
+  // ----------------------------
   function updateGearAnim(dt){
-    // smooth animate to target
     gearAnim += (gearTarget - gearAnim) * (6.0 * dt);
     gearAnim = Math.max(0, Math.min(1, gearAnim));
 
     const gg = plane?.userData?.gearGroup;
     if(!gg) return;
 
-    // When gearAnim=1 (down): normal. When 0 (up): tuck gear into body
-    // Simple animation: rotate and raise
     gg.position.y = -0.1 + (1-gearAnim)*0.55;
     gg.scale.setScalar(0.55 + gearAnim*0.45);
 
@@ -1604,14 +1671,33 @@
     }
   }
 
-  // ---------------------------------------------------------
-  // FLIGHT PHYSICS (twin engines + spin)
-  // ---------------------------------------------------------
+  // ----------------------------
+  // FLIGHT PHYSICS
+  // Key ideas:
+  // - Yoke controls pitch+roll continuously.
+  // - Turn buttons removed; yaw comes from:
+  //   (a) small rudder coupling from yoke X
+  //   (b) asymmetrical thrust (spin)
+  // - Ground fix: when on ground and speed low, clamp pitch/roll strongly.
+  // - Yaw damper: reduces yaw oscillations (airborne).
+  // ----------------------------
   function updateFlightPhysics(dt){
-    const pitchRate = 0.90;
-    const yawRate   = 0.88;
+    // Current ground / onGround estimate BEFORE applying big attitude changes
+    const groundNow = terrainHeightAt(plane.position.x, plane.position.z);
+    const clearance = 4.6 + gearAnim * 1.9;
+    const minY = groundNow + clearance;
+    const onGroundNow = (plane.position.y <= minY + 0.03);
 
-    // AP
+    // Speeds
+    const speedMS = speed * 0.54;
+
+    // Inputs from yoke
+    // yoke.yValue is already inverted as requested:
+    //   down => positive => pitch up
+    const inPitch = yoke.yValue; // -1..+1
+    const inRoll  = yoke.xValue; // -1..+1
+
+    // Autopilot corrections
     let apPitch = 0;
     let apRoll  = 0;
     if(autopilot){
@@ -1619,16 +1705,51 @@
       apRoll  = (-roll)  * 1.1;
     }
 
-    // joystick pitch
-    const inputPitch = joystick.yValue;
-    pitch += (inputPitch * pitchRate + apPitch) * dt;
+    // Twin engine thrust + asym
+    const t1 = eng1On ? throttle1 : 0;
+    const t2 = eng2On ? throttle2 : 0;
+    const totalThrust = (t1 + t2) * 0.5;
+    const asym = (t2 - t1);
 
-    // turn buttons yaw
-    let yawInput = 0;
-    if(turnLeftPressed) yawInput -= 1;
-    if(turnRightPressed) yawInput += 1;
+    // ----------------------------
+    // Ground behavior fix
+    // ----------------------------
+    // When on ground and slow, do NOT allow aerobatic pitch/roll.
+    // Instead:
+    // - pitch/roll are damped towards 0 (stability)
+    // - yaw acts more like steering (limited)
+    // - parking brake can lock almost completely
+    const lowSpeedGround = onGroundNow && (speed < 85);
 
-    // NAV assist
+    // Parking brake stronger when on ground
+    if(parkingBrake && onGroundNow){
+      // heavy damping + speed bleed
+      speed *= (1 - 2.8*dt);
+      if(speed < 0.8) speed = 0;
+    }
+
+    // ----------------------------
+    // Desired angular rates from inputs
+    // ----------------------------
+    // Pitch: in air free; on ground strongly limited
+    const pitchRateAir = 1.05;
+    const pitchRateGround = 0.22;
+
+    // Roll: in air free; on ground strongly limited
+    const rollRateAir = 1.15;
+    const rollRateGround = 0.25;
+
+    // Yaw: steering on ground, rudder in air
+    const yawRateAir = 0.85;
+    const yawRateGround = 0.65;
+
+    // Rudder coupling from yoke X:
+    // - In air: small rudder for coordinated turns + asym
+    // - On ground: stronger steering
+    const rudder = clamp(inRoll * 0.75, -1, 1);
+
+    // NAV assist while autopilot: gentle yaw guidance
+    let navYawAssist = 0;
     if(autopilot && airports.length){
       const target = airports[navIndex];
       _vA.copy(target.center).sub(plane.position);
@@ -1637,76 +1758,115 @@
       if(dist > 1){
         const desired = Math.atan2(_vA.z, _vA.x);
         let diff = wrapAngle((desired - (yaw + Math.PI/2)));
-        yawInput += Math.max(-0.6, Math.min(0.6, diff * 0.35));
+        navYawAssist = clamp(diff * 0.22, -0.55, 0.55);
       }
     }
 
-    // --- Twin engine thrust + asymmetry -> yaw + roll spin ---
-    const t1 = eng1On ? throttle1 : 0;
-    const t2 = eng2On ? throttle2 : 0;
-    const totalThrust = (t1 + t2) * 0.5;     // 0..1 approx
-    const asym = (t2 - t1);                  // -1..+1
+    // ----------------------------
+    // Update angular velocities (smooth)
+    // ----------------------------
+    // Pitch velocity
+    const pitchCmd = (inPitch * (lowSpeedGround ? pitchRateGround : pitchRateAir)) + apPitch;
+    pitchVel += (pitchCmd - pitchVel) * (6.0 * dt);
 
-    // base yaw from inputs
-    yaw += yawInput * yawRate * dt;
+    // Roll velocity
+    const rollCmd = (inRoll * (lowSpeedGround ? rollRateGround : rollRateAir)) + apRoll;
+    rollVel += (rollCmd - rollVel) * (6.0 * dt);
 
-    // add yaw/roll from asymmetry: spin
-    // stronger effect when speed is higher (airflow)
-    const asymPower = (0.35 + Math.min(1, speed/180)) * 1.6;
-    yaw  += asym * asymPower * dt;
-    roll += (-asym) * (0.65 + Math.min(1, speed/220)) * dt; // opposite roll creates spin feel
+    // Yaw velocity includes:
+    // - rudder steering
+    // - nav assist (if AP)
+    // - asym thrust spin
+    // On ground it must be limited so the plane doesn't spin violently.
+    const asymPower = (0.30 + Math.min(1, speed/180)) * 1.6;
+    const asymYaw = asym * asymPower;
 
-    // Roll coupling for turn buttons (bank)
-    const desiredRollFromTurn = -yawInput * 0.62;
-    roll += (desiredRollFromTurn - roll) * (3.2 * dt);
-
-    if(autopilot){
-      roll += apRoll * dt;
+    let yawCmd = 0;
+    if(lowSpeedGround){
+      // steering stronger, but limited
+      yawCmd = rudder * yawRateGround + (asym * 0.22);
+      yawCmd = clamp(yawCmd, -0.75, 0.75);
     }else{
-      if(!joystick.active && Math.abs(yawInput) < 0.01){
-        roll *= (1 - 1.6*dt);
+      yawCmd = rudder * yawRateAir + navYawAssist + asymYaw;
+      yawCmd = clamp(yawCmd, -1.2, 1.2);
+    }
+
+    // Yaw damper: reduces oscillations when airborne
+    if(yawDamperOn && !lowSpeedGround){
+      // When rudder is near zero, force yawVel towards 0 faster
+      const centerFactor = 1 - Math.min(1, Math.abs(rudder));
+      const damperStrength = 4.0 * centerFactor; // 0..4
+      yawVel *= (1 - damperStrength * dt);
+    }
+
+    yawVel += (yawCmd - yawVel) * (5.2 * dt);
+
+    // Extra stability: if on ground, strongly center roll/pitch
+    if(lowSpeedGround){
+      pitchVel *= (1 - 5.0*dt);
+      rollVel  *= (1 - 6.0*dt);
+      // hard clamp angles
+      pitch = clamp(pitch, -0.10, 0.18);
+      roll  = clamp(roll,  -0.10, 0.10);
+    }else{
+      // mild natural damping in air when not touching yoke
+      if(!yoke.active && !autopilot){
+        pitchVel *= (1 - 1.2*dt);
+        rollVel  *= (1 - 1.4*dt);
       }
     }
 
-    // --- Speed update: realistic-ish ---
-    // throttle increases speed, gear adds drag, asym doesn’t add speed
-    const gearDrag = 1.0 + (gearAnim * 0.22);          // gear down => more drag
-    const thrustAccel = (totalThrust - 0.18) * 62;     // tuned
+    // Apply angle integration
+    pitch += pitchVel * dt;
+    roll  += rollVel  * dt;
+    yaw   += yawVel   * dt;
+
+    // Clamp pitch/roll in air to prevent crazy flips
+    pitch = clamp(pitch, -0.75, 0.75);
+    roll  = clamp(roll,  -1.35, 1.35);
+
+    // Turbulence wobble (small)
+    const wob = turbulence * 0.28;
+    if(!lowSpeedGround){
+      pitch += (Math.sin(perfTime()*1.7) * wob) * dt;
+      roll  += (Math.cos(perfTime()*2.1) * wob) * dt;
+      yaw   += (Math.sin(perfTime()*1.1) * wob * 0.4) * dt;
+    }
+
+    // Speed update
+    const gearDrag = 1.0 + (gearAnim * 0.22);
+    const thrustAccel = (totalThrust - 0.18) * 62;
     const drag = (0.020 + (speed/ maxSpeed)*0.030) * gearDrag;
 
     speed += thrustAccel * dt;
     speed -= (speed * drag) * dt;
-
-    // wind adds slight apparent speed
     speed += (windSpeed * 0.018) * dt;
 
-    // ground roll effect: if on runway, allow speed from 0 upward
+    // Parking brake: extra speed bleed on ground
+    if(parkingBrake && onGroundNow){
+      speed *= (1 - 3.5*dt);
+    }
+
     if(speed < 0) speed = 0;
-    if(speed < minSpeed && plane.position.y > terrainHeightAt(plane.position.x, plane.position.z) + 12){
-      speed = minSpeed; // in air don't fall below stall-min "fake"
+    if(speed < minSpeed && !lowSpeedGround && plane.position.y > groundNow + 12){
+      speed = minSpeed;
     }
     if(speed > maxSpeed) speed = maxSpeed;
 
-    // Forward + Up vectors
+    // Forward / Up vectors
     _qA.setFromEuler(_eA.set(pitch, yaw, roll));
     _vA.set(0,0,1).applyQuaternion(_qA);
     _vB.set(0,1,0).applyQuaternion(_qA);
 
-    // turbulence wobble
-    const wob = turbulence * 0.35;
-    pitch += (Math.sin(perfTime()*1.7) * wob) * dt;
-    roll  += (Math.cos(perfTime()*2.1) * wob) * dt;
-
-    // Move (speedMS)
-    const speedMS = speed * 0.54;
+    // Move in world
     const windX = Math.cos(windDir) * (windSpeed * 0.25);
     const windZ = Math.sin(windDir) * (windSpeed * 0.25);
 
-    plane.position.x += (_vA.x * speedMS + windX) * dt;
-    plane.position.y += (_vA.y * speedMS) * dt;
-    plane.position.z += (_vA.z * speedMS + windZ) * dt;
+    plane.position.x += (_vA.x * (speed * 0.54) + windX) * dt;
+    plane.position.y += (_vA.y * (speed * 0.54)) * dt;
+    plane.position.z += (_vA.z * (speed * 0.54) + windZ) * dt;
 
-    // bounds
+    // Bounds
     const r = Math.sqrt(plane.position.x*plane.position.x + plane.position.z*plane.position.z);
     if(r > WORLD_RADIUS){
       const s = WORLD_RADIUS / r;
@@ -1715,46 +1875,47 @@
       yaw += 0.2 * dt;
     }
 
-    // Ground / runway contact (NO CRASH mode, but solid)
+    // Ground contact
     const ground = terrainHeightAt(plane.position.x, plane.position.z);
+    const minY2 = ground + clearance;
+    const onGround = (plane.position.y <= minY2 + 0.02);
 
-    // clearance: with gear down you ride higher; with gear up you are lower
-    const clearance = 4.6 + gearAnim * 1.9; // 4.6..6.5
-    const minY = ground + clearance;
+    // If below ground, clamp and apply ground friction + prevent flips
+    if(plane.position.y < minY2){
+      plane.position.y = minY2;
 
-    // if on ground, simulate “runway roll” by damping pitch/roll a bit
-    const onGround = (plane.position.y <= minY + 0.02);
+      // Takeoff rule: allow lift-off only if enough speed and pitch
+      // This prevents "still on ground but flips up" problem.
+      const canRotate = speed > 115 && pitch > 0.07;
 
-    if(plane.position.y < minY){
-      plane.position.y = minY;
-
-      // if fast enough, allow lift-off by positive pitch
-      // but don't auto-levitate: need pitch / speed
-      if(speed > 120 && pitch > 0.08){
-        plane.position.y += (speed-118) * 0.018 * dt;
+      if(canRotate){
+        plane.position.y += (speed-112) * 0.020 * dt;
       }else{
-        // ground friction: if wheels on ground, reduce sideways roll oscillation
-        roll *= (1 - 2.5*dt);
-        pitch *= (1 - 2.2*dt);
+        // strong damping on ground
+        roll  *= (1 - 3.2*dt);
+        pitch *= (1 - 3.0*dt);
 
-        // ground yaw effect stronger with asym
-        yaw += asym * 0.35 * dt;
+        // keep angles in safe range on ground
+        roll  = clamp(roll,  -0.12, 0.12);
+        pitch = clamp(pitch, -0.10, 0.20);
+
+        // yaw steering still works but limited
+        yawVel = clamp(yawVel, -0.7, 0.7);
       }
     }
 
-    // Lift feel (very simple)
+    // In air, simple sink if slow
     if(!onGround){
-      // if slow, sink
       if(speed < 85){
         plane.position.y -= (90 - speed) * 0.06 * dt;
       }
     }
 
-    // Engine glows per engine throttle (separate)
+    // Engine glows
     const glows = plane.userData.engineGlows;
     if(glows && glows.length){
-      const op1 = Math.min(0.55, Math.max(0, (t1 - 0.2) * 0.9));
-      const op2 = Math.min(0.55, Math.max(0, (t2 - 0.2) * 0.9));
+      const op1 = Math.min(0.60, Math.max(0, (t1 - 0.18) * 0.95));
+      const op2 = Math.min(0.60, Math.max(0, (t2 - 0.18) * 0.95));
       glows[0].material.opacity = op1;
       glows[1].material.opacity = op2;
     }
@@ -1762,9 +1923,9 @@
     plane.setRotationFromEuler(_eA.set(pitch, yaw, roll));
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // WARNINGS
-  // ---------------------------------------------------------
+  // ----------------------------
   function updateWarnings(dt){
     const altAGL = plane.position.y - terrainHeightAt(plane.position.x, plane.position.z);
 
@@ -1817,13 +1978,9 @@
     // Soft recovery
     if(terrainWarn){
       pitch = Math.min(pitch + 0.55*dt, 0.55);
-      // DO NOT auto-change throttles (your request): we don't touch throttle1/2 here
     }
     if(stalled){
       pitch = Math.max(pitch - 0.7*dt, -0.1);
-    }
-    if(overspeed){
-      // no auto throttle
     }
   }
 
@@ -1835,9 +1992,9 @@
     }
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // AIRPORT BEACON
-  // ---------------------------------------------------------
+  // ----------------------------
   function updateAirportBeacons(dt){
     for(let i=0;i<airports.length;i++){
       const a = airports[i];
@@ -1852,9 +2009,9 @@
     }
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // CAMERA
-  // ---------------------------------------------------------
+  // ----------------------------
   function updateCamera(dt){
     _qA.copy(plane.quaternion);
     _vA.set(0,0,1).applyQuaternion(_qA);
@@ -1880,9 +2037,9 @@
     setTimeout(hideMessage, 800);
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // HUD
-  // ---------------------------------------------------------
+  // ----------------------------
   function updateHUD(dt){
     if(!plane) return;
 
@@ -1897,7 +2054,6 @@
     updateNavHud();
     hudMiniEl.style.display = showHelp ? "block" : "none";
 
-    // engine chips
     chipEng1.innerHTML = "<b>ENG1</b><br/>" + (eng1On ? "ON" : "OFF") + " • T: " + Math.round(throttle1*100) + "%";
     chipEng2.innerHTML = "<b>ENG2</b><br/>" + (eng2On ? "ON" : "OFF") + " • T: " + Math.round(throttle2*100) + "%";
     chipGear.innerHTML = "<b>GEAR</b><br/>" + (gearDown ? "DOWN" : "UP");
@@ -1929,10 +2085,16 @@
   function updateGearHud(){
     gearStatusEl.textContent = gearDown ? "Down" : "Up";
   }
+  function updateYawDamperHud(){
+    ydStatusEl.textContent = yawDamperOn ? "On" : "Off";
+  }
+  function updateParkingHud(){
+    parkStatusEl.textContent = parkingBrake ? "On" : "Off";
+  }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // QUALITY
-  // ---------------------------------------------------------
+  // ----------------------------
   function applyQualityMode(){
     if(qualityMode === "quality"){
       renderer.setPixelRatio(pixelRatioQuality);
@@ -1961,12 +2123,15 @@
     setTimeout(hideMessage, 900);
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // BUTTON ACTIONS
-  // ---------------------------------------------------------
+  // ----------------------------
   function manualLevel(){
-    pitch *= 0.25;
-    roll  *= 0.25;
+    pitch *= 0.20;
+    roll  *= 0.20;
+    pitchVel *= 0.3;
+    rollVel  *= 0.3;
+    yawVel   *= 0.5;
     showMessage("LEVEL");
     setTimeout(hideMessage, 450);
   }
@@ -1989,9 +2154,6 @@
     showMessage("NAV hedefi: " + airports[navIndex].id + " (" + airports[navIndex].name + ")");
     setTimeout(hideMessage, 1000);
     saveProfile();
-
-    // Eğer pistten tekrar başlamak istersen:
-    // resetFlightToRunway();
   }
   function toggleHelp(){
     showHelp = !showHelp;
@@ -2019,9 +2181,25 @@
     setTimeout(hideMessage, 700);
   }
 
-  // ---------------------------------------------------------
+  function toggleYawDamper(){
+    yawDamperOn = !yawDamperOn;
+    updateYawDamperHud();
+    showMessage("Yaw Damper: " + (yawDamperOn ? "On" : "Off"));
+    setTimeout(hideMessage, 700);
+    saveProfile();
+  }
+
+  function toggleParkingBrake(){
+    parkingBrake = !parkingBrake;
+    updateParkingHud();
+    showMessage("PARK: " + (parkingBrake ? "On" : "Off"));
+    setTimeout(hideMessage, 700);
+    saveProfile();
+  }
+
+  // ----------------------------
   // WINDOW RESIZE
-  // ---------------------------------------------------------
+  // ----------------------------
   function onWindowResize(){
     const w = container.clientWidth;
     const h = container.clientHeight;
@@ -2030,54 +2208,73 @@
     renderer.setSize(w,h);
   }
 
-  // ---------------------------------------------------------
-  // INPUT: JOYSTICK
-  // ---------------------------------------------------------
-  function onJoystickDown(e){
+  // ----------------------------
+  // INPUT: YOKE
+  // ----------------------------
+  function onYokeDown(e){
     e.preventDefault();
-    joystick.active = true;
-    joystick.id = e.pointerId;
-    const rect = joystickArea.getBoundingClientRect();
-    joystick.startX = rect.left + rect.width/2;
-    joystick.startY = rect.top  + rect.height/2;
-    moveJoystickStick(e.clientX, e.clientY);
+    yoke.active = true;
+    yoke.id = e.pointerId;
+    const rect = yokeArea.getBoundingClientRect();
+    yoke.startX = rect.left + rect.width/2;
+    yoke.startY = rect.top  + rect.height/2;
+    moveYoke(e.clientX, e.clientY);
+    try{ yokeArea.setPointerCapture(e.pointerId); }catch(err){}
   }
-  function onJoystickMove(e){
-    if(!joystick.active || e.pointerId !== joystick.id) return;
+  function onYokeMove(e){
+    if(!yoke.active || e.pointerId !== yoke.id) return;
     e.preventDefault();
-    moveJoystickStick(e.clientX, e.clientY);
+    moveYoke(e.clientX, e.clientY);
   }
-  function onJoystickUp(e){
-    if(!joystick.active || (e && e.pointerId !== joystick.id)) return;
-    joystick.active = false;
-    joystick.id = null;
-    joystick.xValue = 0;
-    joystick.yValue = 0;
-    joystickStick.style.transform = 'translate(-50%, -50%)';
-  }
-  function moveJoystickStick(cx, cy){
-    const dy = cy - joystick.startY;
-    const maxR = joystick.maxRadius;
+  function onYokeUp(e){
+    if(!yoke.active || (e && e.pointerId !== yoke.id)) return;
+    yoke.active = false;
+    yoke.id = null;
 
+    // spring-back to center
+    yoke.xValue = 0;
+    yoke.yValue = 0;
+    yokeKnob.style.transform = 'translate(-50%, -50%)';
+    yokeHandle.style.transform = 'translate(-50%, -50%)';
+  }
+
+  function moveYoke(cx, cy){
+    const dx = cx - yoke.startX;
+    const dy = cy - yoke.startY;
+
+    const maxR = yoke.maxRadius;
+
+    let nx = dx;
     let ny = dy;
-    if(Math.abs(ny) > maxR) ny = maxR * Math.sign(ny);
 
-    joystickStick.style.transform = `translate(-50%, calc(-50% + ${ny}px))`;
+    // circular clamp
+    const len = Math.sqrt(nx*nx + ny*ny);
+    if(len > maxR){
+      const s = maxR / (len || 1);
+      nx *= s;
+      ny *= s;
+    }
 
-    joystick.xValue = 0;
-    joystick.yValue = -ny / maxR;
+    // Visual move
+    yokeKnob.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
+    yokeHandle.style.transform = `translate(calc(-50% + ${nx*0.65}px), calc(-50% + ${ny*0.65}px))`;
+
+    // Convert to normalized inputs
+    // IMPORTANT inversion requested:
+    // down (ny positive) => yValue positive => pitch up
+    yoke.xValue = clamp(nx / maxR, -1, 1);
+    yoke.yValue = clamp(ny / maxR, -1, 1);
   }
 
-  // ---------------------------------------------------------
-  // INPUT: THROTTLES (NO SELF CHANGE)
-  // ---------------------------------------------------------
+  // ----------------------------
+  // INPUT: THROTTLES
+  // ----------------------------
   function onThrottleDown(e, which){
     e.preventDefault();
     tTouch.active = true;
     tTouch.id = e.pointerId;
     tTouch.which = which;
     updateThrottleFromPointer(e, which);
-    // capture pointer so it doesn't get lost
     try{ e.target.setPointerCapture(e.pointerId); }catch(err){}
   }
   function onThrottleMove(e){
@@ -2097,8 +2294,7 @@
     const rect = track.getBoundingClientRect();
     const rel = (e.clientY - rect.top) / rect.height;
     let t = 1 - rel;
-    if(t < 0) t = 0;
-    if(t > 1) t = 1;
+    t = clamp(t, 0, 1);
 
     if(which === 1) throttle1 = t;
     else throttle2 = t;
@@ -2107,7 +2303,6 @@
   }
 
   function updateThrottleThumbs(force){
-    // Use cached heights if possible; avoid layout-jank
     const h1 = (throttle1Track.getBoundingClientRect().height || 175);
     const h2 = (throttle2Track.getBoundingClientRect().height || 175);
 
@@ -2124,50 +2319,47 @@
     throttle2Sub.textContent = Math.round(throttle2*100) + "%";
   }
 
-  // ---------------------------------------------------------
+  // ----------------------------
   // KEYBOARD
-  // ---------------------------------------------------------
+  // ----------------------------
   function onKeyDown(e){
     if(e.repeat) return;
     switch(e.code){
+      // Pitch (W pulls up, S pushes down) - consistent with "yoke down => pitch up"
       case 'KeyW':
       case 'ArrowUp':
-        joystick.yValue = 1; break;
+        yoke.yValue = 1; break;
       case 'KeyS':
       case 'ArrowDown':
-        joystick.yValue = -1; break;
+        yoke.yValue = -1; break;
+
+      // Roll (A left, D right)
       case 'KeyA':
       case 'ArrowLeft':
-        turnLeftPressed = true; break;
+        yoke.xValue = -1; break;
       case 'KeyD':
       case 'ArrowRight':
-        turnRightPressed = true; break;
-      case 'KeyV':
-        toggleViewMode(); break;
-      case 'KeyP':
-        toggleAutopilot(); break;
-      case 'KeyN':
-        cycleNavTarget(); break;
-      case 'KeyQ':
-        toggleQuality(); break;
-      case 'KeyH':
-        toggleHelp(); break;
+        yoke.xValue = 1; break;
 
-      case 'KeyG':
-        toggleGear(); break;
+      case 'KeyV': toggleViewMode(); break;
+      case 'KeyP': toggleAutopilot(); break;
+      case 'KeyN': cycleNavTarget(); break;
+      case 'KeyQ': toggleQuality(); break;
+      case 'KeyH': toggleHelp(); break;
 
-      case 'Digit1':
-        toggleEngine(1); break;
-      case 'Digit2':
-        toggleEngine(2); break;
+      case 'KeyG': toggleGear(); break;
 
-      // ENG1 throttle: [ ]  (same as before but now engine1)
+      case 'KeyY': toggleYawDamper(); break;
+      case 'KeyB': toggleParkingBrake(); break;
+
+      case 'Digit1': toggleEngine(1); break;
+      case 'Digit2': toggleEngine(2); break;
+
       case 'BracketRight':
         throttle1 = Math.min(1, throttle1 + 0.05); updateThrottleThumbs(false); break;
       case 'BracketLeft':
         throttle1 = Math.max(0, throttle1 - 0.05); updateThrottleThumbs(false); break;
 
-      // ENG2 throttle: ; '  (semicolon / quote)
       case 'Semicolon':
         throttle2 = Math.max(0, throttle2 - 0.05); updateThrottleThumbs(false); break;
       case 'Quote':
@@ -2180,13 +2372,15 @@
       case 'ArrowUp':
       case 'KeyS':
       case 'ArrowDown':
-        joystick.yValue = 0; break;
+        if(!yoke.active) yoke.yValue = 0;
+        break;
+
       case 'KeyA':
       case 'ArrowLeft':
-        turnLeftPressed = false; break;
       case 'KeyD':
       case 'ArrowRight':
-        turnRightPressed = false; break;
+        if(!yoke.active) yoke.xValue = 0;
+        break;
     }
   }
 })();
