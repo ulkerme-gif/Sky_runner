@@ -2,2388 +2,1877 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <title>Tablet FlightSim 3D - Yoke + Yaw Damper + Ground Fix</title>
+  <title>Tablet FlightSim 3D - Market + Real Aircraft Inspired Models</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    html, body { width:100%; height:100%; overflow:hidden; background:#000; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-
-    #game-container{
-      position:relative; width:100vw; height:100vh; overflow:hidden;
-      background: radial-gradient(circle at 50% 15%, #7dd4ff 0, #264a7f 45%, #050810 100%);
-    }
-    canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; z-index:0; }
-
-    .hud{ position:absolute; inset:0; pointer-events:none; color:#0ff; z-index:1; }
-    .hud-top{
-      position:absolute; top:8px; left:0; right:0;
-      display:flex; justify-content:space-between; padding:0 8px; gap:6px;
-      font-size:12px; text-shadow:0 0 4px #000;
-      flex-wrap:wrap;
-    }
-    .hud-box{
-      background:rgba(0,0,0,0.45);
-      border:1px solid rgba(0,255,255,0.55);
-      border-radius:10px;
-      padding:5px 7px;
-      min-width:88px;
-      text-align:center;
-      backdrop-filter: blur(4px);
-    }
-    .hud-title{ font-weight:650; letter-spacing:1px; font-size:10px; opacity:.82; }
-    .hud-value{ font-size:13px; font-weight:800; }
-
-    .hud-center{
-      position:absolute; top:50%; left:50%;
-      width:42px; height:42px; margin-left:-21px; margin-top:-21px;
-      border-radius:50%;
-      border:2px solid rgba(0,255,255,0.85);
-      box-shadow:0 0 12px rgba(0,255,255,0.55);
-    }
-    .hud-center::before,.hud-center::after{
-      content:""; position:absolute; background:rgba(0,255,255,0.95);
-    }
-    .hud-center::before{ left:50%; top:-10px; width:2px; height:10px; transform:translateX(-50%); }
-    .hud-center::after{ top:50%; left:-10px; width:10px; height:2px; transform:translateY(-50%); }
-
-    .hud-message{
-      position:absolute; top:50%; left:50%;
-      transform:translate(-50%, -155%);
-      padding:7px 11px;
-      background:rgba(0,0,0,0.72);
-      border-radius:10px;
-      border:1px solid rgba(0,255,255,0.75);
-      font-size:12px;
-      text-shadow:0 0 4px #000;
-      display:none;
-      max-width:92vw;
-      text-align:center;
-      line-height:1.25;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
-    .hud-warning{
-      position:absolute; top:62px; left:50%;
-      transform:translateX(-50%);
-      background:rgba(80,0,0,0.68);
-      border:1px solid rgba(255,70,70,0.85);
-      color:#ffd2d2;
-      padding:6px 10px;
-      border-radius:10px;
-      font-size:12px;
-      text-shadow:0 0 5px #000;
-      display:none;
-      white-space:nowrap;
+    body {
+      overflow: hidden;
+      background: #88cdf8;
+      font-family: Arial, sans-serif;
+      touch-action: none;
     }
 
-    .hud-mini{
-      position:absolute; top:118px; left:8px;
-      background:rgba(0,0,0,0.55);
-      border:1px solid rgba(0,255,255,0.25);
-      border-radius:12px;
-      padding:8px 10px;
-      color:#cfe9ff;
-      font-size:10px;
-      text-shadow:0 0 4px #000;
-      backdrop-filter: blur(3px);
-      width:min(410px, 95vw);
-      line-height:1.25;
-    }
-    .hud-mini b{ color:#e8ffff; }
-    .hud-mini .line{ opacity:.95; }
-    .hud-mini .dim{ opacity:.75; }
-
-    /* --- YOKE (instead of joystick) --- */
-    .yoke-area{
-      position:absolute;
-      left:14px;
-      bottom:96px;
-      width:200px;
-      height:200px;
-      border-radius:22px;
-      background: radial-gradient(circle at 50% 35%, rgba(0,255,255,.18), rgba(0,0,0,.92));
-      border:1px solid rgba(0,255,255,.38);
-      pointer-events:auto;
-      touch-action:none;
-      z-index:2;
-      box-shadow: 0 0 14px rgba(0,255,255,0.22);
-    }
-    .yoke-grid{
-      position:absolute; inset:12px;
-      border-radius:18px;
-      border:1px dashed rgba(0,255,255,0.18);
-      background:
-        linear-gradient(to right, rgba(0,255,255,0.08) 1px, transparent 1px) 0 0 / 25px 25px,
-        linear-gradient(to bottom, rgba(0,255,255,0.08) 1px, transparent 1px) 0 0 / 25px 25px;
-      opacity:0.65;
-    }
-    .yoke-center-dot{
-      position:absolute; left:50%; top:50%;
-      width:8px; height:8px;
-      border-radius:50%;
-      background:rgba(0,255,255,0.85);
-      transform:translate(-50%,-50%);
-      box-shadow:0 0 10px rgba(0,255,255,0.55);
-      pointer-events:none;
+    #game {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
     }
 
-    /* Y shaped handle */
-    .yoke-handle{
-      position:absolute;
-      left:50%; top:50%;
-      width:110px; height:110px;
-      transform:translate(-50%,-50%);
-      pointer-events:none;
-      filter: drop-shadow(0 0 10px rgba(0,255,255,0.35));
-    }
-    .yoke-stem{
-      position:absolute; left:50%; top:32px;
-      width:14px; height:62px;
-      transform:translateX(-50%);
-      background: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,255,255,0.7));
-      border:1px solid rgba(0,255,255,0.75);
-      border-radius:10px;
-    }
-    .yoke-bar{
-      position:absolute; left:50%; top:16px;
-      width:96px; height:18px;
-      transform:translateX(-50%);
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.25), rgba(0,255,255,0.85));
-      border:1px solid rgba(0,255,255,0.9);
-      border-radius:14px;
-      box-shadow:0 0 12px rgba(0,255,255,0.25) inset;
-    }
-    .yoke-arm{
-      position:absolute; top:16px; width:26px; height:26px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), rgba(0,255,255,0.85));
-      border:1px solid rgba(0,255,255,0.95);
-      border-radius:50%;
-    }
-    .yoke-arm.left{ left:4px; }
-    .yoke-arm.right{ right:4px; }
-
-    /* a movable "knob" (invisible drag point) */
-    .yoke-knob{
-      position:absolute;
-      left:50%; top:50%;
-      width:64px; height:64px;
-      transform:translate(-50%,-50%);
-      border-radius:18px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(0,255,255,.20), rgba(0,0,0,.55));
-      border:1px solid rgba(0,255,255,0.45);
-      box-shadow:0 0 18px rgba(0,255,255,0.22);
-      pointer-events:none;
+    #hud {
+      position: fixed;
+      top: max(10px, env(safe-area-inset-top));
+      left: max(10px, env(safe-area-inset-left));
+      padding: 11px 13px;
+      border-radius: 15px;
+      background: rgba(0, 0, 0, 0.48);
+      color: white;
+      font-size: 13px;
+      line-height: 1.45;
+      z-index: 10;
+      min-width: 205px;
+      backdrop-filter: blur(7px);
     }
 
-    /* --- THROTTLES (TWIN) --- */
-    .throttle-panel{
-      position:absolute;
-      right:12px;
-      bottom:260px;
-      display:flex;
-      gap:10px;
-      pointer-events:auto;
-      touch-action:none;
-      z-index:2;
+    #hud b {
+      color: #9ee7ff;
     }
-    .throttle-container{
-      width:48px; height:220px;
-      border-radius:24px;
-      border:1px solid rgba(0,255,255,0.5);
-      background: linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(0,255,255,0.35));
-      display:flex; justify-content:center; align-items:center;
-      position:relative;
+
+    #status {
+      margin-top: 5px;
+      color: #ffe58a;
+      font-weight: bold;
     }
-    .throttle-track{ position:relative; width:10px; height:175px; border-radius:6px; background:linear-gradient(to bottom,#0ff,#023); }
-    .throttle-thumb{
-      position:absolute; left:50%; width:30px; height:10px; margin-left:-15px;
-      border-radius:8px; background:rgba(0,0,0,0.95);
-      border:1px solid rgba(0,255,255,1);
-      box-shadow:0 0 10px rgba(0,255,255,0.9);
+
+    #message {
+      position: fixed;
+      left: 50%;
+      top: max(18px, env(safe-area-inset-top));
+      transform: translateX(-50%);
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: rgba(0,0,0,0.58);
+      color: white;
+      z-index: 60;
+      font-weight: bold;
+      display: none;
+      max-width: 88vw;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    #controls {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .panel {
+      pointer-events: auto;
+      position: absolute;
+      border-radius: 18px;
+      background: rgba(0, 0, 0, 0.37);
+      backdrop-filter: blur(8px);
+      color: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    #buttonPanel {
+      left: max(12px, env(safe-area-inset-left));
+      bottom: max(16px, env(safe-area-inset-bottom));
+      width: 122px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 10px 8px;
+      font-weight: bold;
+      color: white;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.25);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: scale(0.96);
+    }
+
+    button.active {
+      background: #1fbb58;
+    }
+
+    button.warn {
+      background: #c94747;
+    }
+
+    #yokePanel {
+      left: 50%;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: 250px;
+      height: 208px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #yokeBase {
+      position: relative;
+      width: 168px;
+      height: 168px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.15), rgba(0,0,0,0.27));
+      border: 2px solid rgba(255,255,255,0.25);
+    }
+
+    #yoke {
+      position: absolute;
+      left: 50%;
       top: 50%;
-      transform: translateY(-50%);
-    }
-    .throttle-label{
-      position:absolute; top:6px; left:50%; transform:translateX(-50%);
-      font-size:10px; color:#0ff; text-shadow:0 0 3px #000;
-      letter-spacing:0.5px;
-    }
-    .throttle-sub{
-      position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
-      font-size:9px; color:#cfe9ff; opacity:.85; text-shadow:0 0 3px #000;
-      white-space:nowrap;
+      width: 128px;
+      height: 128px;
+      transform: translate(-50%, -50%);
+      transition: transform 0.035s linear;
     }
 
-    /* Buttons */
-    .button-cluster{
-      position:absolute; bottom:110px; right:8px;
-      display:grid;
-      grid-template-columns: repeat(3, minmax(70px, 92px));
-      grid-gap:6px;
-      pointer-events:auto;
-      z-index:2;
+    .yoke-arm {
+      position: absolute;
+      background: #20242a;
+      border: 3px solid #5f6d7a;
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.12), 0 4px 10px rgba(0,0,0,0.4);
     }
-    .btn{
-      position:relative;
-      padding:9px 6px;
-      border-radius:12px;
-      border:1px solid rgba(0,255,255,0.62);
-      background: radial-gradient(circle at 50% 10%, rgba(255,255,255,0.28), rgba(0,0,0,0.95));
-      color:#0ff;
-      font-size:10px;
-      text-align:center;
-      font-weight:700;
-      text-shadow:0 0 5px #000;
-      box-shadow:0 0 12px rgba(0,255,255,0.68);
-      touch-action:manipulation;
-      user-select:none;
-    }
-    .btn:active{
-      transform:scale(.965);
-      box-shadow:0 0 4px rgba(0,255,255,0.9) inset;
-      background: radial-gradient(circle at 50% 90%, rgba(0,255,255,0.55), rgba(0,0,0,0.95));
-    }
-    .btn-label{ display:block; }
-    .btn-sub{ display:block; font-size:8px; opacity:0.72; margin-top:2px; }
 
-    /* Engine status chip */
-    .engine-chip{
-      position:absolute;
-      right:12px;
-      bottom:490px;
-      display:flex;
-      gap:8px;
-      pointer-events:none;
-      z-index:2;
+    .arm-left {
+      width: 80px;
+      height: 22px;
+      left: 0;
+      top: 36px;
+      border-radius: 18px;
+      transform: rotate(-25deg);
     }
-    .chip{
-      background:rgba(0,0,0,0.55);
-      border:1px solid rgba(0,255,255,0.45);
-      border-radius:12px;
-      padding:6px 10px;
-      font-size:10px;
-      color:#cfe9ff;
-      text-shadow:0 0 4px #000;
-      backdrop-filter: blur(3px);
-      min-width:96px;
-      text-align:center;
-    }
-    .chip b{ color:#e8ffff; }
 
-    /* Overlay */
-    .overlay-screen{
-      position:absolute; inset:0;
-      background: radial-gradient(circle at 50% 10%, rgba(0,255,255,0.12), rgba(0,0,0,0.92));
-      display:flex; align-items:center; justify-content:center;
-      z-index:5; pointer-events:auto;
+    .arm-right {
+      width: 80px;
+      height: 22px;
+      right: 0;
+      top: 36px;
+      border-radius: 18px;
+      transform: rotate(25deg);
     }
-    .overlay-card{
-      background:rgba(0,0,0,0.85);
-      border-radius:16px;
-      border:1px solid rgba(0,255,255,0.6);
-      padding:18px 16px;
-      max-width:420px; width:92%;
-      color:#e8ffff;
-      box-shadow:0 0 25px rgba(0,255,255,0.4);
-    }
-    .overlay-title{ font-size:18px; font-weight:800; text-align:center; margin-bottom:8px; }
-    .overlay-subtitle{ font-size:12px; text-align:center; opacity:.85; margin-bottom:14px; line-height:1.3; }
-    .overlay-buttons{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
-    .overlay-btn{
-      border-radius:12px;
-      border:1px solid rgba(0,255,255,0.7);
-      background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(0,0,0,0.9));
-      color:#0ff;
-      font-size:13px; font-weight:750;
-      padding:9px; text-align:center;
-    }
-    .overlay-btn:active{ transform:scale(.975); }
-    .overlay-info{ font-size:11px; opacity:.78; margin-top:8px; line-height:1.35; }
 
-    .auth-screen{ display:flex; }
-    .start-screen{ display:none; }
-
-    .auth-input{
-      width:100%;
-      padding:7px 10px;
-      border-radius:10px;
-      border:1px solid rgba(0,255,255,0.7);
-      background:rgba(0,0,0,0.8);
-      color:#e8ffff;
-      margin-bottom:10px;
-      font-size:13px;
+    .arm-down {
+      width: 24px;
+      height: 82px;
+      left: 52px;
+      top: 48px;
+      border-radius: 18px;
     }
-    .auth-input::placeholder{ color:rgba(200,255,255,0.6); }
 
-    @media (max-width: 820px){
-      .yoke-area{ width:180px; height:180px; bottom:90px; }
-      .button-cluster{ grid-template-columns: repeat(3, minmax(62px, 82px)); bottom:100px; }
-      .throttle-panel{ bottom:245px; }
-      .engine-chip{ bottom:470px; }
-      .hud-mini{ top:120px; }
+    .yoke-center {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: 46px;
+      height: 46px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: #323944;
+      border: 4px solid #748394;
+      box-shadow: inset 0 0 12px rgba(255,255,255,0.15);
+    }
+
+    #yokeHint {
+      position: absolute;
+      bottom: 7px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.82);
+    }
+
+    #throttlePanel {
+      right: max(12px, env(safe-area-inset-right));
+      bottom: max(16px, env(safe-area-inset-bottom));
+      width: 86px;
+      height: 250px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #throttleLabel {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    #throttleTrack {
+      position: relative;
+      width: 34px;
+      height: 178px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.25);
+    }
+
+    #throttleFill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0%;
+      border-radius: 99px;
+      background: linear-gradient(to top, #29d34d, #ffe15a, #ff5d5d);
+    }
+
+    #throttleKnob {
+      position: absolute;
+      left: 50%;
+      bottom: 0%;
+      width: 52px;
+      height: 28px;
+      transform: translate(-50%, 50%);
+      border-radius: 8px;
+      background: #f4f4f4;
+      border: 2px solid #555;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.45);
+    }
+
+    #throttleValue {
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    #rudderPanel {
+      position: absolute;
+      right: max(108px, calc(env(safe-area-inset-right) + 108px));
+      bottom: max(20px, env(safe-area-inset-bottom));
+      width: 150px;
+      height: 72px;
+      padding: 8px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    .rudderBtn {
+      width: 58px;
+      height: 48px;
+      font-size: 22px;
+    }
+
+    #marketOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      background: rgba(5, 9, 18, 0.72);
+      backdrop-filter: blur(8px);
+      padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+      color: white;
+      overflow: auto;
+    }
+
+    #marketBox {
+      width: min(980px, 96vw);
+      margin: 0 auto;
+      background: rgba(15, 22, 35, 0.93);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 12px 38px rgba(0,0,0,0.45);
+    }
+
+    #marketHeader {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    #marketHeader h2 {
+      font-size: 22px;
+    }
+
+    #marketGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .planeCard {
+      border-radius: 18px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 12px;
+    }
+
+    .planeCard.activeCard {
+      outline: 2px solid #73e0ff;
+      background: rgba(55, 155, 255, 0.18);
+    }
+
+    .planeName {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: #eaf8ff;
+    }
+
+    .planeType {
+      font-size: 12px;
+      opacity: 0.78;
+      margin-bottom: 10px;
+    }
+
+    .stat {
+      margin: 7px 0;
+      font-size: 12px;
+    }
+
+    .statLine {
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.16);
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .statFill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #55d98b, #65c7ff);
+    }
+
+    .planePrice {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #ffe58a;
+    }
+
+    .planeCard button {
+      width: 100%;
+      margin-top: 9px;
+    }
+
+    #closeMarketBtn {
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.16);
+    }
+
+    @media (max-width: 860px) {
+      #marketGrid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      #hud {
+        font-size: 12px;
+        min-width: 188px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      #buttonPanel {
+        width: 110px;
+        gap: 6px;
+        padding: 8px;
+      }
+
+      #buttonPanel button {
+        padding: 8px 6px;
+        font-size: 11px;
+      }
+
+      #yokePanel {
+        width: 205px;
+        height: 174px;
+      }
+
+      #yokeBase {
+        width: 138px;
+        height: 138px;
+      }
+
+      #yoke {
+        transform: translate(-50%, -50%) scale(0.82);
+      }
+
+      #yokeHint {
+        font-size: 10px;
+      }
+
+      #throttlePanel {
+        width: 76px;
+        height: 218px;
+      }
+
+      #throttleTrack {
+        height: 148px;
+      }
+
+      #rudderPanel {
+        right: 94px;
+        width: 128px;
+        height: 62px;
+      }
+
+      .rudderBtn {
+        width: 48px;
+        height: 42px;
+      }
+
+      #marketGrid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 
 <body>
-<div id="game-container">
+  <canvas id="game"></canvas>
 
-  <div class="hud">
-    <div class="hud-top">
-      <div class="hud-box">
-        <div class="hud-title">HIZ</div>
-        <div class="hud-value" id="hud-speed">0 kn</div>
-      </div>
+  <div id="hud">
+    <div>Uçak: <b id="planeHud">Cessna 172</b></div>
+    <div>Coin: <b id="coinsHud">0</b></div>
+    <div>Hız: <b id="speed">0</b> km/h</div>
+    <div>Yükseklik: <b id="altitude">0</b> m</div>
+    <div>Gaz: <b id="throttleHud">0</b>%</div>
+    <div>İniş Takımı: <b id="gearHud">Açık</b></div>
+    <div>Yaw Damper: <b id="yawHud">Açık</b></div>
+    <div id="status">Park halinde</div>
+  </div>
 
-      <div class="hud-box">
-        <div class="hud-title">MOD</div>
-        <div class="hud-value" id="hud-mode">UÇUŞ</div>
-      </div>
+  <div id="message"></div>
 
-      <div class="hud-box">
-        <div class="hud-title">İRTİFA</div>
-        <div class="hud-value" id="hud-altitude">0 m</div>
-      </div>
-
-      <div class="hud-box">
-        <div class="hud-title">HDG</div>
-        <div class="hud-value" id="hud-heading">000°</div>
-      </div>
-
-      <div class="hud-box">
-        <div class="hud-title">RÜZGAR</div>
-        <div class="hud-value" id="hud-wind">0 kt</div>
-      </div>
-
-      <div class="hud-box">
-        <div class="hud-title">HEDEF</div>
-        <div class="hud-value" id="hud-target">—</div>
-      </div>
-    </div>
-
-    <div class="hud-center"></div>
-    <div class="hud-message" id="hud-message">...</div>
-    <div class="hud-warning" id="hud-warning">TERRAIN! PULL UP!</div>
-
-    <div class="hud-mini" id="hud-mini">
-      <div class="line"><b>Yoke</b>: Pitch + Roll</div>
-      <div class="line"><b>Yoke Ters</b>: Aşağı çek → <b>Yukarı</b>, Yukarı it → <b>Aşağı</b></div>
-      <div class="line"><b>YD</b>: Yaw Damper (havada yalpalamayı azaltır)</div>
-      <div class="line"><b>PARK</b>: Park freni (yerde stabil)</div>
-      <div class="line"><b>GAZ ENG1</b>: Sağ üst throttle</div>
-      <div class="line"><b>GAZ ENG2</b>: Sağ alt throttle</div>
-      <div class="line"><b>ENG1/ENG2</b>: Motor aç/kapa (asimetrik → spin)</div>
-      <div class="line"><b>GEAR</b>: İniş takımı</div>
-      <div class="line"><b>VIEW</b>: Kokpit / Dış</div>
-      <div class="line"><b>AP</b>: Basit Auto-level</div>
-      <div class="line"><b>NAV</b>: Sonraki havalimanı</div>
-      <div class="line"><b>Q</b>: Grafik Performans/Kalite</div>
-      <div class="dim" style="margin-top:6px;">
-        Yerdeyken (düşük hız + teker yerde) uçuş manevrası kilitlenir: artık ters takla / kendi kendine yatış olmaz.<br/>
-        Kalkış için hızlan, burunu hafif kaldır (rotate).
-      </div>
-      <div class="dim" style="margin-top:6px;">
-        PC: W/S Pitch, A/D Roll+Yaw, V View, P AP, N NAV, Q Quality, G Gear, B Park, Y YawDamper<br/>
-        1/2: ENG1/ENG2 toggle, [ ]: ENG1 throttle, ; ' : ENG2 throttle
-      </div>
-    </div>
-
-    <!-- YOKE -->
-    <div class="yoke-area" id="yoke-area">
-      <div class="yoke-grid"></div>
-      <div class="yoke-center-dot"></div>
-
-      <div class="yoke-knob" id="yoke-knob"></div>
-
-      <div class="yoke-handle" id="yoke-handle">
-        <div class="yoke-bar"></div>
-        <div class="yoke-arm left"></div>
-        <div class="yoke-arm right"></div>
-        <div class="yoke-stem"></div>
-      </div>
-    </div>
-
-    <!-- ENGINE STATUS -->
-    <div class="engine-chip">
-      <div class="chip" id="chip-eng1"><b>ENG1</b><br/>ON • T: 0%</div>
-      <div class="chip" id="chip-eng2"><b>ENG2</b><br/>ON • T: 0%</div>
-      <div class="chip" id="chip-gear"><b>GEAR</b><br/>DOWN</div>
-    </div>
-
-    <!-- TWIN THROTTLES -->
-    <div class="throttle-panel">
-      <div class="throttle-container" id="throttle1-area">
-        <div class="throttle-label">ENG1</div>
-        <div class="throttle-track" id="throttle1-track">
-          <div class="throttle-thumb" id="throttle1-thumb"></div>
+  <div id="marketOverlay">
+    <div id="marketBox">
+      <div id="marketHeader">
+        <div>
+          <h2>Uçak Marketi</h2>
+          <div>Uçarak coin kazan, uçak satın al ve seç.</div>
         </div>
-        <div class="throttle-sub" id="throttle1-sub">0%</div>
+        <button id="closeMarketBtn">Kapat</button>
       </div>
+      <div id="marketGrid"></div>
+    </div>
+  </div>
 
-      <div class="throttle-container" id="throttle2-area">
-        <div class="throttle-label">ENG2</div>
-        <div class="throttle-track" id="throttle2-track">
-          <div class="throttle-thumb" id="throttle2-thumb"></div>
+  <div id="controls">
+    <div id="buttonPanel" class="panel">
+      <button id="engineBtn" class="active">Motor Açık</button>
+      <button id="gearBtn" class="active">Gear Açık</button>
+      <button id="yawBtn" class="active">Yaw Damper</button>
+      <button id="marketBtn">Market</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div id="yokePanel" class="panel">
+      <div id="yokeBase">
+        <div id="yoke">
+          <div class="yoke-arm arm-left"></div>
+          <div class="yoke-arm arm-right"></div>
+          <div class="yoke-arm arm-down"></div>
+          <div class="yoke-center"></div>
         </div>
-        <div class="throttle-sub" id="throttle2-sub">0%</div>
       </div>
+      <div id="yokeHint">Y direksiyon: çek = yüksel, it = alçal</div>
     </div>
 
-    <!-- BUTTONS: TURN buttons removed, replaced with YD + PARK -->
-    <div class="button-cluster">
-      <button class="btn" id="btn-yd">
-        <span class="btn-label">YD</span>
-        <span class="btn-sub" id="yd-status">On</span>
-      </button>
-      <button class="btn" id="btn-park">
-        <span class="btn-label">PARK</span>
-        <span class="btn-sub" id="park-status">Off</span>
-      </button>
-      <button class="btn" id="btn-level">
-        <span class="btn-label">LEVEL</span>
-        <span class="btn-sub">Denge</span>
-      </button>
+    <div id="rudderPanel" class="panel">
+      <button class="rudderBtn" id="rudderLeft">↶</button>
+      <button class="rudderBtn" id="rudderRight">↷</button>
+    </div>
 
-      <button class="btn" id="btn-view">
-        <span class="btn-label">VIEW</span>
-        <span class="btn-sub" id="view-status">Dış</span>
-      </button>
-      <button class="btn" id="btn-ap">
-        <span class="btn-label">AP</span>
-        <span class="btn-sub" id="ap-status">Off</span>
-      </button>
-      <button class="btn" id="btn-nav">
-        <span class="btn-label">NAV</span>
-        <span class="btn-sub">Havalimanı</span>
-      </button>
-
-      <button class="btn" id="btn-eng1">
-        <span class="btn-label">ENG1</span>
-        <span class="btn-sub" id="eng1-status">On</span>
-      </button>
-      <button class="btn" id="btn-eng2">
-        <span class="btn-label">ENG2</span>
-        <span class="btn-sub" id="eng2-status">On</span>
-      </button>
-      <button class="btn" id="btn-gear">
-        <span class="btn-label">GEAR</span>
-        <span class="btn-sub" id="gear-status">Down</span>
-      </button>
-
-      <button class="btn" id="btn-quality">
-        <span class="btn-label">QUALITY</span>
-        <span class="btn-sub" id="quality-status">Performans</span>
-      </button>
-      <button class="btn" id="btn-recenter">
-        <span class="btn-label">RECENTER</span>
-        <span class="btn-sub">Kamera</span>
-      </button>
-      <button class="btn" id="btn-help">
-        <span class="btn-label">HELP</span>
-        <span class="btn-sub">HUD</span>
-      </button>
+    <div id="throttlePanel" class="panel">
+      <div id="throttleLabel">GAZ</div>
+      <div id="throttleTrack">
+        <div id="throttleFill"></div>
+        <div id="throttleKnob"></div>
+      </div>
+      <div id="throttleValue">0%</div>
     </div>
   </div>
 
-  <!-- AUTH -->
-  <div class="overlay-screen auth-screen" id="auth-screen">
-    <div class="overlay-card">
-      <div class="overlay-title">Tablet FlightSim 3D</div>
-      <div class="overlay-subtitle">
-        Bu sürüm: <b>Yoke + Yaw Damper + Ground Fix</b>.<br/>
-        Kullanıcı adı ile ayarlarını bu cihazda saklayabiliriz.
-      </div>
-      <input class="auth-input" id="auth-username" placeholder="Kullanıcı adı (örnek: pilotTuna)" />
-      <div class="overlay-buttons">
-        <button class="overlay-btn" id="btn-auth-create">DEVAM (KAYDET)</button>
-        <button class="overlay-btn" id="btn-auth-guest">MİSAFİR (KAYIT YOK)</button>
-      </div>
-      <div class="overlay-info">
-        İnternet gerekmez. Aynı kullanıcı adı → aynı ayarlar (kalite, görünüm, NAV hedefi).
-      </div>
-    </div>
-  </div>
+  <script type="module">
+    import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 
-  <!-- START -->
-  <div class="overlay-screen start-screen" id="start-screen">
-    <div class="overlay-card">
-      <div class="overlay-title">Pistten Kalkışa Hazır!</div>
-      <div class="overlay-subtitle">
-        Uçak <b>pist üzerinde hizalı</b> başlar.<br/>
-        Yerdeyken pitch/roll kilitli → artık saçma takla yok.
-      </div>
-      <div class="overlay-info">
-        • Sağda <b>ENG1/ENG2</b> ayrı throttle<br/>
-        • <b>YD</b> yaw damper (havada stabil)<br/>
-        • <b>PARK</b> park freni (yerde stabil)<br/>
-        • <b>GEAR</b> iniş takımı, <b>AP</b> dengeleme, <b>NAV</b> hedef
-      </div>
-      <div class="overlay-buttons">
-        <button class="overlay-btn" id="btn-start-game">UÇUŞA BAŞLA</button>
-      </div>
-    </div>
-  </div>
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    const lowPowerDevice = isTouchDevice || (navigator.deviceMemory && navigator.deviceMemory <= 4);
 
-</div>
+    const canvas = document.getElementById("game");
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: !lowPowerDevice,
+      powerPreference: "high-performance"
+    });
 
-<script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowPowerDevice ? 1.35 : 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = !lowPowerDevice;
 
-<script>
-(() => {
-  const container = document.getElementById('game-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x8bd3ff);
+    scene.fog = new THREE.Fog(0x8bd3ff, 500, 2800);
 
-  // Helpers
-  const V3 = () => new THREE.Vector3();
-  const _vA = V3(), _vB = V3(), _vC = V3(), _vD = V3(), _vE = V3();
-  const _qA = new THREE.Quaternion();
-  const _eA = new THREE.Euler(0,0,0,'XYZ');
-
-  // State
-  let scene, camera, renderer, clock;
-  let plane;
-
-  let viewMode = 'chase';
-  let autopilot = false;
-  let showHelp = true;
-
-  let qualityMode = "perf";
-  let pixelRatioPerf = 1.0;
-  let pixelRatioQuality = Math.min(window.devicePixelRatio || 1, 2);
-
-  // Orientation
-  let yaw = 0, pitch = 0, roll = 0;
-
-  // Add a bit more stable control by using angular velocities
-  let yawVel = 0;
-  let rollVel = 0;
-  let pitchVel = 0;
-
-  // Flight
-  let speed = 0; // knots-ish
-  let minSpeed = 45;
-  let maxSpeedPerf = 260;
-  let maxSpeedQuality = 300;
-  let maxSpeed = maxSpeedPerf;
-
-  // Twin engines
-  let throttle1 = 0.00;
-  let throttle2 = 0.00;
-  let eng1On = true;
-  let eng2On = true;
-
-  // landing gear
-  let gearDown = true;
-  let gearAnim = 1.0;
-  let gearTarget = 1.0;
-
-  // NEW: Yaw Damper + Parking brake
-  let yawDamperOn = true;
-  let parkingBrake = false;
-
-  // Wind & turbulence
-  let windDir = 0;
-  let windSpeed = 0;
-  let gustTimer = 0;
-  let turbulence = 0;
-
-  // Terrain world
-  const WORLD_RADIUS = 16000;
-  const TERRAIN_MAX = 1400;
-  const SEA_LEVEL = 0;
-
-  // Airports
-  const airports = [];
-  let navIndex = 0;
-
-  // Warning system
-  let stalled = false;
-  let overspeed = false;
-  let sinkRate = false;
-  let terrainWarn = false;
-  let warnHold = 0;
-
-  // UI refs
-  const hudSpeedEl   = document.getElementById('hud-speed');
-  const hudAltEl     = document.getElementById('hud-altitude');
-  const hudHeadingEl = document.getElementById('hud-heading');
-  const hudWindEl    = document.getElementById('hud-wind');
-  const hudTargetEl  = document.getElementById('hud-target');
-  const hudMessageEl = document.getElementById('hud-message');
-  const hudWarningEl = document.getElementById('hud-warning');
-  const hudMiniEl    = document.getElementById('hud-mini');
-
-  const chipEng1 = document.getElementById('chip-eng1');
-  const chipEng2 = document.getElementById('chip-eng2');
-  const chipGear = document.getElementById('chip-gear');
-
-  const throttle1Area = document.getElementById('throttle1-area');
-  const throttle1Track= document.getElementById('throttle1-track');
-  const throttle1Thumb= document.getElementById('throttle1-thumb');
-  const throttle1Sub  = document.getElementById('throttle1-sub');
-
-  const throttle2Area = document.getElementById('throttle2-area');
-  const throttle2Track= document.getElementById('throttle2-track');
-  const throttle2Thumb= document.getElementById('throttle2-thumb');
-  const throttle2Sub  = document.getElementById('throttle2-sub');
-
-  // Yoke UI
-  const yokeArea = document.getElementById('yoke-area');
-  const yokeKnob = document.getElementById('yoke-knob');
-  const yokeHandle = document.getElementById('yoke-handle');
-
-  const btnLevel     = document.getElementById('btn-level');
-  const btnView      = document.getElementById('btn-view');
-  const btnAp        = document.getElementById('btn-ap');
-  const btnNav       = document.getElementById('btn-nav');
-  const btnQuality   = document.getElementById('btn-quality');
-  const btnRecenter  = document.getElementById('btn-recenter');
-  const btnHelp      = document.getElementById('btn-help');
-
-  const btnEng1      = document.getElementById('btn-eng1');
-  const btnEng2      = document.getElementById('btn-eng2');
-  const btnGear      = document.getElementById('btn-gear');
-
-  const btnYD        = document.getElementById('btn-yd');
-  const btnPark      = document.getElementById('btn-park');
-
-  const viewStatusEl   = document.getElementById('view-status');
-  const apStatusEl     = document.getElementById('ap-status');
-  const qualityStatusEl= document.getElementById('quality-status');
-
-  const eng1StatusEl   = document.getElementById('eng1-status');
-  const eng2StatusEl   = document.getElementById('eng2-status');
-  const gearStatusEl   = document.getElementById('gear-status');
-
-  const ydStatusEl     = document.getElementById('yd-status');
-  const parkStatusEl   = document.getElementById('park-status');
-
-  const authScreen  = document.getElementById('auth-screen');
-  const startScreen = document.getElementById('start-screen');
-  const authUsernameInput = document.getElementById('auth-username');
-  const btnAuthCreate = document.getElementById('btn-auth-create');
-  const btnAuthGuest  = document.getElementById('btn-auth-guest');
-  const btnStartGame  = document.getElementById('btn-start-game');
-
-  // Storage
-  const STORAGE_PREFIX = "TabletFlightSimFlightProfile_";
-  let currentUser = null;
-  let storageEnabled = false;
-
-  // Input: Yoke
-  const yoke = {
-    active:false, id:null,
-    startX:0, startY:0,
-    maxRadius:70,
-    xValue:0, yValue:0
-  };
-
-  // Throttle touches
-  const tTouch = { active:false, id:null, which:0 };
-
-  // Game loop
-  let gameRunning = false;
-
-  // Render caches
-  let skyMesh, sunLight;
-  let cloudGroup;
-  let cityInstanced;
-  let treeInstanced;
-  let terrainMesh;
-  let terrainGeo, terrainMat;
-  let runwayDecalMatCache = new Map();
-
-  init();
-  animate();
-
-  function init(){
-    scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x7bb4ff, 0.00028);
-
-    camera = new THREE.PerspectiveCamera(
-      68,
-      container.clientWidth / container.clientHeight,
+    const camera = new THREE.PerspectiveCamera(
+      65,
+      window.innerWidth / window.innerHeight,
       0.1,
-      52000
+      6000
     );
 
-    renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:"high-performance" });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(pixelRatioPerf);
-    renderer.setClearColor(0x6fa8ff, 1);
-    renderer.shadowMap.enabled = false;
-    container.appendChild(renderer.domElement);
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x3f7647, 1.18);
+    scene.add(hemi);
 
-    clock = new THREE.Clock();
+    const sun = new THREE.DirectionalLight(0xffffff, 1.35);
+    sun.position.set(230, 420, 180);
+    sun.castShadow = !lowPowerDevice;
+    sun.shadow.camera.left = -500;
+    sun.shadow.camera.right = 500;
+    sun.shadow.camera.top = 500;
+    sun.shadow.camera.bottom = -500;
+    sun.shadow.mapSize.width = lowPowerDevice ? 1024 : 2048;
+    sun.shadow.mapSize.height = lowPowerDevice ? 1024 : 2048;
+    scene.add(sun);
 
-    // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 0.60);
-    scene.add(ambient);
-
-    sunLight = new THREE.DirectionalLight(0xffffff, 1.10);
-    sunLight.position.set(6000, 9000, 2500);
-    scene.add(sunLight);
-
-    // Sky
-    const skyGeo = new THREE.SphereGeometry(26000, 32, 24);
-    const skyMat = new THREE.MeshBasicMaterial({ color: 0x7fc8ff, side: THREE.BackSide });
-    skyMesh = new THREE.Mesh(skyGeo, skyMat);
-    scene.add(skyMesh);
-
-    // Airports (used by terrain flatten)
-    createAirportsNetwork();
-
-    // Terrain
-    createProceduralTerrain();
-
-    // World decoration
-    createClouds();
-    createCitiesInstanced();
-    createTreesInstanced();
-    createMountainsAccents();
-
-    // Plane
-    createPlane();
-
-    // Wind
-    randomizeWind(true);
-
-    // Events
-    window.addEventListener('resize', onWindowResize, false);
-
-    // Yoke input
-    yokeArea.addEventListener('pointerdown', onYokeDown);
-    window.addEventListener('pointermove', onYokeMove);
-    window.addEventListener('pointerup', onYokeUp);
-    window.addEventListener('pointercancel', onYokeUp);
-
-    // Throttles
-    throttle1Area.addEventListener('pointerdown', (e)=>onThrottleDown(e,1));
-    throttle2Area.addEventListener('pointerdown', (e)=>onThrottleDown(e,2));
-    window.addEventListener('pointermove', onThrottleMove);
-    window.addEventListener('pointerup', onThrottleUp);
-    window.addEventListener('pointercancel', onThrottleUp);
-
-    // Buttons
-    btnLevel.addEventListener('click', e => { e.preventDefault(); manualLevel(); });
-    btnView.addEventListener('click', e => { e.preventDefault(); toggleViewMode(); });
-    btnAp.addEventListener('click', e => { e.preventDefault(); toggleAutopilot(); });
-    btnNav.addEventListener('click', e => { e.preventDefault(); cycleNavTarget(); });
-    btnQuality.addEventListener('click', e => { e.preventDefault(); toggleQuality(); });
-    btnRecenter.addEventListener('click', e => { e.preventDefault(); recenterCameraHint(); });
-    btnHelp.addEventListener('click', e => { e.preventDefault(); toggleHelp(); });
-
-    btnEng1.addEventListener('click', e => { e.preventDefault(); toggleEngine(1); });
-    btnEng2.addEventListener('click', e => { e.preventDefault(); toggleEngine(2); });
-    btnGear.addEventListener('click', e => { e.preventDefault(); toggleGear(); });
-
-    btnYD.addEventListener('click', e => { e.preventDefault(); toggleYawDamper(); });
-    btnPark.addEventListener('click', e => { e.preventDefault(); toggleParkingBrake(); });
-
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-
-    // Auth / Start
-    btnAuthCreate.addEventListener('click', () => handleAuth(true));
-    btnAuthGuest.addEventListener('click',  () => handleAuth(false));
-    btnStartGame.addEventListener('click',  () => {
-      startScreen.style.display = 'none';
-      gameRunning = true;
-      resetFlightToRunway();
-      showMessage("Pistte hazırsın. Throttle ver → hızlan → rotate!");
-      setTimeout(hideMessage, 1400);
-      saveProfile();
-    });
-
-    // Initial UI
-    updateThrottleThumbs(true);
-    updateHUD(0);
-    applyQualityToUI();
-    updateNavHud();
-    updateViewHud();
-    updateAutopilotHud();
-    updateEngineHud();
-    updateGearHud();
-    updateYawDamperHud();
-    updateParkingHud();
-
-    authScreen.style.display = 'flex';
-    startScreen.style.display = 'none';
-  }
-
-  // ----------------------------
-  // STORAGE
-  // ----------------------------
-  function safeGetItem(key){
-    try{ if(!window.localStorage) return null; return window.localStorage.getItem(key); }catch(e){ return null; }
-  }
-  function safeSetItem(key,value){
-    try{ if(!window.localStorage) return; window.localStorage.setItem(key,value); }catch(e){}
-  }
-  function saveProfile(){
-    if(!storageEnabled || !currentUser) return;
-    const data = {
-      qualityMode,
-      viewMode,
-      autopilot,
-      navIndex,
-      yawDamperOn,
-      parkingBrake
-    };
-    safeSetItem(STORAGE_PREFIX + currentUser, JSON.stringify(data));
-  }
-  function loadProfile(username){
-    const raw = safeGetItem(STORAGE_PREFIX + username);
-    if(!raw) return;
-    try{
-      const data = JSON.parse(raw);
-      if(data.qualityMode) qualityMode = data.qualityMode;
-      if(data.viewMode) viewMode = data.viewMode;
-      if(typeof data.autopilot === "boolean") autopilot = data.autopilot;
-      if(typeof data.navIndex === "number") navIndex = data.navIndex % Math.max(1, airports.length);
-      if(typeof data.yawDamperOn === "boolean") yawDamperOn = data.yawDamperOn;
-      if(typeof data.parkingBrake === "boolean") parkingBrake = data.parkingBrake;
-    }catch(e){}
-  }
-
-  function handleAuth(enableStorage){
-    storageEnabled = enableStorage;
-    const name = (authUsernameInput.value || "").trim();
-
-    if(storageEnabled){
-      if(!name){
-        showMessage("Kayıt için kullanıcı adı yaz (veya Misafir seç).");
-        setTimeout(hideMessage, 1000);
-        return;
-      }
-      currentUser = name;
-      loadProfile(name);
-    }else{
-      currentUser = null;
-    }
-
-    applyQualityMode();
-    updateViewHud();
-    updateAutopilotHud();
-    updateNavHud();
-    updateYawDamperHud();
-    updateParkingHud();
-
-    authScreen.style.display = 'none';
-    startScreen.style.display = 'flex';
-    showMessage(storageEnabled ? ("Hoş geldin, " + currentUser + "!") : "Misafir mod: kayıt yok.");
-    setTimeout(hideMessage, 900);
-  }
-
-  // ----------------------------
-  // TERRAIN
-  // ----------------------------
-  function hash2i(ix, iz){
-    let h = ix * 374761393 + iz * 668265263;
-    h = (h ^ (h >> 13)) * 1274126177;
-    return (h ^ (h >> 16)) >>> 0;
-  }
-  function rand01(ix, iz){
-    return (hash2i(ix, iz) & 0xfffffff) / 0xfffffff;
-  }
-  function smoothstep(t){ return t*t*(3-2*t); }
-  function lerp(a,b,t){ return a + (b-a)*t; }
-
-  function valueNoise2D(x, z, cell){
-    const fx = x / cell;
-    const fz = z / cell;
-    const ix = Math.floor(fx);
-    const iz = Math.floor(fz);
-    const tx = fx - ix;
-    const tz = fz - iz;
-
-    const v00 = rand01(ix,   iz);
-    const v10 = rand01(ix+1, iz);
-    const v01 = rand01(ix,   iz+1);
-    const v11 = rand01(ix+1, iz+1);
-
-    const sx = smoothstep(tx);
-    const sz = smoothstep(tz);
-
-    const a = lerp(v00, v10, sx);
-    const b = lerp(v01, v11, sx);
-    return lerp(a, b, sz);
-  }
-
-  function fbm(x, z){
-    let amp = 1.0;
-    let freq = 1.0;
-    let sum = 0.0;
-    let norm = 0.0;
-    for(let i=0;i<4;i++){
-      const n = valueNoise2D(x*freq, z*freq, 900);
-      sum += n * amp;
-      norm += amp;
-      amp *= 0.52;
-      freq *= 2.05;
-    }
-    return sum / norm;
-  }
-
-  function ridged(x,z){
-    let n = fbm(x+1200, z-700);
-    n = 1.0 - Math.abs(n*2.0 - 1.0);
-    return n*n;
-  }
-
-  function terrainHeightAt(x, z){
-    const r = Math.sqrt(x*x + z*z);
-    const rNorm = Math.min(1, r / WORLD_RADIUS);
-
-    const n1 = fbm(x, z);
-    const n2 = ridged(x, z);
-
-    let h = 0;
-    h += (n1 - 0.5) * 520;
-    h += n2 * 880;
-    h *= (0.25 + 0.75*rNorm);
-
-    // airport plateau
-    for(let i=0;i<airports.length;i++){
-      const a = airports[i];
-      const dx = x - a.center.x;
-      const dz = z - a.center.z;
-      const d = Math.sqrt(dx*dx + dz*dz);
-
-      const flatRadius  = 950;
-      const blendRadius = 1300;
-
-      if(d < flatRadius){
-        h = a.center.y - 0.03;
-      } else if(d < blendRadius){
-        const t = (d - flatRadius) / (blendRadius - flatRadius);
-        const k = smoothstep(t);
-        const target = a.center.y - 0.03;
-        h = lerp(target, h, k);
-      }
-    }
-
-    if(h < SEA_LEVEL) h = SEA_LEVEL;
-    return h;
-  }
-
-  function createProceduralTerrain(){
-    const size = 42000;
-    const segs = 220;
-    terrainGeo = new THREE.PlaneGeometry(size, size, segs, segs);
-    terrainGeo.rotateX(-Math.PI/2);
-
-    const pos = terrainGeo.attributes.position;
-    const colors = [];
-    for(let i=0;i<pos.count;i++){
-      const x = pos.getX(i);
-      const z = pos.getZ(i);
-      const h = terrainHeightAt(x, z);
-      pos.setY(i, h);
-
-      let c;
-      if(h < 60) c = new THREE.Color(0x2f6f3a);
-      else if(h < 180) c = new THREE.Color(0x3e7f44);
-      else if(h < 420) c = new THREE.Color(0x6a7a3f);
-      else if(h < 780) c = new THREE.Color(0x6f5b35);
-      else if(h < 1100) c= new THREE.Color(0x5c5c5c);
-      else c = new THREE.Color(0xdadada);
-
-      const n = valueNoise2D(x+5000, z-2000, 300);
-      c.offsetHSL(0, (n-0.5)*0.05, (n-0.5)*0.08);
-
-      colors.push(c.r, c.g, c.b);
-    }
-    terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    terrainGeo.computeVertexNormals();
-
-    terrainMat = new THREE.MeshPhongMaterial({
-      vertexColors:true,
-      shininess:10,
-      specular: new THREE.Color(0x111111)
-    });
-
-    terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
-    scene.add(terrainMesh);
-  }
-
-  // ----------------------------
-  // CLOUDS
-  // ----------------------------
-  function createClouds(){
-    cloudGroup = new THREE.Group();
-    const cloudMat = new THREE.MeshPhongMaterial({
-      color:0xffffff, emissive:0x111111, transparent:true, opacity:0.88
-    });
-    for(let i=0;i<52;i++){
-      const cloud = new THREE.Group();
-      const num = 3 + (Math.random()*3|0);
-      for(let j=0;j<num;j++){
-        const size = 55 + Math.random()*55;
-        const geo = new THREE.SphereGeometry(size, 12, 10);
-        const puff = new THREE.Mesh(geo, cloudMat);
-        puff.position.set((Math.random()-0.5)*150, (Math.random()-0.5)*70, (Math.random()-0.5)*110);
-        puff.scale.set(1, 0.85, 1);
-        cloud.add(puff);
-      }
-      const ring = 2400 + Math.random()*7600;
-      const ang = Math.random()*Math.PI*2;
-      const cx = Math.cos(ang)*ring;
-      const cz = Math.sin(ang)*ring;
-      const cy = 900 + Math.random()*720;
-      cloud.position.set(cx, cy, cz);
-      cloud.userData.drift = (0.8 + Math.random()*1.2) * (Math.random()<0.5?-1:1);
-      cloudGroup.add(cloud);
-    }
-    scene.add(cloudGroup);
-  }
-
-  function updateClouds(dt){
-    if(!cloudGroup) return;
-    const dx = Math.cos(windDir) * (windSpeed*0.12) * dt;
-    const dz = Math.sin(windDir) * (windSpeed*0.12) * dt;
-    for(let i=0;i<cloudGroup.children.length;i++){
-      const c = cloudGroup.children[i];
-      c.position.x += dx * c.userData.drift;
-      c.position.z += dz * c.userData.drift;
-      const r = Math.sqrt(c.position.x*c.position.x + c.position.z*c.position.z);
-      if(r > 11000){
-        c.position.x *= 0.4;
-        c.position.z *= 0.4;
-      }
-    }
-  }
-
-  // ----------------------------
-  // CITIES & TREES
-  // ----------------------------
-  function createCitiesInstanced(){
-    const count = 140;
-    const geo = new THREE.BoxGeometry(1,1,1);
-    const mat = new THREE.MeshPhongMaterial({ color:0x9aa2aa, emissive:0x111111, shininess:12 });
-
-    cityInstanced = new THREE.InstancedMesh(geo, mat, count);
-    cityInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-
-    const dummy = new THREE.Object3D();
-    for(let i=0;i<count;i++){
-      const ring = 2200 + Math.random()*5200;
-      const ang = Math.random()*Math.PI*2;
-      const x = Math.cos(ang)*ring;
-      const z = Math.sin(ang)*ring;
-      const h = terrainHeightAt(x,z);
-
-      const w = 18 + Math.random()*42;
-      const d = 18 + Math.random()*42;
-      const y = 18 + Math.random()*180;
-
-      dummy.position.set(x, h + y*0.5, z);
-      dummy.scale.set(w, y, d);
-      dummy.rotation.y = Math.random()*Math.PI*2;
-      dummy.updateMatrix();
-      cityInstanced.setMatrixAt(i, dummy.matrix);
-    }
-    scene.add(cityInstanced);
-  }
-
-  function createTreesInstanced(){
-    const count = 520;
-    const geo = new THREE.ConeGeometry(6, 26, 6);
-    const mat = new THREE.MeshPhongMaterial({ color:0x2e6b37, emissive:0x061006, shininess:3, flatShading:true });
-
-    treeInstanced = new THREE.InstancedMesh(geo, mat, count);
-    treeInstanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-
-    const dummy = new THREE.Object3D();
-    for(let i=0;i<count;i++){
-      const ring = 900 + Math.random()*9800;
-      const ang = Math.random()*Math.PI*2;
-      const x = Math.cos(ang)*ring;
-      const z = Math.sin(ang)*ring;
-
-      // keep away from airports
-      let ok = true;
-      for(let k=0;k<airports.length;k++){
-        const a = airports[k];
-        const dx = x - a.center.x;
-        const dz = z - a.center.z;
-        if(dx*dx + dz*dz < 900*900){ ok=false; break; }
-      }
-      if(!ok){ i--; continue; }
-
-      const h = terrainHeightAt(x,z);
-      if(h > 980){ i--; continue; }
-      const s = 0.75 + Math.random()*1.8;
-
-      dummy.position.set(x, h + 13*s, z);
-      dummy.scale.set(s, s, s);
-      dummy.rotation.y = Math.random()*Math.PI*2;
-      dummy.updateMatrix();
-      treeInstanced.setMatrixAt(i, dummy.matrix);
-    }
-    scene.add(treeInstanced);
-  }
-
-  function createMountainsAccents(){
-    const group = new THREE.Group();
-    const mat = new THREE.MeshPhongMaterial({ color:0x55614b, flatShading:true, shininess:2 });
-
-    for(let i=0;i<26;i++){
-      const radius = 8500 + Math.random()*7500;
-      const ang = (i/26)*Math.PI*2 + Math.random()*0.25;
-      const x = Math.cos(ang)*radius;
-      const z = Math.sin(ang)*radius;
-
-      const base = 520 + Math.random()*1200;
-      const height = 900 + Math.random()*1700;
-
-      const geo = new THREE.ConeGeometry(base, height, 6);
-      const m = new THREE.Mesh(geo, mat);
-      const h = terrainHeightAt(x,z);
-      m.position.set(x, h + height*0.5 - 80, z);
-      m.rotation.y = Math.random()*Math.PI*2;
-      group.add(m);
-    }
-    scene.add(group);
-  }
-
-  // ----------------------------
-  // AIRPORTS
-  // ----------------------------
-  function createAirportsNetwork(){
-    const defs = [
-      { id:"IST-0", name:"Alpha Field",   x:0,     z:0,     hdg:0.12, len:520, w:44, lights:true },
-      { id:"BRV-1", name:"Bravo Intl",    x:0,     z:2800,  hdg:1.40, len:620, w:48, lights:true },
-      { id:"CRS-2", name:"Corsa Port",    x:-2400, z:1400,  hdg:0.55, len:560, w:44, lights:true },
-      { id:"DLT-3", name:"Delta Strip",   x:2600,  z:1600,  hdg:2.15, len:460, w:40, lights:false },
-      { id:"ECO-4", name:"Echo Base",     x:-3900, z:-2800, hdg:0.95, len:640, w:52, lights:true },
-      { id:"FOX-5", name:"Foxtrot City",  x:4200,  z:-2400, hdg:1.85, len:700, w:56, lights:true }
+    const runwayDefs = [
+      { x: 0, z: -420, rot: 0, length: 2100, width: 105, name: "18/36" },
+      { x: 520, z: -900, rot: Math.PI * 0.34, length: 1400, width: 78, name: "09/27" }
     ];
 
-    for(const d of defs){
-      const center = new THREE.Vector3(d.x, 0, d.z);
-      center.y = 10.05;
-      const a = createImprovedAirport({
-        id:d.id, name:d.name,
-        center,
-        heading:d.hdg,
-        runwayLength:d.len,
-        runwayWidth:d.w,
-        hasLights:d.lights
-      });
-      airports.push(a);
-    }
-    navIndex = Math.min(navIndex, airports.length-1);
-  }
-
-  function runwayTextureCanvas(style){
-    const key = JSON.stringify(style||{});
-    if(runwayDecalMatCache.has(key)) return runwayDecalMatCache.get(key);
-
-    const c = document.createElement('canvas');
-    c.width = 1024;
-    c.height = 256;
-    const ctx = c.getContext('2d');
-
-    ctx.fillStyle = '#1f2328';
-    ctx.fillRect(0,0,c.width,c.height);
-
-    // asphalt noise
-    for(let i=0;i<24000;i++){
-      const x = Math.random()*c.width;
-      const y = Math.random()*c.height;
-      const v = 26 + Math.random()*26;
-      ctx.fillStyle = `rgba(${v},${v},${v},0.08)`;
-      ctx.fillRect(x,y,1,1);
-    }
-
-    // center dash
-    ctx.fillStyle = 'rgba(245,245,245,0.95)';
-    const dashW = 36, dashH = 8;
-    for(let x=60; x<c.width-60; x+= 64){
-      ctx.fillRect(x, c.height*0.5 - dashH/2, dashW, dashH);
-    }
-
-    // edges
-    ctx.fillStyle = 'rgba(245,245,245,0.75)';
-    ctx.fillRect(20, 40, c.width-40, 4);
-    ctx.fillRect(20, c.height-44, c.width-40, 4);
-
-    // threshold blocks
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    for(let i=0;i<6;i++){
-      ctx.fillRect(70, 70 + i*20, 90, 10);
-      ctx.fillRect(c.width-160, 70 + i*20, 90, 10);
-    }
-
-    // runway numbers
-    ctx.font = 'bold 72px system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(240,240,240,0.92)';
-    ctx.save();
-    ctx.translate(210, 175);
-    ctx.rotate(-Math.PI/2);
-    ctx.fillText(style?.numA || '09', 0, 0);
-    ctx.restore();
-
-    ctx.save();
-    ctx.translate(c.width-210, 80);
-    ctx.rotate(Math.PI/2);
-    ctx.fillText(style?.numB || '27', 0, 0);
-    ctx.restore();
-
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
-    tex.anisotropy = 4;
-
-    const mat = new THREE.MeshPhongMaterial({
-      map: tex,
-      transparent:false,
-      shininess: 30,
-      specular: new THREE.Color(0x222222)
-    });
-
-    runwayDecalMatCache.set(key, mat);
-    return mat;
-  }
-
-  function createImprovedAirport(opts){
-    const {id,name,center,heading,runwayLength,runwayWidth,hasLights} = opts;
-
-    const group = new THREE.Group();
-
-    const padGeo = new THREE.CircleGeometry(520, 42);
-    const padMat = new THREE.MeshPhongMaterial({ color:0x2c3a2f, shininess:6 });
-    const pad = new THREE.Mesh(padGeo, padMat);
-    pad.rotation.x = -Math.PI/2;
-    pad.position.set(center.x, center.y + 0.02, center.z);
-    group.add(pad);
-
-    const runwayGeo = new THREE.PlaneGeometry(runwayLength, runwayWidth);
-    const rwMat = runwayTextureCanvas({
-      numA: String(((Math.abs(heading)*180/Math.PI)/10|0)).padStart(2,'0'),
-      numB: String((((Math.abs(heading)*180/Math.PI)+180)%360/10|0)).padStart(2,'0')
-    });
-    const runway = new THREE.Mesh(runwayGeo, rwMat);
-    runway.rotation.x = -Math.PI/2;
-    runway.rotation.z = heading;
-    runway.position.set(center.x, center.y + 0.035, center.z);
-    group.add(runway);
-
-    const taxiGeo = new THREE.PlaneGeometry(240, 18);
-    const taxiMat = new THREE.MeshPhongMaterial({ color:0x2a2f36, shininess:18 });
-    const taxi = new THREE.Mesh(taxiGeo, taxiMat);
-    taxi.rotation.x = -Math.PI/2;
-    taxi.rotation.z = heading + 0.25;
-    taxi.position.set(center.x - 160, center.y + 0.033, center.z - 90);
-    group.add(taxi);
-
-    const termMat = new THREE.MeshPhongMaterial({ color:0xcfd3da, emissive:0x111111, shininess:12 });
-    const glassMat= new THREE.MeshPhongMaterial({ color:0x66aaff, emissive:0x00001a, transparent:true, opacity:0.65, shininess:90 });
-
-    const terminal = new THREE.Mesh(new THREE.BoxGeometry(80, 24, 42), termMat);
-    terminal.position.set(center.x - 220, center.y + 12, center.z - 70);
-    group.add(terminal);
-
-    const terminalGlass = new THREE.Mesh(new THREE.BoxGeometry(82, 10, 44), glassMat);
-    terminalGlass.position.set(center.x - 220, center.y + 22, center.z - 70);
-    group.add(terminalGlass);
-
-    const towerBase = new THREE.Mesh(new THREE.CylinderGeometry(6, 6, 36, 12), new THREE.MeshPhongMaterial({ color:0x666666, emissive:0x111111 }));
-    towerBase.position.set(center.x + 110, center.y + 18, center.z - 60);
-    group.add(towerBase);
-
-    const towerTop = new THREE.Mesh(new THREE.BoxGeometry(22, 10, 22), glassMat);
-    towerTop.position.set(center.x + 110, center.y + 36, center.z - 60);
-    group.add(towerTop);
-
-    if(hasLights){
-      const lightGeo = new THREE.SphereGeometry(0.9, 10, 10);
-      const edgeMat  = new THREE.MeshBasicMaterial({ color:0x00ff88 });
-      const endMat   = new THREE.MeshBasicMaterial({ color:0xff4444 });
-
-      const halfLen = runwayLength * 0.5;
-      const side = runwayWidth * 0.5 + 6;
-      for(let i=-Math.floor(halfLen/18); i<=Math.floor(halfLen/18); i++){
-        const t = i * 18;
-        const rx = Math.cos(heading)*t;
-        const rz = Math.sin(heading)*t;
-        const lx = -Math.sin(heading)*side;
-        const lz =  Math.cos(heading)*side;
-        const y = center.y + 0.9;
-
-        const l1 = new THREE.Mesh(lightGeo, edgeMat);
-        l1.position.set(center.x + rx + lx, y, center.z + rz + lz);
-        group.add(l1);
-
-        const l2 = new THREE.Mesh(lightGeo, edgeMat);
-        l2.position.set(center.x + rx - lx, y, center.z + rz - lz);
-        group.add(l2);
+    const aircraftCatalog = [
+      {
+        id: "cessna172",
+        name: "Cessna 172",
+        type: "Başlangıç / Eğitim Uçağı",
+        price: 0,
+        maxSpeed: 230,
+        accel: 34,
+        drag: 0.035,
+        takeoffSpeed: 105,
+        landingMax: 145,
+        handling: 0.86,
+        lift: 6.1,
+        climb: 1.0,
+        reward: 1.0,
+        groundClearance: 3.3,
+        statSpeed: 35,
+        statHandling: 88,
+        statLift: 68
+      },
+      {
+        id: "a320",
+        name: "Airbus A320",
+        type: "Yolcu Uçağı",
+        price: 700,
+        maxSpeed: 840,
+        accel: 48,
+        drag: 0.021,
+        takeoffSpeed: 235,
+        landingMax: 260,
+        handling: 0.46,
+        lift: 8.2,
+        climb: 0.75,
+        reward: 1.4,
+        groundClearance: 4.4,
+        statSpeed: 74,
+        statHandling: 47,
+        statLift: 82
+      },
+      {
+        id: "b747",
+        name: "Boeing 747",
+        type: "Büyük Yolcu Uçağı",
+        price: 1400,
+        maxSpeed: 920,
+        accel: 42,
+        drag: 0.019,
+        takeoffSpeed: 280,
+        landingMax: 285,
+        handling: 0.31,
+        lift: 10.5,
+        climb: 0.58,
+        reward: 1.9,
+        groundClearance: 5.9,
+        statSpeed: 82,
+        statHandling: 31,
+        statLift: 95
+      },
+      {
+        id: "f16",
+        name: "F-16 Fighting Falcon",
+        type: "Jet Savaş Uçağı",
+        price: 2100,
+        maxSpeed: 1500,
+        accel: 95,
+        drag: 0.026,
+        takeoffSpeed: 220,
+        landingMax: 300,
+        handling: 1.22,
+        lift: 7.4,
+        climb: 1.55,
+        reward: 2.4,
+        groundClearance: 2.9,
+        statSpeed: 100,
+        statHandling: 96,
+        statLift: 75
+      },
+      {
+        id: "tb2",
+        name: "Bayraktar TB2",
+        type: "İHA / Uzun Kanat",
+        price: 1100,
+        maxSpeed: 220,
+        accel: 26,
+        drag: 0.032,
+        takeoffSpeed: 90,
+        landingMax: 125,
+        handling: 0.62,
+        lift: 8.8,
+        climb: 0.72,
+        reward: 1.7,
+        groundClearance: 2.6,
+        statSpeed: 30,
+        statHandling: 66,
+        statLift: 90
       }
+    ];
 
-      for(let s of [-1, 1]){
-        const t = s * halfLen;
-        const rx = Math.cos(heading)*t;
-        const rz = Math.sin(heading)*t;
-        for(let k=-2;k<=2;k++){
-          const off = k * 7.5;
-          const lx = -Math.sin(heading)*off;
-          const lz =  Math.cos(heading)*off;
-          const l = new THREE.Mesh(lightGeo, endMat);
-          l.position.set(center.x + rx + lx, center.y + 1.0, center.z + rz + lz);
-          group.add(l);
-        }
-      }
+    const saveKey = "tablet_flightsim_market_v2";
+    let saveData = loadSave();
+
+    function loadSave() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(saveKey));
+        if (parsed && Array.isArray(parsed.owned)) return parsed;
+      } catch {}
+      return {
+        coins: 250,
+        owned: ["cessna172"],
+        active: "cessna172"
+      };
     }
 
-    const beacon = new THREE.Mesh(
-      new THREE.SphereGeometry(3.2, 12, 12),
-      new THREE.MeshBasicMaterial({ color:0x00e5ff })
-    );
-    beacon.position.set(center.x, center.y + 120, center.z);
-    group.add(beacon);
+    function saveGame() {
+      localStorage.setItem(saveKey, JSON.stringify(saveData));
+    }
 
-    scene.add(group);
+    function getAircraft(id) {
+      return aircraftCatalog.find(p => p.id === id) || aircraftCatalog[0];
+    }
 
-    return {
-      id, name,
-      center: center.clone(),
-      heading,
-      runwayLength,
-      runwayWidth,
-      hasLights,
-      beaconMesh: beacon,
-      runwayMesh: runway,
-      group
+    if (!saveData.owned.includes("cessna172")) saveData.owned.push("cessna172");
+    if (!saveData.owned.includes(saveData.active)) saveData.active = "cessna172";
+
+    let currentAircraft = getAircraft(saveData.active);
+    let airplane;
+
+    const state = {
+      throttle: 0,
+      speed: 0,
+      altitude: 0,
+      pitch: 0,
+      roll: 0,
+      yaw: 0,
+      yokeX: 0,
+      yokeY: 0,
+      rudder: 0,
+      engineOn: true,
+      gearDown: true,
+      yawDamper: true,
+      airborne: false,
+      crashed: false,
+      coinBuffer: 0
     };
-  }
 
-  // ----------------------------
-  // PLANE MODEL (improved visuals)
-  // ----------------------------
-  function buildPlaneModel(colorAccent){
-    const g = new THREE.Group();
+    const speedEl = document.getElementById("speed");
+    const altEl = document.getElementById("altitude");
+    const throttleHud = document.getElementById("throttleHud");
+    const gearHud = document.getElementById("gearHud");
+    const yawHud = document.getElementById("yawHud");
+    const statusEl = document.getElementById("status");
+    const messageEl = document.getElementById("message");
+    const planeHud = document.getElementById("planeHud");
+    const coinsHud = document.getElementById("coinsHud");
 
-    const metal = new THREE.MeshPhongMaterial({ color:0xe6e6e6, emissive:0x111111, shininess:45, specular: new THREE.Color(0x333333) });
-    const dark  = new THREE.MeshPhongMaterial({ color:0x2e3440, emissive:0x0d0f12, shininess:25 });
-    const accent= new THREE.MeshPhongMaterial({ color:colorAccent, emissive:0x000022, shininess:55, specular: new THREE.Color(0x3355aa) });
-    const glass = new THREE.MeshPhongMaterial({ color:0x66aaff, emissive:0x00001a, transparent:true, opacity:0.78, shininess:100 });
+    const throttleTrack = document.getElementById("throttleTrack");
+    const throttleFill = document.getElementById("throttleFill");
+    const throttleKnob = document.getElementById("throttleKnob");
+    const throttleValue = document.getElementById("throttleValue");
 
-    // Fuselage
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(1.25, 7.6, 8, 16), metal);
-    body.rotation.x = Math.PI/2;
-    g.add(body);
+    const yokeBase = document.getElementById("yokeBase");
+    const yoke = document.getElementById("yoke");
 
-    // Belly shadow (fake AO)
-    const belly = new THREE.Mesh(new THREE.CylinderGeometry(1.10,1.10,8.7,18,1,true), new THREE.MeshPhongMaterial({
-      color:0x808080, emissive:0x0a0a0a, transparent:true, opacity:0.20, shininess:5
-    }));
-    belly.rotation.z = Math.PI/2;
-    belly.position.y = -0.35;
-    g.add(belly);
+    const gearBtn = document.getElementById("gearBtn");
+    const engineBtn = document.getElementById("engineBtn");
+    const yawBtn = document.getElementById("yawBtn");
+    const marketOverlay = document.getElementById("marketOverlay");
+    const marketGrid = document.getElementById("marketGrid");
 
-    // Nose cone
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(1.25, 2.8, 28), accent);
-    nose.rotation.x = Math.PI/2;
-    nose.position.set(0, 0.02, 5.25);
-    g.add(nose);
-
-    // Canopy
-    const cockpit = new THREE.Mesh(new THREE.SphereGeometry(1.48, 22, 14, 0, Math.PI*2, 0, Math.PI/2), glass);
-    cockpit.position.set(0, 0.85, 1.95);
-    g.add(cockpit);
-
-    // Wing
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(14.6, 0.28, 3.45), dark);
-    wing.position.set(0, -0.1, 0.0);
-    wing.rotation.y = 0.06;
-    g.add(wing);
-
-    // Wing stripe
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(14.7, 0.06, 0.40), accent);
-    stripe.position.set(0, 0.05, -0.95);
-    stripe.rotation.y = 0.06;
-    g.add(stripe);
-
-    // Winglets
-    const wingletGeo = new THREE.BoxGeometry(0.45, 1.3, 1.1);
-    const wingletL = new THREE.Mesh(wingletGeo, accent);
-    wingletL.position.set(-7.1, 0.55, 0.0);
-    g.add(wingletL);
-    const wingletR = wingletL.clone();
-    wingletR.position.x = 7.1;
-    g.add(wingletR);
-
-    // Tail
-    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.75, 2.35), metal);
-    tail.position.set(0, 0.45, -5.05);
-    g.add(tail);
-
-    const vFin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 2.85, 1.65), dark);
-    vFin.position.set(0, 1.85, -5.45);
-    g.add(vFin);
-
-    const hFin = new THREE.Mesh(new THREE.BoxGeometry(4.9, 0.22, 1.25), dark);
-    hFin.position.set(0, 0.35, -5.55);
-    g.add(hFin);
-
-    // Engines
-    const engGeo = new THREE.CylinderGeometry(0.74, 0.74, 2.4, 16);
-    const engMat = new THREE.MeshPhongMaterial({ color:0x4f4f4f, emissive:0x141414, shininess:30, specular: new THREE.Color(0x333333) });
-    const engL = new THREE.Mesh(engGeo, engMat);
-    engL.rotation.z = Math.PI/2;
-    engL.position.set(-4.15, -0.72, -0.55);
-    g.add(engL);
-    const engR = engL.clone();
-    engR.position.x = 4.15;
-    g.add(engR);
-
-    // Afterburner glows
-    const glowGeo = new THREE.SphereGeometry(0.55, 12, 10);
-    const glowMat = new THREE.MeshBasicMaterial({ color:0x00ddff, transparent:true, opacity:0.0 });
-    const glowL = new THREE.Mesh(glowGeo, glowMat);
-    glowL.position.set(-4.95, -0.72, -1.55);
-    g.add(glowL);
-    const glowR = glowL.clone();
-    glowR.position.x = 4.95;
-    g.add(glowR);
-
-    // Nav lights (simple)
-    const navGeo = new THREE.SphereGeometry(0.22, 10, 10);
-    const navL = new THREE.Mesh(navGeo, new THREE.MeshBasicMaterial({ color:0x00ff44 }));
-    navL.position.set(-7.4, 0.4, 0.5);
-    g.add(navL);
-    const navR = new THREE.Mesh(navGeo, new THREE.MeshBasicMaterial({ color:0xff3344 }));
-    navR.position.set(7.4, 0.4, 0.5);
-    g.add(navR);
-
-    // Landing gear
-    const gearGroup = new THREE.Group();
-    const strutMat = new THREE.MeshPhongMaterial({ color:0x8e8e8e, emissive:0x111111, shininess:25 });
-    const wheelMat = new THREE.MeshPhongMaterial({ color:0x1a1a1a, emissive:0x050505, shininess:12 });
-
-    function makeWheel(){
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,0.22,16), wheelMat);
-      wheel.rotation.z = Math.PI/2;
-      return wheel;
-    }
-    function makeStrut(h){
-      return new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,h,10), strutMat);
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
     }
 
-    const noseGear = new THREE.Group();
-    const ns = makeStrut(1.1);
-    ns.position.set(0, -0.65, 0);
-    noseGear.add(ns);
-    const nw = makeWheel();
-    nw.position.set(0, -1.2, 0.25);
-    noseGear.add(nw);
-    noseGear.position.set(0, -0.2, 3.7);
-    gearGroup.add(noseGear);
-
-    const mainL = new THREE.Group();
-    const msL = makeStrut(1.2);
-    msL.position.set(0, -0.65, 0);
-    mainL.add(msL);
-    const mwL = makeWheel();
-    mwL.position.set(0, -1.25, 0.2);
-    mainL.add(mwL);
-    mainL.position.set(-2.5, -0.25, -0.6);
-    gearGroup.add(mainL);
-
-    const mainR = mainL.clone();
-    mainR.position.x = 2.5;
-    gearGroup.add(mainR);
-
-    g.add(gearGroup);
-
-    g.userData.engineGlows = [glowL, glowR];
-    g.userData.gearGroup = gearGroup;
-    g.userData.noseGear = noseGear;
-    g.userData.mainGearL = mainL;
-    g.userData.mainGearR = mainR;
-
-    return g;
-  }
-
-  function createPlane(){
-    plane = buildPlaneModel(0x2f6bff);
-    plane.position.set(0, 30, -220);
-    scene.add(plane);
-  }
-
-  // ----------------------------
-  // RESET: runway start
-  // ----------------------------
-  function resetFlightToRunway(){
-    const a = airports[navIndex] || airports[0];
-    if(!a){
-      plane.position.set(0, 20, -220);
-      yaw = 0; pitch = 0; roll = 0;
-      yawVel = rollVel = pitchVel = 0;
-      speed = 0;
-      throttle1 = throttle2 = 0;
-      eng1On = eng2On = true;
-      gearDown = true; gearTarget = 1; gearAnim = 1;
-      parkingBrake = false;
-      updateThrottleThumbs(true);
-      updateEngineHud();
-      updateGearHud();
-      updateParkingHud();
-      return;
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
     }
 
-    const hdg = a.heading;
-    const axisX = Math.cos(hdg);
-    const axisZ = Math.sin(hdg);
-
-    const startOffset = -(a.runwayLength*0.5 - 60);
-    const sx = a.center.x + axisX * startOffset;
-    const sz = a.center.z + axisZ * startOffset;
-
-    const ground = terrainHeightAt(sx, sz);
-    plane.position.set(sx, ground + 6.2, sz);
-
-    const desired = Math.atan2(axisZ, axisX);
-    yaw = desired - Math.PI/2;
-    pitch = 0;
-    roll = 0;
-    yawVel = rollVel = pitchVel = 0;
-
-    plane.setRotationFromEuler(_eA.set(pitch,yaw,roll));
-
-    speed = 0;
-    throttle1 = 0.0;
-    throttle2 = 0.0;
-
-    eng1On = true;
-    eng2On = true;
-
-    gearDown = true;
-    gearTarget = 1.0;
-    gearAnim = 1.0;
-
-    parkingBrake = false;
-    updateParkingHud();
-
-    stalled = overspeed = sinkRate = terrainWarn = false;
-    warnHold = 0;
-
-    updateThrottleThumbs(true);
-    updateEngineHud();
-    updateGearHud();
-    updateNavHud();
-
-    showMessage("Pist başlangıç. Throttle ver → hızlan → rotate!");
-    setTimeout(hideMessage, 1100);
-  }
-
-  // ----------------------------
-  // UI helpers
-  // ----------------------------
-  function showMessage(text){
-    hudMessageEl.textContent = text;
-    hudMessageEl.style.display = "block";
-  }
-  function hideMessage(){
-    hudMessageEl.style.display = "none";
-  }
-  function setTerrainWarning(on){
-    hudWarningEl.style.display = on ? "block" : "none";
-  }
-
-  // ----------------------------
-  // LOOP
-  // ----------------------------
-  function animate(){
-    requestAnimationFrame(animate);
-    const dt = Math.min(clock.getDelta(), 0.05);
-
-    if(gameRunning){
-      updateWind(dt);
-      updateClouds(dt);
-      updateGearAnim(dt);
-      updateFlightPhysics(dt);
-      updateWarnings(dt);
-      updateAirportBeacons(dt);
-      updateCamera(dt);
+    function smoothstep(edge0, edge1, x) {
+      const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
     }
 
-    updateHUD(dt);
-    renderer.render(scene, camera);
-  }
-
-  // ----------------------------
-  // WIND
-  // ----------------------------
-  function randomizeWind(first=false){
-    windDir = Math.random()*Math.PI*2;
-    windSpeed = first ? (4 + Math.random()*8) : (4 + Math.random()*18);
-  }
-
-  function updateWind(dt){
-    gustTimer += dt;
-    if(gustTimer > 8 + Math.random()*8){
-      gustTimer = 0;
-      windDir += (Math.random()-0.5)*0.35;
-      windSpeed = Math.max(0, Math.min(26, windSpeed + (Math.random()-0.5)*8));
-      turbulence = Math.min(1, Math.max(0, turbulence + (Math.random()-0.5)*0.25));
-    }
-    turbulence += (0.12 - turbulence)*0.02*dt;
-  }
-
-  function perfTime(){
-    return performance && performance.now ? performance.now()/1000 : Date.now()/1000;
-  }
-  function wrapAngle(a){
-    while(a > Math.PI) a -= Math.PI*2;
-    while(a < -Math.PI) a += Math.PI*2;
-    return a;
-  }
-  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-
-  // ----------------------------
-  // GEAR
-  // ----------------------------
-  function updateGearAnim(dt){
-    gearAnim += (gearTarget - gearAnim) * (6.0 * dt);
-    gearAnim = Math.max(0, Math.min(1, gearAnim));
-
-    const gg = plane?.userData?.gearGroup;
-    if(!gg) return;
-
-    gg.position.y = -0.1 + (1-gearAnim)*0.55;
-    gg.scale.setScalar(0.55 + gearAnim*0.45);
-
-    const ng = plane.userData.noseGear;
-    const ml = plane.userData.mainGearL;
-    const mr = plane.userData.mainGearR;
-
-    if(ng){
-      ng.rotation.x = (1-gearAnim) * 1.1;
-      ng.position.y = -0.2 + (1-gearAnim)*0.35;
-    }
-    if(ml){
-      ml.rotation.x = (1-gearAnim) * 1.0;
-      ml.position.y = -0.25 + (1-gearAnim)*0.35;
-    }
-    if(mr){
-      mr.rotation.x = (1-gearAnim) * 1.0;
-      mr.position.y = -0.25 + (1-gearAnim)*0.35;
-    }
-  }
-
-  // ----------------------------
-  // FLIGHT PHYSICS
-  // Key ideas:
-  // - Yoke controls pitch+roll continuously.
-  // - Turn buttons removed; yaw comes from:
-  //   (a) small rudder coupling from yoke X
-  //   (b) asymmetrical thrust (spin)
-  // - Ground fix: when on ground and speed low, clamp pitch/roll strongly.
-  // - Yaw damper: reduces yaw oscillations (airborne).
-  // ----------------------------
-  function updateFlightPhysics(dt){
-    // Current ground / onGround estimate BEFORE applying big attitude changes
-    const groundNow = terrainHeightAt(plane.position.x, plane.position.z);
-    const clearance = 4.6 + gearAnim * 1.9;
-    const minY = groundNow + clearance;
-    const onGroundNow = (plane.position.y <= minY + 0.03);
-
-    // Speeds
-    const speedMS = speed * 0.54;
-
-    // Inputs from yoke
-    // yoke.yValue is already inverted as requested:
-    //   down => positive => pitch up
-    const inPitch = yoke.yValue; // -1..+1
-    const inRoll  = yoke.xValue; // -1..+1
-
-    // Autopilot corrections
-    let apPitch = 0;
-    let apRoll  = 0;
-    if(autopilot){
-      apPitch = (-pitch) * 0.9;
-      apRoll  = (-roll)  * 1.1;
+    function showMessage(text) {
+      messageEl.textContent = text;
+      messageEl.style.display = "block";
+      clearTimeout(showMessage.timer);
+      showMessage.timer = setTimeout(() => {
+        messageEl.style.display = "none";
+      }, 1800);
     }
 
-    // Twin engine thrust + asym
-    const t1 = eng1On ? throttle1 : 0;
-    const t2 = eng2On ? throttle2 : 0;
-    const totalThrust = (t1 + t2) * 0.5;
-    const asym = (t2 - t1);
-
-    // ----------------------------
-    // Ground behavior fix
-    // ----------------------------
-    // When on ground and slow, do NOT allow aerobatic pitch/roll.
-    // Instead:
-    // - pitch/roll are damped towards 0 (stability)
-    // - yaw acts more like steering (limited)
-    // - parking brake can lock almost completely
-    const lowSpeedGround = onGroundNow && (speed < 85);
-
-    // Parking brake stronger when on ground
-    if(parkingBrake && onGroundNow){
-      // heavy damping + speed bleed
-      speed *= (1 - 2.8*dt);
-      if(speed < 0.8) speed = 0;
+    function runwayLocal(x, z, r) {
+      const dx = x - r.x;
+      const dz = z - r.z;
+      const c = Math.cos(-r.rot);
+      const s = Math.sin(-r.rot);
+      return {
+        x: dx * c - dz * s,
+        z: dx * s + dz * c
+      };
     }
 
-    // ----------------------------
-    // Desired angular rates from inputs
-    // ----------------------------
-    // Pitch: in air free; on ground strongly limited
-    const pitchRateAir = 1.05;
-    const pitchRateGround = 0.22;
+    function runwayBlendFor(x, z) {
+      let best = 0;
 
-    // Roll: in air free; on ground strongly limited
-    const rollRateAir = 1.15;
-    const rollRateGround = 0.25;
+      for (const r of runwayDefs) {
+        const local = runwayLocal(x, z, r);
+        const ax = Math.abs(local.x);
+        const az = Math.abs(local.z);
 
-    // Yaw: steering on ground, rudder in air
-    const yawRateAir = 0.85;
-    const yawRateGround = 0.65;
+        const bx = 1 - smoothstep(r.width / 2, r.width / 2 + 90, ax);
+        const bz = 1 - smoothstep(r.length / 2, r.length / 2 + 120, az);
 
-    // Rudder coupling from yoke X:
-    // - In air: small rudder for coordinated turns + asym
-    // - On ground: stronger steering
-    const rudder = clamp(inRoll * 0.75, -1, 1);
-
-    // NAV assist while autopilot: gentle yaw guidance
-    let navYawAssist = 0;
-    if(autopilot && airports.length){
-      const target = airports[navIndex];
-      _vA.copy(target.center).sub(plane.position);
-      _vA.y = 0;
-      const dist = _vA.length();
-      if(dist > 1){
-        const desired = Math.atan2(_vA.z, _vA.x);
-        let diff = wrapAngle((desired - (yaw + Math.PI/2)));
-        navYawAssist = clamp(diff * 0.22, -0.55, 0.55);
+        best = Math.max(best, bx * bz);
       }
+
+      return best;
     }
 
-    // ----------------------------
-    // Update angular velocities (smooth)
-    // ----------------------------
-    // Pitch velocity
-    const pitchCmd = (inPitch * (lowSpeedGround ? pitchRateGround : pitchRateAir)) + apPitch;
-    pitchVel += (pitchCmd - pitchVel) * (6.0 * dt);
-
-    // Roll velocity
-    const rollCmd = (inRoll * (lowSpeedGround ? rollRateGround : rollRateAir)) + apRoll;
-    rollVel += (rollCmd - rollVel) * (6.0 * dt);
-
-    // Yaw velocity includes:
-    // - rudder steering
-    // - nav assist (if AP)
-    // - asym thrust spin
-    // On ground it must be limited so the plane doesn't spin violently.
-    const asymPower = (0.30 + Math.min(1, speed/180)) * 1.6;
-    const asymYaw = asym * asymPower;
-
-    let yawCmd = 0;
-    if(lowSpeedGround){
-      // steering stronger, but limited
-      yawCmd = rudder * yawRateGround + (asym * 0.22);
-      yawCmd = clamp(yawCmd, -0.75, 0.75);
-    }else{
-      yawCmd = rudder * yawRateAir + navYawAssist + asymYaw;
-      yawCmd = clamp(yawCmd, -1.2, 1.2);
-    }
-
-    // Yaw damper: reduces oscillations when airborne
-    if(yawDamperOn && !lowSpeedGround){
-      // When rudder is near zero, force yawVel towards 0 faster
-      const centerFactor = 1 - Math.min(1, Math.abs(rudder));
-      const damperStrength = 4.0 * centerFactor; // 0..4
-      yawVel *= (1 - damperStrength * dt);
-    }
-
-    yawVel += (yawCmd - yawVel) * (5.2 * dt);
-
-    // Extra stability: if on ground, strongly center roll/pitch
-    if(lowSpeedGround){
-      pitchVel *= (1 - 5.0*dt);
-      rollVel  *= (1 - 6.0*dt);
-      // hard clamp angles
-      pitch = clamp(pitch, -0.10, 0.18);
-      roll  = clamp(roll,  -0.10, 0.10);
-    }else{
-      // mild natural damping in air when not touching yoke
-      if(!yoke.active && !autopilot){
-        pitchVel *= (1 - 1.2*dt);
-        rollVel  *= (1 - 1.4*dt);
-      }
-    }
-
-    // Apply angle integration
-    pitch += pitchVel * dt;
-    roll  += rollVel  * dt;
-    yaw   += yawVel   * dt;
-
-    // Clamp pitch/roll in air to prevent crazy flips
-    pitch = clamp(pitch, -0.75, 0.75);
-    roll  = clamp(roll,  -1.35, 1.35);
-
-    // Turbulence wobble (small)
-    const wob = turbulence * 0.28;
-    if(!lowSpeedGround){
-      pitch += (Math.sin(perfTime()*1.7) * wob) * dt;
-      roll  += (Math.cos(perfTime()*2.1) * wob) * dt;
-      yaw   += (Math.sin(perfTime()*1.1) * wob * 0.4) * dt;
-    }
-
-    // Speed update
-    const gearDrag = 1.0 + (gearAnim * 0.22);
-    const thrustAccel = (totalThrust - 0.18) * 62;
-    const drag = (0.020 + (speed/ maxSpeed)*0.030) * gearDrag;
-
-    speed += thrustAccel * dt;
-    speed -= (speed * drag) * dt;
-    speed += (windSpeed * 0.018) * dt;
-
-    // Parking brake: extra speed bleed on ground
-    if(parkingBrake && onGroundNow){
-      speed *= (1 - 3.5*dt);
-    }
-
-    if(speed < 0) speed = 0;
-    if(speed < minSpeed && !lowSpeedGround && plane.position.y > groundNow + 12){
-      speed = minSpeed;
-    }
-    if(speed > maxSpeed) speed = maxSpeed;
-
-    // Forward / Up vectors
-    _qA.setFromEuler(_eA.set(pitch, yaw, roll));
-    _vA.set(0,0,1).applyQuaternion(_qA);
-    _vB.set(0,1,0).applyQuaternion(_qA);
-
-    // Move in world
-    const windX = Math.cos(windDir) * (windSpeed * 0.25);
-    const windZ = Math.sin(windDir) * (windSpeed * 0.25);
-
-    plane.position.x += (_vA.x * (speed * 0.54) + windX) * dt;
-    plane.position.y += (_vA.y * (speed * 0.54)) * dt;
-    plane.position.z += (_vA.z * (speed * 0.54) + windZ) * dt;
-
-    // Bounds
-    const r = Math.sqrt(plane.position.x*plane.position.x + plane.position.z*plane.position.z);
-    if(r > WORLD_RADIUS){
-      const s = WORLD_RADIUS / r;
-      plane.position.x *= s;
-      plane.position.z *= s;
-      yaw += 0.2 * dt;
-    }
-
-    // Ground contact
-    const ground = terrainHeightAt(plane.position.x, plane.position.z);
-    const minY2 = ground + clearance;
-    const onGround = (plane.position.y <= minY2 + 0.02);
-
-    // If below ground, clamp and apply ground friction + prevent flips
-    if(plane.position.y < minY2){
-      plane.position.y = minY2;
-
-      // Takeoff rule: allow lift-off only if enough speed and pitch
-      // This prevents "still on ground but flips up" problem.
-      const canRotate = speed > 115 && pitch > 0.07;
-
-      if(canRotate){
-        plane.position.y += (speed-112) * 0.020 * dt;
-      }else{
-        // strong damping on ground
-        roll  *= (1 - 3.2*dt);
-        pitch *= (1 - 3.0*dt);
-
-        // keep angles in safe range on ground
-        roll  = clamp(roll,  -0.12, 0.12);
-        pitch = clamp(pitch, -0.10, 0.20);
-
-        // yaw steering still works but limited
-        yawVel = clamp(yawVel, -0.7, 0.7);
-      }
-    }
-
-    // In air, simple sink if slow
-    if(!onGround){
-      if(speed < 85){
-        plane.position.y -= (90 - speed) * 0.06 * dt;
-      }
-    }
-
-    // Engine glows
-    const glows = plane.userData.engineGlows;
-    if(glows && glows.length){
-      const op1 = Math.min(0.60, Math.max(0, (t1 - 0.18) * 0.95));
-      const op2 = Math.min(0.60, Math.max(0, (t2 - 0.18) * 0.95));
-      glows[0].material.opacity = op1;
-      glows[1].material.opacity = op2;
-    }
-
-    plane.setRotationFromEuler(_eA.set(pitch, yaw, roll));
-  }
-
-  // ----------------------------
-  // WARNINGS
-  // ----------------------------
-  function updateWarnings(dt){
-    const altAGL = plane.position.y - terrainHeightAt(plane.position.x, plane.position.z);
-
-    stalled = (speed < 75 && altAGL > 45 && pitch > 0.35);
-    overspeed = (speed > (maxSpeed - 12));
-
-    _qA.setFromEuler(_eA.set(pitch,yaw,roll));
-    _vA.set(0,0,1).applyQuaternion(_qA);
-    const vSpeed = _vA.y * (speed * 0.54);
-    sinkRate = (altAGL < 160 && vSpeed < -18);
-
-    terrainWarn = false;
-    if(altAGL < 500){
-      const steps = 9;
-      const stepDist = 180;
-      for(let i=1;i<=steps;i++){
-        const t = i * stepDist;
-        const sx = plane.position.x + _vA.x * t;
-        const sz = plane.position.z + _vA.z * t;
-        const g = terrainHeightAt(sx, sz);
-        const futureY = plane.position.y + _vA.y * (t * 0.18);
-        const clearance = futureY - g;
-        if(clearance < 120){
-          terrainWarn = true;
-          break;
+    function isOnRunway(x, z) {
+      for (const r of runwayDefs) {
+        const local = runwayLocal(x, z, r);
+        if (Math.abs(local.x) < r.width / 2 && Math.abs(local.z) < r.length / 2) {
+          return true;
         }
       }
+      return false;
     }
 
-    if(stalled || overspeed || sinkRate || terrainWarn){
-      warnHold = 0.6;
-    }else{
-      warnHold -= dt;
-      if(warnHold < 0) warnHold = 0;
+    function rawTerrainHeight(x, z) {
+      const h1 = Math.sin(x * 0.004) * 8;
+      const h2 = Math.cos(z * 0.0047) * 6;
+      const h3 = Math.sin((x + z) * 0.0062) * 4;
+      const h4 = Math.cos((x - z) * 0.0032) * 7;
+      return h1 + h2 + h3 + h4 - 2;
     }
 
-    setTerrainWarning(terrainWarn && warnHold > 0);
+    function terrainHeightAt(x, z) {
+      const blend = runwayBlendFor(x, z);
+      return rawTerrainHeight(x, z) * (1 - blend);
+    }
 
-    if(warnHold > 0){
-      if(terrainWarn) showHudBanner("TERRAIN AHEAD! PULL UP!");
-      else if(sinkRate) showHudBanner("SINK RATE!");
-      else if(overspeed) showHudBanner("OVERSPEED!");
-      else if(stalled) showHudBanner("STALL!");
-    }else{
-      if(hudMessageEl.style.display === "block"){
-        hideMessage();
+    function groundContactY(x, z) {
+      return terrainHeightAt(x, z) + currentAircraft.groundClearance;
+    }
+
+    function createTerrain() {
+      const size = 4300;
+      const segments = lowPowerDevice ? 86 : 145;
+      const half = size / 2;
+
+      const positions = [];
+      const colors = [];
+      const indices = [];
+      const color = new THREE.Color();
+
+      for (let iz = 0; iz <= segments; iz++) {
+        for (let ix = 0; ix <= segments; ix++) {
+          const x = -half + (ix / segments) * size;
+          const z = -half + (iz / segments) * size;
+          const y = terrainHeightAt(x, z);
+
+          positions.push(x, y, z);
+
+          const runwayBlend = runwayBlendFor(x, z);
+          const grassTone = 0.30 + Math.sin(x * 0.02 + z * 0.01) * 0.025;
+          const lightness = clamp(0.34 + y * 0.006 + Math.sin((x - z) * 0.01) * 0.03, 0.25, 0.48);
+
+          if (runwayBlend > 0.55) {
+            color.setHSL(0.25, 0.18, 0.30);
+          } else if (y > 12) {
+            color.setHSL(0.22, 0.42, 0.38);
+          } else if (y < -8) {
+            color.setHSL(0.30, 0.45, 0.31);
+          } else {
+            color.setHSL(grassTone, 0.50, lightness);
+          }
+
+          colors.push(color.r, color.g, color.b);
+        }
+      }
+
+      for (let iz = 0; iz < segments; iz++) {
+        for (let ix = 0; ix < segments; ix++) {
+          const a = iz * (segments + 1) + ix;
+          const b = a + 1;
+          const c = a + (segments + 1);
+          const d = c + 1;
+
+          indices.push(a, c, b);
+          indices.push(b, c, d);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+
+      const mat = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        roughness: 1,
+        flatShading: true
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+    }
+
+    function createRunways() {
+      const runwayMat = new THREE.MeshStandardMaterial({
+        color: 0x262626,
+        roughness: 0.86
+      });
+
+      const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const yellowMat = new THREE.MeshBasicMaterial({ color: 0xffd84d });
+      const lightMat = new THREE.MeshBasicMaterial({ color: 0x9ee7ff });
+
+      for (const r of runwayDefs) {
+        const group = new THREE.Group();
+        group.position.set(r.x, 0.16, r.z);
+        group.rotation.y = r.rot;
+
+        const runway = new THREE.Mesh(
+          new THREE.PlaneGeometry(r.width, r.length),
+          runwayMat
+        );
+        runway.rotation.x = -Math.PI / 2;
+        runway.receiveShadow = true;
+        group.add(runway);
+
+        const centerCount = Math.floor(r.length / 90);
+        for (let i = 0; i < centerCount; i++) {
+          const z = -r.length / 2 + 60 + i * 90;
+          const line = new THREE.Mesh(new THREE.PlaneGeometry(5, 40), whiteMat);
+          line.rotation.x = -Math.PI / 2;
+          line.position.set(0, 0.035, z);
+          group.add(line);
+        }
+
+        for (const side of [-1, 1]) {
+          const sideLine = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.2, r.length - 70),
+            whiteMat
+          );
+          sideLine.rotation.x = -Math.PI / 2;
+          sideLine.position.set(side * (r.width / 2 - 5), 0.04, 0);
+          group.add(sideLine);
+
+          for (let z = -r.length / 2 + 30; z < r.length / 2; z += 80) {
+            const light = new THREE.Mesh(new THREE.SphereGeometry(1.1, 8, 6), lightMat);
+            light.position.set(side * (r.width / 2 + 6), 0.9, z);
+            group.add(light);
+          }
+        }
+
+        for (const end of [-1, 1]) {
+          for (let i = -4; i <= 4; i++) {
+            const block = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 26), whiteMat);
+            block.rotation.x = -Math.PI / 2;
+            block.position.set(i * 7, 0.045, end * (r.length / 2 - 65));
+            group.add(block);
+          }
+        }
+
+        const taxi = new THREE.Mesh(new THREE.PlaneGeometry(4, r.length - 80), yellowMat);
+        taxi.rotation.x = -Math.PI / 2;
+        taxi.position.set(0, 0.05, 0);
+        taxi.visible = r.width > 90;
+        group.add(taxi);
+
+        scene.add(group);
       }
     }
 
-    // Soft recovery
-    if(terrainWarn){
-      pitch = Math.min(pitch + 0.55*dt, 0.55);
-    }
-    if(stalled){
-      pitch = Math.max(pitch - 0.7*dt, -0.1);
-    }
-  }
+    function createAirportObjects() {
+      const hangarMat = new THREE.MeshStandardMaterial({ color: 0x89939e, roughness: 0.75 });
+      const roofMat = new THREE.MeshStandardMaterial({ color: 0x354457, roughness: 0.65 });
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x74c7ff, roughness: 0.2, transparent: true, opacity: 0.75 });
 
-  function showHudBanner(text){
-    if(hudMessageEl.textContent !== text){
-      showMessage(text);
-    }else{
-      hudMessageEl.style.display = "block";
-    }
-  }
+      function box(size, pos, mat) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), mat);
+        m.position.set(pos.x, terrainHeightAt(pos.x, pos.z) + pos.y, pos.z);
+        m.castShadow = !lowPowerDevice;
+        m.receiveShadow = true;
+        scene.add(m);
+        return m;
+      }
 
-  // ----------------------------
-  // AIRPORT BEACON
-  // ----------------------------
-  function updateAirportBeacons(dt){
-    for(let i=0;i<airports.length;i++){
-      const a = airports[i];
-      if(!a.beaconMesh) continue;
+      box({ x: 90, y: 24, z: 70 }, { x: -190, y: 12, z: 190 }, hangarMat);
+      box({ x: 96, y: 9, z: 78 }, { x: -190, y: 31, z: 190 }, roofMat);
 
-      const isTarget = (i === navIndex);
-      const t = perfTime();
-      a.beaconMesh.scale.setScalar(1 + (isTarget?0.25:0.05)*Math.sin(t*2.2));
-      a.beaconMesh.material.color.setHex(isTarget ? 0x00ffff : 0x00aa99);
-      a.beaconMesh.position.y = a.center.y + 120 + Math.sin(t*2.0 + i)*6;
-      a.beaconMesh.visible = true;
-    }
-  }
+      box({ x: 70, y: 20, z: 55 }, { x: -300, y: 10, z: 105 }, hangarMat);
+      box({ x: 76, y: 8, z: 62 }, { x: -300, y: 26, z: 105 }, roofMat);
 
-  // ----------------------------
-  // CAMERA
-  // ----------------------------
-  function updateCamera(dt){
-    _qA.copy(plane.quaternion);
-    _vA.set(0,0,1).applyQuaternion(_qA);
-    _vB.set(0,1,0).applyQuaternion(_qA);
+      box({ x: 42, y: 18, z: 42 }, { x: 150, y: 9, z: 190 }, hangarMat);
+      box({ x: 18, y: 74, z: 18 }, { x: 150, y: 37, z: 190 }, glassMat);
+      box({ x: 34, y: 10, z: 34 }, { x: 150, y: 79, z: 190 }, roofMat);
 
-    let targetPos = _vC;
-    let targetLook= _vD;
+      const treeCount = lowPowerDevice ? 85 : 170;
+      const trunkGeo = new THREE.CylinderGeometry(0.7, 1.0, 8, 6);
+      const crownGeo = new THREE.ConeGeometry(4.2, 12, 7);
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6a4727, roughness: 1 });
+      const crownMat = new THREE.MeshStandardMaterial({ color: 0x1e6b34, roughness: 1 });
 
-    if(viewMode === 'chase'){
-      targetPos.copy(plane.position).add(_vE.set(0, 10, -26).applyQuaternion(_qA));
-      targetLook.copy(plane.position).addScaledVector(_vA, 80);
-    }else{
-      targetPos.copy(plane.position).add(_vE.set(0, 1.55, 2.9).applyQuaternion(_qA));
-      targetLook.copy(plane.position).addScaledVector(_vA, 130).addScaledVector(_vB, 7);
-    }
+      const trunks = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
+      const crowns = new THREE.InstancedMesh(crownGeo, crownMat, treeCount);
+      const dummy = new THREE.Object3D();
 
-    camera.position.lerp(targetPos, 0.18);
-    camera.lookAt(targetLook);
-  }
+      let placed = 0;
+      let attempts = 0;
 
-  function recenterCameraHint(){
-    showMessage("Kamera otomatik takipte. VIEW ile değiştir.");
-    setTimeout(hideMessage, 800);
-  }
+      while (placed < treeCount && attempts < treeCount * 10) {
+        attempts++;
 
-  // ----------------------------
-  // HUD
-  // ----------------------------
-  function updateHUD(dt){
-    if(!plane) return;
+        const x = (Math.random() - 0.5) * 3600;
+        const z = (Math.random() - 0.5) * 3600;
 
-    hudSpeedEl.textContent = Math.round(speed) + " kn";
-    hudAltEl.textContent = Math.round(plane.position.y) + " m";
+        if (runwayBlendFor(x, z) > 0.05) continue;
+        if (Math.abs(x) < 350 && z > -100 && z < 420) continue;
 
-    let hdg = ((yaw * 180/Math.PI) % 360);
-    if(hdg < 0) hdg += 360;
-    hudHeadingEl.textContent = String(Math.round(hdg)).padStart(3,'0') + "°";
+        const h = terrainHeightAt(x, z);
+        const scale = 0.75 + Math.random() * 0.65;
 
-    hudWindEl.textContent = Math.round(windSpeed) + " kt";
-    updateNavHud();
-    hudMiniEl.style.display = showHelp ? "block" : "none";
+        dummy.position.set(x, h + 4 * scale, z);
+        dummy.scale.set(scale, scale, scale);
+        dummy.rotation.y = Math.random() * Math.PI;
+        dummy.updateMatrix();
+        trunks.setMatrixAt(placed, dummy.matrix);
 
-    chipEng1.innerHTML = "<b>ENG1</b><br/>" + (eng1On ? "ON" : "OFF") + " • T: " + Math.round(throttle1*100) + "%";
-    chipEng2.innerHTML = "<b>ENG2</b><br/>" + (eng2On ? "ON" : "OFF") + " • T: " + Math.round(throttle2*100) + "%";
-    chipGear.innerHTML = "<b>GEAR</b><br/>" + (gearDown ? "DOWN" : "UP");
-  }
+        dummy.position.set(x, h + 13 * scale, z);
+        dummy.scale.set(scale, scale, scale);
+        dummy.rotation.y = Math.random() * Math.PI;
+        dummy.updateMatrix();
+        crowns.setMatrixAt(placed, dummy.matrix);
 
-  function updateNavHud(){
-    if(!airports.length){
-      hudTargetEl.textContent = "—";
-      return;
-    }
-    const a = airports[navIndex];
-    _vA.copy(a.center).sub(plane.position);
-    _vA.y = 0;
-    const dist = _vA.length();
-    const km = dist / 1000;
-    hudTargetEl.textContent = a.id + " " + km.toFixed(km<10?2:1) + " km";
-  }
+        placed++;
+      }
 
-  function updateViewHud(){
-    viewStatusEl.textContent = (viewMode === "chase") ? "Dış" : "Kokpit";
-  }
-  function updateAutopilotHud(){
-    apStatusEl.textContent = autopilot ? "On" : "Off";
-  }
-  function updateEngineHud(){
-    eng1StatusEl.textContent = eng1On ? "On" : "Off";
-    eng2StatusEl.textContent = eng2On ? "On" : "Off";
-  }
-  function updateGearHud(){
-    gearStatusEl.textContent = gearDown ? "Down" : "Up";
-  }
-  function updateYawDamperHud(){
-    ydStatusEl.textContent = yawDamperOn ? "On" : "Off";
-  }
-  function updateParkingHud(){
-    parkStatusEl.textContent = parkingBrake ? "On" : "Off";
-  }
-
-  // ----------------------------
-  // QUALITY
-  // ----------------------------
-  function applyQualityMode(){
-    if(qualityMode === "quality"){
-      renderer.setPixelRatio(pixelRatioQuality);
-      maxSpeed = maxSpeedQuality;
-      scene.fog.density = 0.00023;
-      skyMesh.material.color.setHex(0x86d2ff);
-    }else{
-      renderer.setPixelRatio(pixelRatioPerf);
-      maxSpeed = maxSpeedPerf;
-      scene.fog.density = 0.00029;
-      skyMesh.material.color.setHex(0x7fc8ff);
-    }
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    applyQualityToUI();
-    saveProfile();
-  }
-
-  function applyQualityToUI(){
-    qualityStatusEl.textContent = (qualityMode === "quality") ? "Kalite" : "Performans";
-  }
-
-  function toggleQuality(){
-    qualityMode = (qualityMode === "perf") ? "quality" : "perf";
-    applyQualityMode();
-    showMessage("QUALITY: " + (qualityMode === "quality" ? "Kalite" : "Performans"));
-    setTimeout(hideMessage, 900);
-  }
-
-  // ----------------------------
-  // BUTTON ACTIONS
-  // ----------------------------
-  function manualLevel(){
-    pitch *= 0.20;
-    roll  *= 0.20;
-    pitchVel *= 0.3;
-    rollVel  *= 0.3;
-    yawVel   *= 0.5;
-    showMessage("LEVEL");
-    setTimeout(hideMessage, 450);
-  }
-  function toggleViewMode(){
-    viewMode = (viewMode === "chase") ? "cockpit" : "chase";
-    updateViewHud();
-    saveProfile();
-  }
-  function toggleAutopilot(){
-    autopilot = !autopilot;
-    updateAutopilotHud();
-    showMessage("AP: " + (autopilot ? "On" : "Off"));
-    setTimeout(hideMessage, 700);
-    saveProfile();
-  }
-  function cycleNavTarget(){
-    if(!airports.length) return;
-    navIndex = (navIndex + 1) % airports.length;
-    updateNavHud();
-    showMessage("NAV hedefi: " + airports[navIndex].id + " (" + airports[navIndex].name + ")");
-    setTimeout(hideMessage, 1000);
-    saveProfile();
-  }
-  function toggleHelp(){
-    showHelp = !showHelp;
-    showMessage(showHelp ? "HUD Help: Açık" : "HUD Help: Kapalı");
-    setTimeout(hideMessage, 700);
-  }
-
-  function toggleEngine(which){
-    if(which === 1){
-      eng1On = !eng1On;
-      showMessage("ENG1: " + (eng1On ? "On" : "Off"));
-    }else{
-      eng2On = !eng2On;
-      showMessage("ENG2: " + (eng2On ? "On" : "Off"));
-    }
-    updateEngineHud();
-    setTimeout(hideMessage, 650);
-  }
-
-  function toggleGear(){
-    gearDown = !gearDown;
-    gearTarget = gearDown ? 1.0 : 0.0;
-    showMessage("GEAR: " + (gearDown ? "DOWN" : "UP"));
-    updateGearHud();
-    setTimeout(hideMessage, 700);
-  }
-
-  function toggleYawDamper(){
-    yawDamperOn = !yawDamperOn;
-    updateYawDamperHud();
-    showMessage("Yaw Damper: " + (yawDamperOn ? "On" : "Off"));
-    setTimeout(hideMessage, 700);
-    saveProfile();
-  }
-
-  function toggleParkingBrake(){
-    parkingBrake = !parkingBrake;
-    updateParkingHud();
-    showMessage("PARK: " + (parkingBrake ? "On" : "Off"));
-    setTimeout(hideMessage, 700);
-    saveProfile();
-  }
-
-  // ----------------------------
-  // WINDOW RESIZE
-  // ----------------------------
-  function onWindowResize(){
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    camera.aspect = w/h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w,h);
-  }
-
-  // ----------------------------
-  // INPUT: YOKE
-  // ----------------------------
-  function onYokeDown(e){
-    e.preventDefault();
-    yoke.active = true;
-    yoke.id = e.pointerId;
-    const rect = yokeArea.getBoundingClientRect();
-    yoke.startX = rect.left + rect.width/2;
-    yoke.startY = rect.top  + rect.height/2;
-    moveYoke(e.clientX, e.clientY);
-    try{ yokeArea.setPointerCapture(e.pointerId); }catch(err){}
-  }
-  function onYokeMove(e){
-    if(!yoke.active || e.pointerId !== yoke.id) return;
-    e.preventDefault();
-    moveYoke(e.clientX, e.clientY);
-  }
-  function onYokeUp(e){
-    if(!yoke.active || (e && e.pointerId !== yoke.id)) return;
-    yoke.active = false;
-    yoke.id = null;
-
-    // spring-back to center
-    yoke.xValue = 0;
-    yoke.yValue = 0;
-    yokeKnob.style.transform = 'translate(-50%, -50%)';
-    yokeHandle.style.transform = 'translate(-50%, -50%)';
-  }
-
-  function moveYoke(cx, cy){
-    const dx = cx - yoke.startX;
-    const dy = cy - yoke.startY;
-
-    const maxR = yoke.maxRadius;
-
-    let nx = dx;
-    let ny = dy;
-
-    // circular clamp
-    const len = Math.sqrt(nx*nx + ny*ny);
-    if(len > maxR){
-      const s = maxR / (len || 1);
-      nx *= s;
-      ny *= s;
+      trunks.count = placed;
+      crowns.count = placed;
+      trunks.castShadow = !lowPowerDevice;
+      crowns.castShadow = !lowPowerDevice;
+      scene.add(trunks);
+      scene.add(crowns);
     }
 
-    // Visual move
-    yokeKnob.style.transform = `translate(calc(-50% + ${nx}px), calc(-50% + ${ny}px))`;
-    yokeHandle.style.transform = `translate(calc(-50% + ${nx*0.65}px), calc(-50% + ${ny*0.65}px))`;
+    function createClouds() {
+      const count = lowPowerDevice ? 20 : 34;
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 1,
+        transparent: true,
+        opacity: 0.84
+      });
 
-    // Convert to normalized inputs
-    // IMPORTANT inversion requested:
-    // down (ny positive) => yValue positive => pitch up
-    yoke.xValue = clamp(nx / maxR, -1, 1);
-    yoke.yValue = clamp(ny / maxR, -1, 1);
-  }
+      for (let i = 0; i < count; i++) {
+        const group = new THREE.Group();
+        const s = 18 + Math.random() * 30;
 
-  // ----------------------------
-  // INPUT: THROTTLES
-  // ----------------------------
-  function onThrottleDown(e, which){
-    e.preventDefault();
-    tTouch.active = true;
-    tTouch.id = e.pointerId;
-    tTouch.which = which;
-    updateThrottleFromPointer(e, which);
-    try{ e.target.setPointerCapture(e.pointerId); }catch(err){}
-  }
-  function onThrottleMove(e){
-    if(!tTouch.active || e.pointerId !== tTouch.id) return;
-    e.preventDefault();
-    updateThrottleFromPointer(e, tTouch.which);
-  }
-  function onThrottleUp(e){
-    if(!tTouch.active) return;
-    tTouch.active = false;
-    tTouch.id = null;
-    tTouch.which = 0;
-  }
+        for (let p = 0; p < 5; p++) {
+          const puff = new THREE.Mesh(
+            new THREE.SphereGeometry(s * (0.55 + Math.random() * 0.45), 14, 10),
+            mat
+          );
+          puff.position.set(
+            (Math.random() - 0.5) * s * 2.6,
+            (Math.random() - 0.25) * s * 0.65,
+            (Math.random() - 0.5) * s * 1.4
+          );
+          group.add(puff);
+        }
 
-  function updateThrottleFromPointer(e, which){
-    const track = (which===1) ? throttle1Track : throttle2Track;
-    const rect = track.getBoundingClientRect();
-    const rel = (e.clientY - rect.top) / rect.height;
-    let t = 1 - rel;
-    t = clamp(t, 0, 1);
+        group.position.set(
+          (Math.random() - 0.5) * 3200,
+          160 + Math.random() * 420,
+          -400 - Math.random() * 2600
+        );
 
-    if(which === 1) throttle1 = t;
-    else throttle2 = t;
-
-    updateThrottleThumbs(false);
-  }
-
-  function updateThrottleThumbs(force){
-    const h1 = (throttle1Track.getBoundingClientRect().height || 175);
-    const h2 = (throttle2Track.getBoundingClientRect().height || 175);
-
-    const thumbH1 = throttle1Thumb.offsetHeight || 10;
-    const thumbH2 = throttle2Thumb.offsetHeight || 10;
-
-    const y1 = (1 - throttle1) * h1;
-    const y2 = (1 - throttle2) * h2;
-
-    throttle1Thumb.style.top = (y1 - thumbH1/2) + "px";
-    throttle2Thumb.style.top = (y2 - thumbH2/2) + "px";
-
-    throttle1Sub.textContent = Math.round(throttle1*100) + "%";
-    throttle2Sub.textContent = Math.round(throttle2*100) + "%";
-  }
-
-  // ----------------------------
-  // KEYBOARD
-  // ----------------------------
-  function onKeyDown(e){
-    if(e.repeat) return;
-    switch(e.code){
-      // Pitch (W pulls up, S pushes down) - consistent with "yoke down => pitch up"
-      case 'KeyW':
-      case 'ArrowUp':
-        yoke.yValue = 1; break;
-      case 'KeyS':
-      case 'ArrowDown':
-        yoke.yValue = -1; break;
-
-      // Roll (A left, D right)
-      case 'KeyA':
-      case 'ArrowLeft':
-        yoke.xValue = -1; break;
-      case 'KeyD':
-      case 'ArrowRight':
-        yoke.xValue = 1; break;
-
-      case 'KeyV': toggleViewMode(); break;
-      case 'KeyP': toggleAutopilot(); break;
-      case 'KeyN': cycleNavTarget(); break;
-      case 'KeyQ': toggleQuality(); break;
-      case 'KeyH': toggleHelp(); break;
-
-      case 'KeyG': toggleGear(); break;
-
-      case 'KeyY': toggleYawDamper(); break;
-      case 'KeyB': toggleParkingBrake(); break;
-
-      case 'Digit1': toggleEngine(1); break;
-      case 'Digit2': toggleEngine(2); break;
-
-      case 'BracketRight':
-        throttle1 = Math.min(1, throttle1 + 0.05); updateThrottleThumbs(false); break;
-      case 'BracketLeft':
-        throttle1 = Math.max(0, throttle1 - 0.05); updateThrottleThumbs(false); break;
-
-      case 'Semicolon':
-        throttle2 = Math.max(0, throttle2 - 0.05); updateThrottleThumbs(false); break;
-      case 'Quote':
-        throttle2 = Math.min(1, throttle2 + 0.05); updateThrottleThumbs(false); break;
+        scene.add(group);
+      }
     }
-  }
-  function onKeyUp(e){
-    switch(e.code){
-      case 'KeyW':
-      case 'ArrowUp':
-      case 'KeyS':
-      case 'ArrowDown':
-        if(!yoke.active) yoke.yValue = 0;
-        break;
 
-      case 'KeyA':
-      case 'ArrowLeft':
-      case 'KeyD':
-      case 'ArrowRight':
-        if(!yoke.active) yoke.xValue = 0;
-        break;
+    function mat(color, roughness = 0.45, metalness = 0.08) {
+      return new THREE.MeshStandardMaterial({ color, roughness, metalness });
     }
-  }
-})();
-</script>
+
+    function addMesh(group, geometry, material, position, rotation, scale) {
+      const mesh = new THREE.Mesh(geometry, material);
+      if (position) mesh.position.set(position.x || 0, position.y || 0, position.z || 0);
+      if (rotation) mesh.rotation.set(rotation.x || 0, rotation.y || 0, rotation.z || 0);
+      if (scale) mesh.scale.set(scale.x || 1, scale.y || 1, scale.z || 1);
+      mesh.castShadow = !lowPowerDevice;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+      return mesh;
+    }
+
+    function createWingPair(span, rootChord, tipChord, sweep, thickness, material) {
+      const positions = [];
+      const indices = [];
+
+      function addHalf(side) {
+        const base = positions.length / 3;
+        const xRoot = 0;
+        const xTip = side * span / 2;
+        const yTop = thickness / 2;
+        const yBottom = -thickness / 2;
+        const rootLE = -rootChord / 2;
+        const rootTE = rootChord / 2;
+        const tipLE = -tipChord / 2 + sweep;
+        const tipTE = tipChord / 2 + sweep;
+
+        positions.push(
+          xRoot, yTop, rootLE,
+          xRoot, yTop, rootTE,
+          xTip, yTop, tipLE,
+          xTip, yTop, tipTE,
+          xRoot, yBottom, rootLE,
+          xRoot, yBottom, rootTE,
+          xTip, yBottom, tipLE,
+          xTip, yBottom, tipTE
+        );
+
+        indices.push(
+          base + 0, base + 1, base + 3,
+          base + 0, base + 3, base + 2,
+          base + 4, base + 7, base + 5,
+          base + 4, base + 6, base + 7,
+          base + 0, base + 2, base + 6,
+          base + 0, base + 6, base + 4,
+          base + 1, base + 5, base + 7,
+          base + 1, base + 7, base + 3,
+          base + 2, base + 3, base + 7,
+          base + 2, base + 7, base + 6
+        );
+      }
+
+      addHalf(1);
+      addHalf(-1);
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+
+      return new THREE.Mesh(geo, material);
+    }
+
+    function createGearGroup(size = 1) {
+      const group = new THREE.Group();
+      const dark = mat(0x121820, 0.75);
+      const metal = mat(0xbfc7d1, 0.35, 0.35);
+
+      function wheel(x, y, z, r) {
+        const w = addMesh(
+          group,
+          new THREE.CylinderGeometry(r, r, 0.7 * size, 16),
+          dark,
+          { x, y, z },
+          { z: Math.PI / 2 }
+        );
+
+        addMesh(
+          group,
+          new THREE.CylinderGeometry(0.10 * size, 0.10 * size, 2.8 * size, 8),
+          metal,
+          { x, y: y + 1.3 * size, z }
+        );
+
+        return w;
+      }
+
+      wheel(-3.4 * size, -2.1 * size, 2.7 * size, 0.72 * size);
+      wheel(3.4 * size, -2.1 * size, 2.7 * size, 0.72 * size);
+      wheel(0, -2.15 * size, -5.6 * size, 0.55 * size);
+
+      return group;
+    }
+
+    function buildCessna() {
+      const g = new THREE.Group();
+      const body = mat(0xf0f3f7, 0.38);
+      const red = mat(0xd73737, 0.42);
+      const dark = mat(0x121820, 0.65);
+      const glass = new THREE.MeshStandardMaterial({
+        color: 0x78c9ff,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.72
+      });
+
+      addMesh(g, new THREE.CapsuleGeometry(1.45, 14, 10, 20), body, { z: 0 }, { x: Math.PI / 2 });
+      addMesh(g, new THREE.ConeGeometry(1.45, 3.2, 20), body, { z: -8.6 }, { x: -Math.PI / 2 });
+      addMesh(g, new THREE.SphereGeometry(1.35, 16, 10), glass, { y: 1.05, z: -3.9 }, null, { x: 1.05, y: 0.55, z: 1.2 });
+
+      const wing = createWingPair(26, 4.2, 2.4, 0.2, 0.28, red);
+      wing.position.set(0, 1.7, -1.2);
+      g.add(wing);
+
+      const tailWing = createWingPair(9, 2.5, 1.5, 0.1, 0.22, red);
+      tailWing.position.set(0, 1.05, 7);
+      g.add(tailWing);
+
+      addMesh(g, new THREE.BoxGeometry(0.45, 4.8, 2.2), red, { y: 2.5, z: 6.7 }, { x: -0.14 });
+      addMesh(g, new THREE.BoxGeometry(0.18, 7.5, 0.25), dark, { z: -10.35 }, { z: Math.PI / 2 });
+      addMesh(g, new THREE.SphereGeometry(0.45, 10, 8), dark, { z: -10.15 });
+
+      const gear = createGearGroup(0.9);
+      gear.position.y = -0.55;
+      g.add(gear);
+
+      g.userData.engineParts = [g.children[g.children.length - 2]];
+      g.userData.gearGroup = gear;
+      g.scale.setScalar(1.05);
+      return g;
+    }
+
+    function buildA320() {
+      const g = new THREE.Group();
+      const body = mat(0xe8edf3, 0.32, 0.12);
+      const blue = mat(0x2166d1, 0.45);
+      const dark = mat(0x111820, 0.58);
+      const glass = new THREE.MeshStandardMaterial({
+        color: 0x67c7ff,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.72
+      });
+
+      addMesh(g, new THREE.CapsuleGeometry(2.55, 31, 14, 28), body, null, { x: Math.PI / 2 });
+      addMesh(g, new THREE.ConeGeometry(2.55, 5.5, 28), body, { z: -18.4 }, { x: -Math.PI / 2 });
+      addMesh(g, new THREE.SphereGeometry(2.05, 20, 10), glass, { y: 1.9, z: -14.7 }, null, { x: 1.05, y: 0.42, z: 0.85 });
+
+      const wing = createWingPair(39, 9.5, 3.2, 5.7, 0.38, blue);
+      wing.position.set(0, -0.15, -0.7);
+      g.add(wing);
+
+      const tailWing = createWingPair(15, 4.4, 2.2, 1.6, 0.3, blue);
+      tailWing.position.set(0, 1.25, 15.2);
+      g.add(tailWing);
+
+      addMesh(g, new THREE.BoxGeometry(0.75, 8.5, 4.8), blue, { y: 4.1, z: 14.3 }, { x: -0.18 });
+
+      const engineParts = [];
+
+      function engine(x) {
+        const pod = addMesh(
+          g,
+          new THREE.CylinderGeometry(1.42, 1.42, 3.9, 24),
+          dark,
+          { x, y: -1.75, z: -1.9 },
+          { x: Math.PI / 2 }
+        );
+
+        const fan = addMesh(
+          g,
+          new THREE.BoxGeometry(0.18, 2.35, 0.16),
+          mat(0xc8d0d8, 0.35, 0.35),
+          { x, y: -1.75, z: -3.95 }
+        );
+
+        engineParts.push(fan);
+      }
+
+      engine(-9.5);
+      engine(9.5);
+
+      const gear = createGearGroup(1.25);
+      gear.position.y = -1.5;
+      g.add(gear);
+
+      g.userData.engineParts = engineParts;
+      g.userData.gearGroup = gear;
+      g.scale.setScalar(1.08);
+      return g;
+    }
+
+    function buildB747() {
+      const g = new THREE.Group();
+      const body = mat(0xf1f3f6, 0.3, 0.14);
+      const navy = mat(0x1e4b91, 0.45);
+      const dark = mat(0x111820, 0.58);
+      const glass = new THREE.MeshStandardMaterial({
+        color: 0x75cfff,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.72
+      });
+
+      addMesh(g, new THREE.CapsuleGeometry(3.35, 45, 16, 32), body, null, { x: Math.PI / 2 });
+      addMesh(g, new THREE.ConeGeometry(3.35, 7.2, 32), body, { z: -26.1 }, { x: -Math.PI / 2 });
+
+      addMesh(g, new THREE.SphereGeometry(2.6, 24, 12), body, { y: 2.75, z: -17.5 }, null, { x: 1.0, y: 0.58, z: 1.6 });
+      addMesh(g, new THREE.SphereGeometry(1.95, 18, 10), glass, { y: 4.05, z: -20.1 }, null, { x: 1.05, y: 0.38, z: 0.75 });
+
+      const wing = createWingPair(61, 15, 5, 9.6, 0.55, navy);
+      wing.position.set(0, -0.1, -1.1);
+      g.add(wing);
+
+      const tailWing = createWingPair(23, 6.8, 2.8, 2.3, 0.36, navy);
+      tailWing.position.set(0, 2.2, 22.2);
+      g.add(tailWing);
+
+      addMesh(g, new THREE.BoxGeometry(0.95, 12.5, 6.5), navy, { y: 6.1, z: 21.1 }, { x: -0.18 });
+
+      const engineParts = [];
+
+      function engine(x, z) {
+        addMesh(
+          g,
+          new THREE.CylinderGeometry(1.55, 1.55, 4.0, 24),
+          dark,
+          { x, y: -2.2, z },
+          { x: Math.PI / 2 }
+        );
+
+        const fan = addMesh(
+          g,
+          new THREE.BoxGeometry(0.18, 2.7, 0.16),
+          mat(0xc8d0d8, 0.35, 0.35),
+          { x, y: -2.2, z: z - 2.05 }
+        );
+
+        engineParts.push(fan);
+      }
+
+      engine(-19, -3.4);
+      engine(-10.5, -1.2);
+      engine(10.5, -1.2);
+      engine(19, -3.4);
+
+      const gear = createGearGroup(1.55);
+      gear.position.y = -2.25;
+      g.add(gear);
+
+      g.userData.engineParts = engineParts;
+      g.userData.gearGroup = gear;
+      g.scale.setScalar(1.12);
+      return g;
+    }
+
+    function buildF16() {
+      const g = new THREE.Group();
+      const grey = mat(0x8f9aa5, 0.42, 0.22);
+      const dark = mat(0x161c24, 0.6);
+      const glass = new THREE.MeshStandardMaterial({
+        color: 0x4cc8ff,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.65
+      });
+
+      addMesh(g, new THREE.CapsuleGeometry(1.25, 16, 12, 24), grey, null, { x: Math.PI / 2 });
+      addMesh(g, new THREE.ConeGeometry(1.2, 7.0, 24), grey, { z: -11.5 }, { x: -Math.PI / 2 });
+      addMesh(g, new THREE.SphereGeometry(1.25, 18, 9), glass, { y: 1.12, z: -5.0 }, null, { x: 0.9, y: 0.42, z: 1.65 });
+
+      const wing = createWingPair(18, 9.5, 1.2, 4.8, 0.28, grey);
+      wing.position.set(0, -0.12, 0.6);
+      g.add(wing);
+
+      const tailWing = createWingPair(7.2, 3.1, 1.1, 1.8, 0.22, grey);
+      tailWing.position.set(0, 0.6, 7.4);
+      g.add(tailWing);
+
+      addMesh(g, new THREE.BoxGeometry(0.42, 6.3, 3.0), grey, { y: 3.0, z: 6.8 }, { x: -0.2 });
+      addMesh(g, new THREE.CylinderGeometry(1.05, 1.25, 2.4, 24), dark, { z: 9.2 }, { x: Math.PI / 2 });
+
+      const flame = addMesh(
+        g,
+        new THREE.ConeGeometry(0.7, 2.5, 18),
+        new THREE.MeshBasicMaterial({ color: 0xff8a25, transparent: true, opacity: 0.58 }),
+        { z: 11.1 },
+        { x: Math.PI / 2 }
+      );
+
+      const gear = createGearGroup(0.8);
+      gear.position.y = -0.9;
+      g.add(gear);
+
+      g.userData.engineParts = [flame];
+      g.userData.gearGroup = gear;
+      g.scale.setScalar(1.15);
+      return g;
+    }
+
+    function buildTB2() {
+      const g = new THREE.Group();
+      const white = mat(0xe7e9e5, 0.5, 0.05);
+      const dark = mat(0x171b20, 0.7);
+      const glass = new THREE.MeshStandardMaterial({
+        color: 0x5bbfec,
+        roughness: 0.15,
+        transparent: true,
+        opacity: 0.6
+      });
+
+      addMesh(g, new THREE.CapsuleGeometry(0.85, 13.5, 10, 20), white, null, { x: Math.PI / 2 });
+      addMesh(g, new THREE.ConeGeometry(0.85, 2.6, 18), white, { z: -8.1 }, { x: -Math.PI / 2 });
+      addMesh(g, new THREE.SphereGeometry(0.75, 14, 8), glass, { y: 0.7, z: -4.3 }, null, { x: 1, y: 0.45, z: 1.0 });
+
+      const wing = createWingPair(32, 2.3, 1.4, 0.1, 0.18, white);
+      wing.position.set(0, 0.62, -1.2);
+      g.add(wing);
+
+      const tailWing = createWingPair(8.5, 2.2, 1.1, 0.6, 0.16, white);
+      tailWing.position.set(0, 0.75, 7.2);
+      g.add(tailWing);
+
+      addMesh(g, new THREE.BoxGeometry(0.35, 3.8, 1.8), white, { x: -2.7, y: 2.0, z: 7.4 }, { z: 0.35 });
+      addMesh(g, new THREE.BoxGeometry(0.35, 3.8, 1.8), white, { x: 2.7, y: 2.0, z: 7.4 }, { z: -0.35 });
+
+      const prop = addMesh(g, new THREE.BoxGeometry(0.16, 5.8, 0.14), dark, { z: 9.8 });
+      const gear = createGearGroup(0.62);
+      gear.position.y = -0.75;
+      g.add(gear);
+
+      g.userData.engineParts = [prop];
+      g.userData.gearGroup = gear;
+      g.scale.setScalar(1.18);
+      return g;
+    }
+
+    function createAircraftModel(id) {
+      let model;
+
+      if (id === "a320") model = buildA320();
+      else if (id === "b747") model = buildB747();
+      else if (id === "f16") model = buildF16();
+      else if (id === "tb2") model = buildTB2();
+      else model = buildCessna();
+
+      model.rotation.order = "YXZ";
+      return model;
+    }
+
+    function resetPlane(show = true) {
+      state.throttle = 0;
+      state.speed = 0;
+      state.altitude = 0;
+      state.pitch = 0;
+      state.roll = 0;
+      state.yaw = 0;
+      state.yokeX = 0;
+      state.yokeY = 0;
+      state.rudder = 0;
+      state.airborne = false;
+      state.crashed = false;
+      state.gearDown = true;
+
+      const startX = 0;
+      const startZ = 670;
+      airplane.position.set(startX, groundContactY(startX, startZ), startZ);
+      airplane.rotation.set(0, 0, 0);
+
+      updateThrottleUI();
+      updateGearButton();
+
+      if (show) showMessage("Uçak piste alındı.");
+    }
+
+    function selectAircraft(id) {
+      if (!saveData.owned.includes(id)) return;
+
+      saveData.active = id;
+      currentAircraft = getAircraft(id);
+      saveGame();
+
+      if (airplane) scene.remove(airplane);
+      airplane = createAircraftModel(id);
+      scene.add(airplane);
+
+      resetPlane(false);
+      renderMarket();
+      updateHUD();
+      showMessage(currentAircraft.name + " seçildi.");
+    }
+
+    function renderMarket() {
+      marketGrid.innerHTML = "";
+
+      for (const p of aircraftCatalog) {
+        const owned = saveData.owned.includes(p.id);
+        const active = saveData.active === p.id;
+
+        const card = document.createElement("div");
+        card.className = "planeCard" + (active ? " activeCard" : "");
+
+        card.innerHTML = `
+          <div class="planeName">${p.name}</div>
+          <div class="planeType">${p.type}</div>
+
+          <div class="stat">Hız
+            <div class="statLine"><div class="statFill" style="width:${p.statSpeed}%"></div></div>
+          </div>
+
+          <div class="stat">Kontrol
+            <div class="statLine"><div class="statFill" style="width:${p.statHandling}%"></div></div>
+          </div>
+
+          <div class="stat">Kaldırma
+            <div class="statLine"><div class="statFill" style="width:${p.statLift}%"></div></div>
+          </div>
+
+          <div class="planePrice">${owned ? "Sahip olundu" : p.price + " coin"}</div>
+        `;
+
+        const btn = document.createElement("button");
+
+        if (active) {
+          btn.textContent = "Seçili";
+          btn.className = "active";
+        } else if (owned) {
+          btn.textContent = "Bu Uçağı Seç";
+          btn.onclick = () => selectAircraft(p.id);
+        } else {
+          btn.textContent = "Satın Al";
+          btn.onclick = () => {
+            if (saveData.coins < p.price) {
+              showMessage("Yeterli coin yok. Uçarak coin kazan.");
+              return;
+            }
+
+            saveData.coins -= p.price;
+            saveData.owned.push(p.id);
+            saveGame();
+            selectAircraft(p.id);
+          };
+        }
+
+        card.appendChild(btn);
+        marketGrid.appendChild(card);
+      }
+
+      coinsHud.textContent = Math.floor(saveData.coins);
+    }
+
+    function updateThrottleUI() {
+      const p = Math.round(state.throttle * 100);
+      throttleFill.style.height = `${p}%`;
+      throttleKnob.style.bottom = `${p}%`;
+      throttleValue.textContent = `${p}%`;
+      throttleHud.textContent = p;
+    }
+
+    function updateGearButton() {
+      gearBtn.textContent = state.gearDown ? "Gear Açık" : "Gear Kapalı";
+      gearBtn.classList.toggle("active", state.gearDown);
+      gearHud.textContent = state.gearDown ? "Açık" : "Kapalı";
+    }
+
+    let throttleDragging = false;
+
+    throttleTrack.addEventListener("pointerdown", e => {
+      throttleDragging = true;
+      setThrottleFromPointer(e);
+    });
+
+    window.addEventListener("pointermove", e => {
+      if (throttleDragging) setThrottleFromPointer(e);
+    });
+
+    window.addEventListener("pointerup", () => {
+      throttleDragging = false;
+    });
+
+    function setThrottleFromPointer(e) {
+      const rect = throttleTrack.getBoundingClientRect();
+      const y = clamp(e.clientY, rect.top, rect.bottom);
+      const p = 1 - (y - rect.top) / rect.height;
+      state.throttle = clamp(p, 0, 1);
+      updateThrottleUI();
+    }
+
+    let yokeActive = false;
+
+    yokeBase.addEventListener("pointerdown", e => {
+      yokeActive = true;
+      yokeBase.setPointerCapture(e.pointerId);
+      updateYoke(e);
+    });
+
+    yokeBase.addEventListener("pointermove", e => {
+      if (yokeActive) updateYoke(e);
+    });
+
+    yokeBase.addEventListener("pointerup", () => {
+      yokeActive = false;
+    });
+
+    yokeBase.addEventListener("pointercancel", () => {
+      yokeActive = false;
+    });
+
+    function updateYoke(e) {
+      const rect = yokeBase.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      const dx = clamp((e.clientX - cx) / (rect.width * 0.40), -1, 1);
+      const dy = clamp((e.clientY - cy) / (rect.height * 0.40), -1, 1);
+
+      state.yokeX = dx;
+      state.yokeY = dy;
+
+      const rotate = dx * 42;
+      const moveX = dx * 18;
+      const moveY = dy * 18;
+
+      yoke.style.transform =
+        `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) rotate(${rotate}deg)`;
+    }
+
+    function relaxYoke() {
+      if (yokeActive) return;
+
+      state.yokeX = lerp(state.yokeX, 0, 0.08);
+      state.yokeY = lerp(state.yokeY, 0, 0.08);
+
+      const rotate = state.yokeX * 42;
+      const moveX = state.yokeX * 18;
+      const moveY = state.yokeY * 18;
+
+      yoke.style.transform =
+        `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) rotate(${rotate}deg)`;
+    }
+
+    const rudderLeft = document.getElementById("rudderLeft");
+    const rudderRight = document.getElementById("rudderRight");
+
+    function bindHold(btn, value) {
+      btn.addEventListener("pointerdown", () => state.rudder = value);
+      btn.addEventListener("pointerup", () => state.rudder = 0);
+      btn.addEventListener("pointerleave", () => state.rudder = 0);
+      btn.addEventListener("pointercancel", () => state.rudder = 0);
+    }
+
+    bindHold(rudderLeft, -1);
+    bindHold(rudderRight, 1);
+
+    engineBtn.addEventListener("click", e => {
+      state.engineOn = !state.engineOn;
+      e.target.textContent = state.engineOn ? "Motor Açık" : "Motor Kapalı";
+      e.target.classList.toggle("active", state.engineOn);
+      e.target.classList.toggle("warn", !state.engineOn);
+    });
+
+    gearBtn.addEventListener("click", () => {
+      if (!state.airborne && state.speed > 35) {
+        showMessage("Yerde hareket ederken iniş takımı kapatılamaz.");
+        return;
+      }
+
+      state.gearDown = !state.gearDown;
+      updateGearButton();
+    });
+
+    yawBtn.addEventListener("click", e => {
+      state.yawDamper = !state.yawDamper;
+      e.target.classList.toggle("active", state.yawDamper);
+      yawHud.textContent = state.yawDamper ? "Açık" : "Kapalı";
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => resetPlane(true));
+
+    document.getElementById("marketBtn").addEventListener("click", () => {
+      renderMarket();
+      marketOverlay.style.display = "block";
+    });
+
+    document.getElementById("closeMarketBtn").addEventListener("click", () => {
+      marketOverlay.style.display = "none";
+    });
+
+    function updatePhysics(dt) {
+      relaxYoke();
+
+      const cfg = currentAircraft;
+      const enginePower = state.engineOn ? state.throttle : 0;
+      const gearDrag = state.gearDown ? 0.020 : 0.006;
+      const terrainDrag = isOnRunway(airplane.position.x, airplane.position.z) ? 0.0 : 0.018;
+
+      const acceleration =
+        enginePower * cfg.accel -
+        cfg.drag * state.speed -
+        gearDrag * state.speed -
+        terrainDrag * state.speed;
+
+      state.speed = clamp(state.speed + acceleration * dt, 0, cfg.maxSpeed * 1.04);
+
+      const groundY = groundContactY(airplane.position.x, airplane.position.z);
+      state.altitude = Math.max(0, airplane.position.y - groundY);
+
+      if (!state.airborne && state.altitude > 1.8) state.airborne = true;
+
+      if (!state.airborne) {
+        airplane.position.y = groundY;
+
+        state.pitch = lerp(state.pitch, 0, 0.16);
+        state.roll = lerp(state.roll, 0, 0.20);
+
+        const taxiPower = isOnRunway(airplane.position.x, airplane.position.z) ? 1 : 0.45;
+        state.yaw += state.rudder * state.speed * 0.00055 * taxiPower;
+
+        if (state.speed > cfg.takeoffSpeed && state.yokeY > 0.16) {
+          state.airborne = true;
+          state.pitch = -0.075;
+          airplane.position.y += 1.2;
+        }
+      } else {
+        const authority = clamp((state.speed - cfg.takeoffSpeed * 0.45) / (cfg.takeoffSpeed * 1.15), 0.12, 1.0);
+        const handling = cfg.handling;
+
+        const targetPitch = -state.yokeY * 0.36 * authority * handling;
+        const targetRoll = -state.yokeX * 0.78 * authority * handling;
+
+        state.pitch = lerp(state.pitch, targetPitch, 0.052);
+        state.roll = lerp(state.roll, targetRoll, 0.068);
+
+        let yawInput = state.rudder * 0.55 + state.roll * -0.40;
+
+        if (state.yawDamper) {
+          yawInput *= 0.42;
+          state.roll = lerp(state.roll, 0, 0.010);
+        }
+
+        state.yaw += yawInput * dt * authority * handling;
+
+        const lift = Math.max(0, (state.speed - cfg.takeoffSpeed * 0.62) / cfg.takeoffSpeed) * cfg.lift;
+        const climbFromPitch = -state.pitch * state.speed * 0.038 * cfg.climb;
+        const gravity = 3.25;
+        const verticalSpeed = lift + climbFromPitch - gravity;
+
+        airplane.position.y += verticalSpeed * dt * 2.4;
+
+        const newGroundY = groundContactY(airplane.position.x, airplane.position.z);
+
+        if (airplane.position.y <= newGroundY) {
+          airplane.position.y = newGroundY;
+
+          const unsafeLanding =
+            state.speed > cfg.landingMax ||
+            Math.abs(state.roll) > 0.48 ||
+            Math.abs(state.pitch) > 0.42 ||
+            !state.gearDown ||
+            !isOnRunway(airplane.position.x, airplane.position.z);
+
+          if (unsafeLanding && state.speed > 55) {
+            state.crashed = true;
+            state.speed *= 0.18;
+            showMessage("Sert iniş / kaza! Reset'e bas.");
+          } else {
+            if (state.airborne && state.speed > 60) showMessage("İniş başarılı!");
+          }
+
+          state.airborne = false;
+          state.pitch = lerp(state.pitch, 0, 0.25);
+          state.roll = lerp(state.roll, 0, 0.25);
+        }
+      }
+
+      if (state.crashed) {
+        state.throttle = 0;
+        state.speed = lerp(state.speed, 0, 0.055);
+        updateThrottleUI();
+      }
+
+      const forward = new THREE.Vector3(
+        Math.sin(state.yaw),
+        0,
+        -Math.cos(state.yaw)
+      );
+
+      airplane.position.addScaledVector(forward, state.speed * dt * 0.115);
+
+      airplane.rotation.order = "YXZ";
+      airplane.rotation.y = state.yaw;
+      airplane.rotation.x = state.pitch;
+      airplane.rotation.z = state.roll;
+
+      const gearGroup = airplane.userData.gearGroup;
+      if (gearGroup) {
+        const gearTargetY = state.gearDown ? gearGroup.userData.baseY || 0 : 7;
+        gearGroup.position.y = lerp(gearGroup.position.y, gearTargetY, 0.085);
+        gearGroup.visible = gearGroup.position.y < 6.4;
+      }
+
+      const spin = (state.engineOn ? 14 + state.throttle * 90 : 3) * dt;
+      for (const part of airplane.userData.engineParts || []) {
+        part.rotation.z += spin;
+      }
+
+      if (state.airborne && !state.crashed) {
+        state.coinBuffer += dt * (state.speed / 120) * cfg.reward;
+
+        if (state.coinBuffer >= 1) {
+          const earned = Math.floor(state.coinBuffer);
+          state.coinBuffer -= earned;
+          saveData.coins += earned;
+          coinsHud.textContent = Math.floor(saveData.coins);
+          saveGame();
+        }
+      }
+
+      updateCamera(dt);
+      updateHUD();
+    }
+
+    function updateCamera(dt) {
+      const distance = currentAircraft.id === "b747" ? 105 : currentAircraft.id === "f16" ? 65 : 78;
+      const height = currentAircraft.id === "b747" ? 42 : 31;
+
+      const behind = new THREE.Vector3(
+        -Math.sin(state.yaw) * distance,
+        height,
+        Math.cos(state.yaw) * distance
+      );
+
+      const desired = airplane.position.clone().add(behind);
+      camera.position.lerp(desired, 1 - Math.pow(0.001, dt));
+
+      const lookAt = airplane.position.clone();
+      lookAt.y += currentAircraft.groundClearance + 4;
+      camera.lookAt(lookAt);
+    }
+
+    function updateHUD() {
+      speedEl.textContent = Math.round(state.speed);
+      altEl.textContent = Math.round(state.altitude);
+      throttleHud.textContent = Math.round(state.throttle * 100);
+      gearHud.textContent = state.gearDown ? "Açık" : "Kapalı";
+      yawHud.textContent = state.yawDamper ? "Açık" : "Kapalı";
+      planeHud.textContent = currentAircraft.name;
+      coinsHud.textContent = Math.floor(saveData.coins);
+
+      if (state.crashed) {
+        statusEl.textContent = "Kaza yaptı";
+        statusEl.style.color = "#ff7777";
+      } else if (!state.engineOn) {
+        statusEl.textContent = "Motor kapalı";
+        statusEl.style.color = "#ffaaaa";
+      } else if (!state.airborne && state.speed < 5) {
+        statusEl.textContent = "Park halinde";
+        statusEl.style.color = "#ffe58a";
+      } else if (!state.airborne) {
+        statusEl.textContent = isOnRunway(airplane.position.x, airplane.position.z)
+          ? "Pistte ilerliyor"
+          : "Arazide ilerliyor";
+        statusEl.style.color = "#ffe58a";
+      } else {
+        statusEl.textContent = "Uçuşta";
+        statusEl.style.color = "#9effa8";
+      }
+    }
+
+    const keys = {};
+
+    window.addEventListener("keydown", e => {
+      keys[e.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener("keyup", e => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    function updateKeyboard(dt) {
+      if (keys["w"]) state.throttle = clamp(state.throttle + dt * 0.45, 0, 1);
+      if (keys["s"]) state.throttle = clamp(state.throttle - dt * 0.45, 0, 1);
+
+      if (keys["arrowleft"]) state.yokeX = clamp(state.yokeX - dt * 2.2, -1, 1);
+      if (keys["arrowright"]) state.yokeX = clamp(state.yokeX + dt * 2.2, -1, 1);
+      if (keys["arrowup"]) state.yokeY = clamp(state.yokeY - dt * 2.2, -1, 1);
+      if (keys["arrowdown"]) state.yokeY = clamp(state.yokeY + dt * 2.2, -1, 1);
+
+      if (keys["a"]) state.rudder = -1;
+      else if (keys["d"]) state.rudder = 1;
+      else if (!rudderLeft.matches(":active") && !rudderRight.matches(":active")) state.rudder = 0;
+
+      updateThrottleUI();
+    }
+
+    createTerrain();
+    createRunways();
+    createAirportObjects();
+    createClouds();
+
+    selectAircraft(saveData.active);
+    renderMarket();
+
+    let last = performance.now();
+
+    function animate(now) {
+      const dt = Math.min(0.035, (now - last) / 1000);
+      last = now;
+
+      updateKeyboard(dt);
+      updatePhysics(dt);
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    animate(performance.now());
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, lowPowerDevice ? 1.35 : 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
 </body>
 </html>
